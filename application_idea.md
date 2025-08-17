@@ -29,10 +29,13 @@ and "supervising" (person supervising other person), and "supervised" (reverse r
 - **Supervised-by**: Relation from Supervised to Supervisor.
 
 - **Companionship**: The system of relationships between Companions and Accompanied persons/couples.
-- **Companionship Delegate**: Person or couple responsible for maintaining the companionship relations system.
+- **Companionship Service**: being Companion in service of Accompanied.
+- **Companionship Delegate**: Person or couple responsible for maintaining the companionship relations system. Those people are main target group (personas) for
+                              application use (since application should help them in operating their role).
 - **Companionship Relation**: Accompanying or Accompanied relation between two persons or couples.
 - **Companionship Health**: The status of the companionship relation, determined by the frequency of meetings and communication.
-- **Companion Support Health**: The status of support provided by Companionship Delegate to Companion, determined by the frequency of their meetings and list of provided trainings.
+- **Companion Support Health**: The status of support provided by Companionship Delegate to Companion, 
+                                determined by the frequency of their meetings (should be at least once a year) and list of provided trainings.
 - **Accompanying Readiness**: The status that determines if person/couple can-be/is Companion. Possible values:
   - **Not Candidate**: Person/couple is not eligible to become Companion.
   - **Candidate**: Person/couple is candidate to become Companions - has enough experience, usually needs training.
@@ -51,6 +54,29 @@ and "supervising" (person supervising other person), and "supervised" (reverse r
   - it is calculated parameter: anyone besides "Looker-On" is eligible for Companionship Relation. It is so since Companionship is provided to all Community Members,
     (those who are just looking at the life of Community and considering whether to get involved are not formally Members).
 
+# Hierarchical terms
+## Hierarchy of geographical grouping
+- smallest unit is "Sector" (may not exist if Province is small enough)
+- Province built-up from Sectors
+- Country built-up from Provinces
+- Zone built-up from Countries
+- Community as whole
+## Hierarchy of leadership
+- Sector Head (person or couple)
+- Province Head (person or couple)
+- Country Head (person or couple)
+- Zone Delegate (person responsible for whole Community, from Fraternity of Jesus)
+- General Moderator (person responsible for whole Community, laity from Fraternity of Jesus)
+## Hierarchy of Companionship Delegates (also person or couple possible)
+- Companionship Delegates (responsible for companionship inside Province; notice - there is no Sector Companionship Delegates)
+- Zone Companionship Delegates (responsible for companionship inside Zone; notice - there is no Country Companionship Delegates)
+- International Companionship Delegates cooperating with Companionship International Committee
+
+# Accronyms
+- **(PH)**: Province Head
+- **(CD)**: Companionship Delegates
+
+
 # Constraints
 
 There are following constraints here:
@@ -63,73 +89,74 @@ about Dialogs conducted (date, time, participants, etc.). For conducting dialogs
 but should prioritize encrypted communication channels, or even better, provide its own encrypted communication channel for Dialogs - where best possible option
 is to have direct device-to-device encrypted communication channel without any server in the middle.
 Supporting to confidentiality is open-source nature of application - it should be open-source so that anyone can verify that application doesn't store any Dialog content.
+Application should be members-only protected. Later on we may find out more detailed access level rules that allow access to application sub-functionalities based on assigned access rules.
+Initial version (Phase1) is for (CD) of all levels (Province, Zone, International) and for (PH) of Province level.
 Initial version (Phase1) of application should also support confidentiality by providing only minimal required information about Companionship Relations,
 and only to those that require it for their duties (Companionship Delegates). Details - TBD
+In very rare cases, confidentiality may be broken - detailed rules TBD
 
-2. companionship follows gender: men accompanies men, woman accompanies woman
+2. Companionship follows gender: men accompanies men, woman accompanies woman
 2.a. for couples it means: either they meet 2:2 (couple with couple) or 1:1 (husband with husband, wife with wife) 
      but never accompanying husband with accompanied wife nor accompanying wife with accompanied husband
 2.b. for consecrated persons it means: either consecrated men accompanies consecrated men (and accordingly: consecrated women accompanies consecrated women) or 
      husband accompanies consecrated men (and accordingly: wife accompanies consecrated women)
 
-3. accompanying consecrated person has additional constraints:
+3. Accompanying consecrated person has additional constraints:
 2.a. only "experienced" may accompany those less experienced, it means that deacons, seminarians can't accompany priest nor monk; 
      if husband or wife accompanies consecrated person it must be person having status "experienced" (means having some years of marial experience to be able to wisely provide companionship guidance)
 
-4. separation of superiority and companionship rule - it means: person supervising other person (see hierarchy of leadership below) can't be accompanying for that person. 
+4. Separation of superiority and companionship rule - it means: person supervising other person (see Hierarchical terms) can't accompany that person. 
    Rule is to protect openness in the relation without impact of supervisor dependence.
 
-5. companionship eligibility - general rule is that all people are eligible for companionship, however, some people may have status "not eligible" - in such case those are not allowed to build 
-   accompanying-accompanied relation
-Application should allow for easy entering new people and new relation. Described problem has a graph nature so, application should be able to visually present graphs showing:
+5. Companionship eligibility - rule is that all community members are eligible for companionship, so, 
+   people engaged at "Looker-On" level are "not eligible" - in such case those are not allowed to build accompanying-accompanied relation
+
+6. Duration of Companionship Service: basic is for 5 years (configurable), may be extended and shortened mainly on request from Companion. 
+   At the end of basic Duration Companion must be asked "do you still want to be in service?"
+
+# Visuals serving application goals
+
+Application should allow for easy entering new people and new relation. 
+Described problem has a graph nature so, application should be able to visually present graphs showing:
 - overall graph of accompanying/accompanied for people in system served by given Delegate
 - accompanying view - graph of all people/couples accompanied by given person/couple
 - missing companionship view - list of people/couples that are eligible for companionship but are not assigned their accompanying person/couple
 - overwhelmed view - graph of all people/couples accompanying too many  people/couples. What too many means is application configuration parameter. 
   Goal of this view is to spot overwhelmed person/couple and help them to keep healthy balance between companionship and personal life.
-- companionship maintenance view - it should visually show relationship health using color codes: 
+- companionship health view - it should visually show relationship health using color codes: 
   red for companionship relation that exceeded max_meeting_distance threshold (application configuration parameter), 
   yellow for those exceeding min_meeting_distance (also configured parameter)
   and green for those below min_meeting_distance. Idea here is that to keep healthy companionship relation people need to meet regularly and talk to each other - if they don't meet 
   let's say over a year it means there is something wrong with their relation. This requirement means that application should allow to store dates of meetings or other time distance rough entity like 
   monthly, quarterly, bi-yearly, once-a-year or so. If there is no last meetings distance data for given companionship relation - application should display it in gray color 
   which means "relationship health" data not available
-Application should be members-only protected. Later on we may find out more detailed access level rules that allow access to application sub-functionalities based on assigned access rules.
+- companion health view - it should visually show health of support provided to Companion in service by Companionship Delegates using color codes: 
+  green for healthy companionship service, yellow for warning ( (CD) didn't contact Companion over a year), red for unhealthy ( (CD) didn't contact Companion over 2 years).
+  This view should also show list of trainings provided by (CD) to Companion person/couple.
+
+# Application form
 Application should be web application with frontend and backend with possibility to extend it to be mobile app reusing backend created at phase 1.
 
-Person or couple may be assigned "companionship delegates" role which means they are responsible for keeping whole companionship relations system healthy. 
-It means those people are first target group (personas) for application use (since application should help them in operating their role) - so, 
-for first phase only  "companionship delegates" will have access to application and not other members of community.
+# Usage groups
+Main target group (personas) for application use are Companionship Delegates (CD) of all levels (Province, Zone, International)
+where (CD) (province level delegates) are main users of application since it mostly helps in their duties.
 
-Now, let's clarify naming to better match reality:
-1. hierarchy of geographical grouping:
-- smallest unit is "Sector" (I forgot that for big provinces we may spit to Sectors)
-- Province built-up from Sectors
-- Country built-up from Provinces
-- Zone (not region) built-up from Countries
-- Community as whole
-2. hierarchy of leadership
-- Sector Head (person or couple)
-- Province Head (person or couple)
-- Country Head (person or couple)
-- Zone Delegate (person or couple)
-- General Moderator (person or couple responsible for whole Community)
-3. hierarchy of Companionship Delegates (also person or couple possible)
-- Province Companionship Delegates (notice - there is no Sector Companionship Delegates)
-- Zone Companionship Delegates (notice - there is no Country Companionship Delegates)
-- International Companionship Delegates cooperating with Companionship International Commitee
-That different hierarchies must be encountered when calculating separation of power constraint.
-
-We may have hierarchy of Delegates: province delegates (basic level, most interested in our application since it mostly helps in their duties) 
+We have hierarchy of Companionship Delegates: (CD) province delegates (basic level, most interested in our application since it mostly helps in their duties, we call them basic Delegates in this chapter) 
 and higher level Delegates (zone, whole community). Higher level delegates duty is to coordinate other lower-level Delegates. 
 But they don't need to handle same tasks as lower level Delegates so, they are not interested in same things. 
 And most importantly they are not DOING same things. Higher level delegates mainly nominate basic Delegates and train them but they don't build companionship relations 
 nor directly act to maintain their health. So higher level delegates will need read-only view to graph visuals (as do have basic Delegates) but 
 with filters for province - that is their handling for phase-1 - they may see same or even more then basic Delegates but they can't edit. 
 What "even more" means? basic delegates can see "who is accompanied by whom" but only for own province. From all other provinces they can't see it but 
-can see just "available Accompanying people/couples" (maybe with additional graphical hint "overwhelmed") to be able to try building companionship relation first with less loaded ones. 
-Accordingly zone level Delegates can see "who is accompanied by whom" for whole zone they are responsible for but not from whole community. 
-From higher-level geo-groups they may see "available Accompanying people/couples".
+can see just "available Companions people/couples" (maybe with additional graphical hint "overwhelmed") to be able to try building companionship relation first with less loaded ones. 
+Zone level Delegates are not interested in detailed "who is accompanied by whom" view but rather in health of companionship system. Same for International Companionship Delegates.
+So, they are interested in following visuals:
+- missing companionship view
+- overwhelmed view
+- companionship health view
+- companion health view
+Even availability of those views is questionable since they are not interested in details but rather statistics. So, later phases may add some charts
+that may inform them about size of difficulties in companionship system, with filters for province, country, zone, community.
 
 Supervision Assignment: Supervision has parallel hierarchy to Delegates as seen above. No person can have both roles (separation of power). 
 Usually Supervisors are couples. When province Delegate enters persons/couples into system then Delegate knows Supervisor status and level so, 
