@@ -116,6 +116,13 @@ In very rare cases, confidentiality may be broken - detailed rules TBD
 6. Duration of Companionship Service: basic is for 5 years (configurable), may be extended and shortened mainly on request from Companion. 
    At the end of basic Duration Companion must be asked "do you still want to be in service?"
 
+7. language barrier - Companionship Relation may be established only if both Accompanied and Companion speak same language (or have common language) 
+   - this is to ensure that Companionship Dialogs can be conducted in understandable way. 
+   That is per default language of their geo-location - German for Germany inhabitants, French for France inhabitants etc. It is usually not a problem within province. 
+   But if we need cross-province companionship it may appear that it crosses country/language borders. So, we have to know that people can communicate. 
+   That is why we should store all languages that people are capable to speak with. Then if Delegate searches for cross-country Companion 
+   for German inhabitant speaking English and Spanish then system can filter only those who speak English or Spanish.
+
 # Visuals serving application goals
 
 Application should allow for easy entering new people and new relation. 
@@ -189,64 +196,25 @@ So, they are interested in following visuals:
 Even availability of those views is questionable since they are not interested in details but rather statistics. So, later phases may add some charts
 that may inform them about size of difficulties in companionship system, with filters for province, country, zone, community.
 
-
-
-Yet another people attribute has been uncovered: spoken languages. To be able to talk during companionship meeting people need to talk same language. 
-That is per default language of their geo-location - german for Germany habitants, french for France habitants etc. It is usually not a problem within province. 
-But if we need cross-province companionship it may appear that it crosses country/language borders. So, we have to know that people can communicate. 
-That is why we should store all languages that people are capable to speak with. Then if Delegate searches for cross-country Companion for German habitant speaking English and Spanish 
-then system can filter only those who speak English or Spanish.
-
-
 # Clarifications:
 
 1. How non-Delegates exist in the system for Phase-1?
-In general: as entities only, not users. but they should appear in system the way that will allow smooth transition of them into real users of system. 
+In general: as entities only, not users but they should appear in system the way that will allow smooth transition of them into real users of system. 
 In future release normal users (non-Delegates) should benefit from application for their companionship meetings logistics and conducting: 
 - planning time, putting it into their calendars (export to google calendar, outlook or any other used), 
-- setting reminders, 1:1 chat notification (note here: meetings are always face-to-face, voice calls or video-calls by never via chats - we need deep human to human interaction 
-  and chat only dialogue may lead into misunderstanding), 
+- setting reminders, 1:1 chat notification (note here: meetings are always face-to-face, voice calls or video-calls by never via chats - we need 
+  deep human to human interaction and chat only dialogue may lead into misunderstanding), 
 - voice-call or video-call (phase-2 may add to calendar meetings just links to external voice/video communication tools like phone call, WhatsUp, messanger, ...; 
   phase-3 may implement application native voice-call/video-call). Benefit from phase-2/phase-2 will be that companionship meetings arranged/conducted by application will auto-populate 
   "relationship health" data via storing time of meeting (either planned in calendar or really conducted) 
 
-2. how should Delegates act if they are couple?
+2. How should Delegates act if they are couple?
 Delegates should not act as single account since then we will not have traceability who has made given action in the system. 
 Wife may forget to communicate to husband and that may lead to duplicate action on same matter. 
 Delegates are nominated by Community as a couple but that is just  informative for the system. 
 In theory it is possible that single person (f.ex. deacon) will be nominated as Companionship Delegate.
 
-3. How to handle big graphs that may be seen at "overall graph view"?
-(CD) are nominated per specific group within community. It might be province (around 200 people), or zone (multiple provinces) or whole community. 
-That way we have uncover yet another hidden relation - people belong to: sector, province, country, zone, 
-whole community (we have geographical hierarchy here). So basic "overall graph" should be limited to those people that are directly supported by (CD). 
-However, that relation is not strict set assignment without overlaps. There are cases when Companion can't be found within province
-(for example due to constraints like "Power separation") and then Delegates need to cooperate to find Companion from other province. 
-That overlapping should be solved that way: (CD) are allowed to add people to system only for own province but should be able 
-to see Companion candidates from whole community (all provinces with province filter).
-
-4. How to handle cross-province companionship?
-Assigning cross-province companionship will be joint effort of both Delegates and Accompanying and Accompanied - detailed flow is TBD for now.
-Moreover, not only both province Delegates must agree but also Accompanied must agree to Accompanying - that agreement is most critical one since companionship is not enforced but proposed. 
-So, no overlapping authority exists here. After Delegates dialog with both ends of companionship relation any of two province Delegates may approve new relation in system - just for tracking 
-let's mark who has done it. 
-
-5. How to handle Accompanying person/couple change?
-Accompanied person/couple may request (CD) "I want to change Accompanying person/couple". In such case delegate should mark in system "change requested". 
-Moreover, once a year (or once per 2 years - configurable 1-5 years) Delegate should ask (system will help with reminder) "do you want a change?"
-There is maximum value - default is 5 years (configurable) - after that time Accompanied person/couple MUST change Companion.
-
-5. What is graphs usage?
-graphs should be just visuals helping delegates but not editing entity. Assigning relation, entering people and so on are workflows that should follow "workflow rules" 
-(like the one more complicated for cross-province companionship establishment). Moreover, actions on a system may evolve via adding/changing rules for given workflow in the future. 
-So, system is not expected to edit graph in-place (that would suit only simplest cases). Rather it is expected to trigger specific workflow from graph view and then update graph view 
-after workflow completion (or even during (transition in-progress view) if workflow is time consuming). 
-Example could be: we display "Overwhelmed view" and from within view we start "re-balance workflow" which should shift companionship from overloaded Accompanying to less loaded ones.
-
-6. How to initially load system from old formats?
-I'd like to have 2 initial possibilities: from CSV and from Microsoft Excel file since Excel is current tool used by Delegates
-
-7. How to handle risk of double work or confusion when Delegate is couple?
+3. How to handle risk of double work or confusion when Delegate is couple?
 Since Delegates are frequently couples there could be potential risk "Delegates as Couples vs Individuals"
 Workflows like “assign companionship” may involve both spouses independently acting. Risk of conflicting edits.
 Gap: No concurrency strategy (e.g., husband assigns A, wife assigns B).
@@ -256,25 +224,55 @@ so if Delegates are couple they do operate as one entity but we keep track who h
 The risk for "husband assigns A, wife assigns B" is almost zero since assignment is a process which requires Accompanied agreement so couple discuses about it during process. 
 Moreover, proposing Companion is one by one till Accompanied agrees.
 
-8. Graph vs Workflow Expectation
+4. How to handle big graphs that may be seen at "overall graph view"?
+(CD) are nominated per specific group within community. It might be province (around 200 people), or zone (multiple provinces) or whole community. 
+That way we have uncover yet another hidden relation - people belong to: sector, province, country, zone, 
+whole community (we have geographical hierarchy here). So basic "overall graph" should be limited to those people that are directly supported by (CD). 
+However, that relation is not strict set assignment without overlaps. There are cases when Companion can't be found within province
+(for example due to constraints like "Power separation") and then Delegates need to cooperate to find Companion from other province. 
+That overlapping should be solved that way: (CD) are allowed to add people to system only for own province but should be able 
+to see Companion candidates from whole community (all provinces with province filter).
+
+5. How to handle cross-province companionship?
+Assigning cross-province companionship will be joint effort of both Delegates and Accompanying and Accompanied - detailed flow is TBD for now.
+Moreover, not only both province Delegates must agree but also Accompanied must agree to Accompanying - that agreement is most critical one since companionship is not enforced but proposed. 
+So, no overlapping authority exists here. After Delegates dialog with both ends of companionship relation any of two province Delegates may approve new relation in system - just for tracking 
+let's mark who has done it. 
+
+6. How to handle Accompanying person/couple change?
+Accompanied person/couple may request (CD) "I want to change Accompanying person/couple". In such case delegate should mark in system "change requested". 
+Moreover, once a year (or once per 2 years - configurable 1-5 years) Delegate should ask (system will help with reminder) "do you want a change?"
+There is maximum value - default is 5 years (configurable) - after that time Accompanied person/couple MUST change Companion.
+
+7. What is graphs usage?
+graphs should be just visuals helping delegates but not editing entity. Assigning relation, entering people and so on are workflows that should follow "workflow rules" 
+(like the one more complicated for cross-province companionship establishment). Moreover, actions on a system may evolve via adding/changing rules for given workflow in the future. 
+So, system is not expected to edit graph in-place (that would suit only simplest cases). Rather it is expected to trigger specific workflow from graph view and then update graph view 
+after workflow completion (or even during (transition in-progress view) if workflow is time consuming). 
+Example could be: we display "Overwhelmed view" and from within view we start "re-balance workflow" which should shift companionship from overloaded Accompanying to less loaded ones.
+
+8. How to initially load system from old formats?
+I'd like to have 2 initial possibilities: from CSV and from Microsoft Excel file since Excel is current tool used by Delegates
+
+9. Graph vs Workflow Expectation
 Risk: Graphs are non-editable, but Delegates will expect drag-drop or “quick fix” UI for simple cases.
 Contradiction: Saying “graphs are only visuals” may conflict with user intuition.
 Gap: Missing definition of “graph-initiated workflows” → e.g., click on node to start assignment wizard.
 👉 Mitigation: Market clearly: “Graphs are dashboards, not editors”. But allow workflow entry points from graph (click a node/edge triggers wizard). That bridges both worlds.
 
-9. Data Import Reality
+10. Data Import Reality
 Risk: Excel sheets across provinces/countries likely have inconsistent formats. Bulk import may break.
 Gap: No definition of validation flow (clean data → load errors → manual fix loop).
 Contradiction: Expectation that Delegates “just upload Excel” vs reality of months of messy cleanup.
 👉 Mitigation: Build import as 2-step wizard: preview → errors flagged → fix or skip. Phase-1 must tolerate messy inputs.
 
-10. Eligibility + Nominated Companions
+11. Eligibility + Nominated Companions
 Risk: Province Delegates must mark who can be a Companion. What if Country Delegate disagrees?
 Contradiction: Higher-level Delegates see but cannot edit → oversight without correction power.
 Gap: Missing escalation workflow (“Country Delegate flags ineligible mark for review”).
 👉 Mitigation: Add “flag for review” mechanism for higher-level Delegates (doesn’t edit, but raises issue for Province Delegate resolution).
 
-11. Scalability
+12. Scalability
 Risk: Province graphs may be manageable (~200 nodes). Country graphs may become thousands. Region/community graphs → overwhelming.
 Gap: No mention of progressive rendering or filters by role/status/eligibility.
 Contradiction: “Higher-level Delegates get more visibility” but in practice may get too much to be usable.
