@@ -54,16 +54,32 @@ and "supervising" (person supervising other person), and "supervised" (reverse r
 # Constraints
 
 There are following constraints here:
-1. companionship follows gender: men accompanies men, woman accompanies woman
-1.a. for couples it means: either they meet 2:2 (couple with couple) or 1:1 (husband with husband, wife with wife) but never accompanying husband with accompanied wife nor accompanying wife with accompanied husband
-1.b. for consecrated persons it means: either consecrated men accompanies consecrated men (and accordingly: consecrated women accompanies consecrated women) or 
-     husband accompanies consecrated men (and accordingly: wife accompanies consecrated women) 
-2. accompanying consecrated person has additional constraints:
+
+1. Confidentiality: Companionship Dialog is confidential and should be protected as much as possible.
+Initial version of service doesn't provide any means to conduct Companionship Dialogs, so it is not a problem for now.
+However, in future versions it may be possible to conduct Companionship Dialogs via application. Then, confidentiality will be a key requirement.
+Application can't store any data about Dialog content (text, voice, video), it should just provide means to conduct Dialogs and store information 
+about Dialogs conducted (date, time, participants, etc.). For conducting dialogs, application may use external tools like phone calls, WhatsApp, Messenger, etc.
+but should prioritize encrypted communication channels, or even better, provide its own encrypted communication channel for Dialogs - where best possible option
+is to have direct device-to-device encrypted communication channel without any server in the middle.
+Supporting to confidentiality is open-source nature of application - it should be open-source so that anyone can verify that application doesn't store any Dialog content.
+Initial version (Phase1) of application should also support confidentiality by providing only minimal required information about Companionship Relations,
+and only to those that require it for their duties (Companionship Delegates). Details - TBD
+
+2. companionship follows gender: men accompanies men, woman accompanies woman
+2.a. for couples it means: either they meet 2:2 (couple with couple) or 1:1 (husband with husband, wife with wife) 
+     but never accompanying husband with accompanied wife nor accompanying wife with accompanied husband
+2.b. for consecrated persons it means: either consecrated men accompanies consecrated men (and accordingly: consecrated women accompanies consecrated women) or 
+     husband accompanies consecrated men (and accordingly: wife accompanies consecrated women)
+
+3. accompanying consecrated person has additional constraints:
 2.a. only "experienced" may accompany those less experienced, it means that deacons, seminarians can't accompany priest nor monk; 
      if husband or wife accompanies consecrated person it must be person having status "experienced" (means having some years of marial experience to be able to wisely provide companionship guidance)
-3. separation of superiority and companionship rule - it means: person supervising other person (see hierarchy of leadership below) can't be accompanying for that person. 
+
+4. separation of superiority and companionship rule - it means: person supervising other person (see hierarchy of leadership below) can't be accompanying for that person. 
    Rule is to protect openness in the relation without impact of supervisor dependence.
-4. companionship eligibility - general rule is that all people are eligible for companionship, however, some people may have status "not eligible" - in such case those are not allowed to build 
+
+5. companionship eligibility - general rule is that all people are eligible for companionship, however, some people may have status "not eligible" - in such case those are not allowed to build 
    accompanying-accompanied relation
 Application should allow for easy entering new people and new relation. Described problem has a graph nature so, application should be able to visually present graphs showing:
 - overall graph of accompanying/accompanied for people in system served by given Delegate
