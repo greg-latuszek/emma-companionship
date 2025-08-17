@@ -1,9 +1,55 @@
 # Problem description
 
 I want to build relations tracking application called "emmaCompanionship" that helps people responsible for maintaining relationships and dialogue between people (community members) in these relationships. 
-We have three types of people involved in those relations: couples (married people), consecrated persons (priests, deacons, seminarians, monks, nuns, consecrated sisters, consecrated brothers), single people.  
+We have three types of people involved in those relations: couples (married people), consecrated members (priests, deacons, seminarians, consecrated sisters, consecrated brothers), single people.  
 We have four types of relation here: "accompanying" (person or couple who accompanies other person/couple) and "accompanied" (reverse relation: person or couple being accompanied by his/her/their companion(s)), 
-and "supervising" (person supervising other person), and "supervised" (reverse relation: person being supervised by other person). There are following constraints here:
+and "supervising" (person supervising other person), and "supervised" (reverse relation: person being supervised by other person). 
+
+# Terminology
+- **Community**: Group of people of different states (single, consecrated or couple).
+- **Community Member**: Person belonging to Community.
+- **Consecrated Community Member**: Person belonging to Community and being consecrated (priest, deacon, consecrated sister, consecrated brother) - not seminarian, nor monk, nor nun.
+- **Consecrated Person**: priest, deacon, consecrated sister, consecrated brother, seminarian, monk, nun - that may or may not be Community Member.
+- **Youth**: Teenager or young adult before choosing life's vocation.
+- **Elderly Sister/Brother**: Community member over 70 years old.
+- **Couple**: Two persons (husband and wife) being married to each other.
+- **Single Person**: Person not being part of couple nor Youth, and usually over 30 years old.
+- **Widow/Widower**: Person being widowed.
+ 
+- **Companion**: Person or couple who accompanies other person/couple.
+- **Accompanied**: Person or couple being accompanied by his/her/their companion(s).
+- **Accompanying**: Relation from Companion to Accompanied.
+- **Accompanied-by**: Relation from Accompanied to Companion. 
+
+- **Supervisor**: Person or couple supervising other person/couple.
+- **Supervised**: Person or couple being supervised by other person/couple.
+- **Supervising**: Relation from Supervisor to Supervised.
+- **Supervised-by**: Relation from Supervised to Supervisor.
+
+- **Companionship**: The system of relationships between Companions and Accompanied persons/couples.
+- **Companionship Delegate**: Person or couple responsible for maintaining the companionship relations system.
+- **Companionship Relation**: Accompanying or Accompanied relation between two persons or couples.
+- **Companionship Health**: The status of the companionship relation, determined by the frequency of meetings and communication.
+- **Companion Support Health**: The status of support provided by Companionship Delegate to Companion, determined by the frequency of their meetings and list of provided trainings.
+- **Companionship Eligibility**: The status that determines whether a person/couple is eligible for Companionship Relation (to become Accompanied person/couple).
+- **Accompanying Readiness**: The status that determines if person/couple can-be/is Companion. Possible values:
+  - **Not Candidate**: Person/couple is not eligible to become Companion.
+  - **Candidate**: Person/couple is candidate to become Companions - has enough experience, usually needs training.
+  - **Ready**: Person/couple may start to be Companion any time but has none Accompanied yet (ready but not assigned Companionship Relation).
+  - **Active**: Person/couple has at least one Companionship Relation.
+  - **Overwhelmed**: Person/couple is accompanying too many people/couples.
+  - **Deactivated**: Person/couple is no more Companion due to some reason (resigned from Companionship service, left Community).
+- **Community Experience**: The status that determines whether a person/couple is experienced enough to provide companionship guidance (to become Companion).
+- **Community Engagement Status**: The status of belonging to Community, which may be one of the following:
+  - **Looker-On**: Person/couple looking at the life of Community and considering whether to get involved.
+  - **In-Probation**: Person/couple being in Community probation period.
+  - **Commited**: Person/couple commited to Community life.
+  - **In-Fraternity-Probation**: Person/couple commited to Community life and being in probation period of Fraternity of Jesus.
+  - **Fraternity**: Person/couple commited to Community life and being member of Fraternity of Jesus.
+
+# Constraints
+
+There are following constraints here:
 1. companionship follows gender: men accompanies men, woman accompanies woman
 1.a. for couples it means: either they meet 2:2 (couple with couple) or 1:1 (husband with husband, wife with wife) but never accompanying husband with accompanied wife nor accompanying wife with accompanied husband
 1.b. for consecrated persons it means: either consecrated men accompanies consecrated men (and accordingly: consecrated women accompanies consecrated women) or 
