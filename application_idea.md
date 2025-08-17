@@ -249,34 +249,42 @@ graphs should be just visuals helping delegates but not editing entity. Assignin
 (like the one more complicated for cross-province companionship establishment). Moreover, actions on a system may evolve via adding/changing rules for given workflow in the future. 
 So, system is not expected to edit graph in-place (that would suit only simplest cases). Rather it is expected to trigger specific workflow from graph view and then update graph view 
 after workflow completion (or even during (transition in-progress view) if workflow is time consuming). 
-Example could be: we display "Overwhelmed view" and from within view we start "re-balance workflow" which should shift companionship from overloaded Accompanying to less loaded ones.
+Example could be: we display "Overwhelmed view" and from within view we start "re-balance workflow" which should shift companionship from overloaded Companion to less loaded ones.
 
-8. How to initially load system from old formats?
-I'd like to have 2 initial possibilities: from CSV and from Microsoft Excel file since Excel is current tool used by Delegates
-
-9. Graph vs Workflow Expectation
+8. Graph vs Workflow Expectation
 Risk: Graphs are non-editable, but Delegates will expect drag-drop or “quick fix” UI for simple cases.
 Contradiction: Saying “graphs are only visuals” may conflict with user intuition.
 Gap: Missing definition of “graph-initiated workflows” → e.g., click on node to start assignment wizard.
-👉 Mitigation: Market clearly: “Graphs are dashboards, not editors”. But allow workflow entry points from graph (click a node/edge triggers wizard). That bridges both worlds.
+Mitigation: Market clearly: “Graphs are dashboards, not editors”. But allow workflow entry points from graph (click a node/edge triggers wizard). That bridges both worlds.
+
+9. How to initially load system from old formats?
+I'd like to have 2 initial possibilities: from CSV and from Microsoft Excel file since Excel is current tool used by Delegates
 
 10. Data Import Reality
 Risk: Excel sheets across provinces/countries likely have inconsistent formats. Bulk import may break.
 Gap: No definition of validation flow (clean data → load errors → manual fix loop).
 Contradiction: Expectation that Delegates “just upload Excel” vs reality of months of messy cleanup.
-👉 Mitigation: Build import as 2-step wizard: preview → errors flagged → fix or skip. Phase-1 must tolerate messy inputs.
+Mitigation: Build import as 2-step wizard: preview → errors flagged → fix or skip. Phase-1 must tolerate messy inputs.
 
 11. Eligibility + Nominated Companions
-Risk: Province Delegates must mark who can be a Companion. What if Country Delegate disagrees?
+Risk: (CD) must mark who can be a Companion (changing "Accompanying Readiness" status). What if Zone Delegate disagrees?
 Contradiction: Higher-level Delegates see but cannot edit → oversight without correction power.
-Gap: Missing escalation workflow (“Country Delegate flags ineligible mark for review”).
-👉 Mitigation: Add “flag for review” mechanism for higher-level Delegates (doesn’t edit, but raises issue for Province Delegate resolution).
+Gap: Missing escalation workflow (“Zone Delegate flags ineligible mark for review”).
+Mitigation: Add “flag for review” mechanism for higher-level Delegates (doesn’t edit, but raises issue for Province Delegate resolution).
 
 12. Scalability
-Risk: Province graphs may be manageable (~200 nodes). Country graphs may become thousands. Region/community graphs → overwhelming.
+Risk: Province graphs may be manageable (~200 nodes). Zone graphs may become thousands. Community graphs → overwhelming.
 Gap: No mention of progressive rendering or filters by role/status/eligibility.
 Contradiction: “Higher-level Delegates get more visibility” but in practice may get too much to be usable.
-👉 Mitigation: Always render graphs scoped by filters (e.g., show only overwhelmed nodes, or only missing companionships). Avoid raw “hairball” graphs.
+Mitigation: 
+- overall graph should be available only to (CD) and (PH) of Province level (since they cooperate)
+- Zone Delegates and International Delegates should see only charts of (for Phase-1) simple lists
+  filtered (e.g., by province, country, zone) with pagination like 100 per page.
+- those charts/lists should mimic "health" graphs (not "operational" graphs) so, their topisc are: 
+  - missing companionships
+  - overwhelmed companions
+  - companionship health (how many relations are healthy, how many are not)
+  - companion health (how many companions are healthy, how many are not)
 
 
 # Workflow Mapping (Phase-1 Core)
