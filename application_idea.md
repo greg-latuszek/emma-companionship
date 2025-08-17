@@ -129,6 +129,14 @@ Described problem has a graph nature so, application should be able to visually 
 
 - missing companionship view - list of people/couples that are eligible for companionship but are not assigned their accompanying person/couple
 
+- new Companions view
+  not all community members may become Companions - that is delegates responsibility to mark if given person/couple is already nominated 
+  to be Companion for companionship eligible person/couple. So, (CD) sets "Accompanying Readiness" status.
+  While searching for new Companions, (CD) may use "new Companions view" that shows all people/couples that have status:
+   - "Candidate" - means that person/couple is candidate to become Companions - has enough experience, usually needs training.
+   - "Ready" - means that person/couple may start to be Companion any time but has none Accompanied yet (ready but not assigned Companionship Relation).
+   - "Not Candidate" - to rethink if that person/couple may become "Candidate" in nearest future and arrange dialog with them.
+
 - overwhelmed view - graph of all people/couples accompanying too many  people/couples. What too many means is application configuration parameter. 
   Goal of this view is to spot overwhelmed person/couple and help them to keep healthy balance between companionship and personal life.
 
@@ -189,8 +197,6 @@ But if we need cross-province companionship it may appear that it crosses countr
 That is why we should store all languages that people are capable to speak with. Then if Delegate searches for cross-country Companion for German habitant speaking English and Spanish 
 then system can filter only those who speak English or Spanish.
 
-Ah, I have just uncovered yet another constraint: not all community members may become Companions - that is delegates responsibility 
-to mark if given person/couple is already nominated to be Companion for companionship eligible person/couple.
 
 # Clarifications:
 
