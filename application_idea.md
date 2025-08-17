@@ -29,10 +29,10 @@ and "supervising" (person supervising other person), and "supervised" (reverse r
 - **Supervised-by**: Relation from Supervised to Supervisor.
 
 - **Companionship**: The system of relationships between Companions and Accompanied persons/couples.
-- **Companionship Service**: being Companion in service of Accompanied.
 - **Companionship Delegate**: Person or couple responsible for maintaining the companionship relations system. Those people are main target group (personas) for
                               application use (since application should help them in operating their role).
 - **Companionship Relation**: Accompanying or Accompanied relation between two persons or couples.
+- **Companionship Service**: being Companion in service of Accompanied. Also being Companionship Delegate of any level.
 - **Companionship Health**: The status of the companionship relation, determined by the frequency of meetings and communication.
 - **Companion Support Health**: The status of support provided by Companionship Delegate to Companion, 
                                 determined by the frequency of their meetings (should be at least once a year) and list of provided trainings.
@@ -107,6 +107,8 @@ In very rare cases, confidentiality may be broken - detailed rules TBD
 
 4. Separation of superiority and companionship rule - it means: person supervising other person (see Hierarchical terms) can't accompany that person. 
    Rule is to protect openness in the relation without impact of supervisor dependence.
+4.a. That constraint may cause that system can't find Companion for given Accompanied person/couple locally inside province. 
+   In such case, Companionship Delegate (CD) should try to find Companion from other province (cross-province companionship search workflow). 
 
 5. Companionship eligibility - rule is that all community members are eligible for companionship, so, 
    people engaged at "Looker-On" level are "not eligible" - in such case those are not allowed to build accompanying-accompanied relation
@@ -118,11 +120,31 @@ In very rare cases, confidentiality may be broken - detailed rules TBD
 
 Application should allow for easy entering new people and new relation. 
 Described problem has a graph nature so, application should be able to visually present graphs showing:
+
 - overall graph of accompanying/accompanied for people in system served by given Delegate
+  - it should not show cross-province Companion candidates (separate view below). However, it should show that already existent Companion 
+    comes from other province (for example by specific color or different icon - TBD). 
+
 - accompanying view - graph of all people/couples accompanied by given person/couple
+
 - missing companionship view - list of people/couples that are eligible for companionship but are not assigned their accompanying person/couple
+
 - overwhelmed view - graph of all people/couples accompanying too many  people/couples. What too many means is application configuration parameter. 
   Goal of this view is to spot overwhelmed person/couple and help them to keep healthy balance between companionship and personal life.
+
+- Cross-province Companion candidate view - graph that (CD) may use when intentionally searching for Companion. 
+  System may support (CD) by proposing such view when system asked "find me available Companion" can't find such a person due to constraints:
+  - the no-discussion hard constraint here is "power separation rule". 
+  - Soft constraint here is "all available are overwhelmed" - soft since we prefer face-to-face interaction so, other province may mean long distance
+    and only voice/video meetings --> so, (CD) may ask overwhelmed person/couple for "yet another accompanied" for the good of Accompanied person/couple.
+  - next Soft constraint here is "prefer Fraternity" - if Accompanied engagement status is "In-Fraternity-Probation" or "Fraternity" then we prefer to find Companion 
+    from Fraternity of Jesus (or in probation to it) since they are more engaged in Community life and have better understanding of its values
+    and local province may have no such Companion candidates.
+  - that view when presenting cross-province candidates should show all available Companions from all provinces 
+    (we need filtering by zone/country/province with default selection to nearest province from same country/language), 
+    but with additional graphical hint "overwhelmed" for those who are already accompanying too many people/couples.
+  - similarly we need filtering by "Fraternity" or graphical hint "Fraternity" (if "Fraternity" filter is off) for those who are from Fraternity of Jesus (or in probation to it).
+
 - companionship health view - it should visually show relationship health using color codes: 
   red for companionship relation that exceeded max_meeting_distance threshold (application configuration parameter), 
   yellow for those exceeding min_meeting_distance (also configured parameter)
@@ -130,6 +152,7 @@ Described problem has a graph nature so, application should be able to visually 
   let's say over a year it means there is something wrong with their relation. This requirement means that application should allow to store dates of meetings or other time distance rough entity like 
   monthly, quarterly, bi-yearly, once-a-year or so. If there is no last meetings distance data for given companionship relation - application should display it in gray color 
   which means "relationship health" data not available
+
 - companion health view - it should visually show health of support provided to Companion in service by Companionship Delegates using color codes: 
   green for healthy companionship service, yellow for warning ( (CD) didn't contact Companion over a year), red for unhealthy ( (CD) didn't contact Companion over 2 years).
   This view should also show list of trainings provided by (CD) to Companion person/couple.
@@ -163,23 +186,14 @@ Usually Supervisors are couples. When province Delegate enters persons/couples i
 can enter it directly into system. Entering person/couple as province Head instantly builds supervising-supervised relation between that person/couple 
 and all members belonging to province. And accordingly: adding Country Head automatically builds supervising-supervised relation between that person/couple and all members belonging to country, and so on.
 
-Clarification to "Overall graph": it should not show cross-province candidate visibility. It should show that already existent Accompanying comes from other province 
-(for example by specific color or different icon - TBD). 
-
-Cross-province candidate visibility should be separate graph that delegate may use when intentionally searching for Accompanying person. 
-System may support Delegate by proposing such view when system asked "find me available Accompanying" can't find such a person due to contraints:
-- the no-discussion constraint here is "power separation rule". 
-- Soft constraint here is "all available are overwhelmed" - soft since we prefer face-to-face interaction so, other province may mean long distance and only voice/video meetings --> so, 
-  Delegate may ask overwhelmed person/couple for "yet another accompanied" for the good of Accompanied person.
-
 Yet another people attribute has been uncovered: spoken languages. To be able to talk during companionship meeting people need to talk same language. 
 That is per default language of their geo-location - german for Germany habitants, french for France habitants etc. It is usually not a problem within province. 
 But if we need cross-province companionship it may appear that it crosses country/language borders. So, we have to know that people can communicate. 
-That is why we should store all languages that people are capable to speak with. Then if Delegate searches for cross-country Accompanying person for German habitant speaking English and Spanish 
+That is why we should store all languages that people are capable to speak with. Then if Delegate searches for cross-country Companion for German habitant speaking English and Spanish 
 then system can filter only those who speak English or Spanish.
 
-Ah, I have just uncovered yet another constraint: not all community members may become Accompanying persons - that is delegates responsibility 
-to mark if given person/couple is already nominated to be Accompanying person for companionship eligible person/couple.
+Ah, I have just uncovered yet another constraint: not all community members may become Companions - that is delegates responsibility 
+to mark if given person/couple is already nominated to be Companion for companionship eligible person/couple.
 
 # Clarifications:
 
@@ -203,8 +217,8 @@ In theory it is possible that single person (f.ex. deacon) will be nominated as 
 Delegates are nominated per specific group within community. It might be province (around 200 people), or country (multiple provinces) or whole community. 
 That way we have uncover yet another hidden relation - people belong to: province, country, zone (like East Europe or any other multi-country group), 
 whole community (we have geographical hierarchy here). So basic "overall graph" should be limited to those people that are directly supported by Delegate. 
-However, that relation is not strict set assignment without overlaps. There are cases when accompanying person can't be found within province
-(for example due to constraints like "Power separation") and then Delegates need to cooperate to find Accompanying person from other province. 
+However, that relation is not strict set assignment without overlaps. There are cases when Companion can't be found within province
+(for example due to constraints like "Power separation") and then Delegates need to cooperate to find Companion from other province. 
 That overlapping should be solved that way: Delegates are allowed to add people to system only for own province but should be able to see Accompanying candidates from whole community (all provinces).
 
 4. How to handle cross-province companionship?
@@ -214,9 +228,9 @@ So, no overlapping authority exists here. After Delegates dialog with both ends 
 let's mark who has done it. 
 
 5. How to handle Accompanying person/couple change?
-Accompanied person/couple may request Delegate "I want to change Accompanying person/couple". In such case delegate should mark in system "change requested". 
+Accompanied person/couple may request (CD) "I want to change Accompanying person/couple". In such case delegate should mark in system "change requested". 
 Moreover, once a year (or once per 2 years - configurable 1-5 years) Delegate should ask (system will help with reminder) "do you want a change?"
-There is maximum value - default is 5 years (configurable) - after that time Accompanied person/couple MUST change Accompanying person/couple.
+There is maximum value - default is 5 years (configurable) - after that time Accompanied person/couple MUST change Companion.
 
 5. What is graphs usage?
 graphs should be just visuals helping delegates but not editing entity. Assigning relation, entering people and so on are workflows that should follow "workflow rules" 
@@ -236,7 +250,7 @@ Contradiction: The app says “couple nominated as Delegate” but operationally
 Mitigation: “delegate couple dashboard” view where actions are merged but with individual audit trails,
 so if Delegates are couple they do operate as one entity but we keep track who has made specific action. 
 The risk for "husband assigns A, wife assigns B" is almost zero since assignment is a process which requires Accompanied agreement so couple discuses about it during process. 
-Moreover, proposing Accompanying person is one by one till Accompanied agrees.
+Moreover, proposing Companion is one by one till Accompanied agrees.
 
 8. Graph vs Workflow Expectation
 Risk: Graphs are non-editable, but Delegates will expect drag-drop or “quick fix” UI for simple cases.
@@ -250,8 +264,8 @@ Gap: No definition of validation flow (clean data → load errors → manual fix
 Contradiction: Expectation that Delegates “just upload Excel” vs reality of months of messy cleanup.
 👉 Mitigation: Build import as 2-step wizard: preview → errors flagged → fix or skip. Phase-1 must tolerate messy inputs.
 
-10. Eligibility + Nominated Accompanying Persons
-Risk: Province Delegates must mark who can be an Accompanying person. What if Country Delegate disagrees?
+10. Eligibility + Nominated Companions
+Risk: Province Delegates must mark who can be a Companion. What if Country Delegate disagrees?
 Contradiction: Higher-level Delegates see but cannot edit → oversight without correction power.
 Gap: Missing escalation workflow (“Country Delegate flags ineligible mark for review”).
 👉 Mitigation: Add “flag for review” mechanism for higher-level Delegates (doesn’t edit, but raises issue for Province Delegate resolution).
