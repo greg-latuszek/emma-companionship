@@ -21,6 +21,8 @@ and "supervising" (person supervising other person), and "supervised" (reverse r
 - **Accompanying**: Relation from Companion to Accompanied.
 - **Accompanied-by**: Relation from Accompanied to Companion. 
 
+- **Associate Community Member**: Person belonging to Community on special rights (may become Accompanied but not Companion).
+
 - **Supervisor**: Person or couple supervising other person/couple.
 - **Supervised**: Person or couple being supervised by other person/couple.
 - **Supervising**: Relation from Supervisor to Supervised.
@@ -31,7 +33,6 @@ and "supervising" (person supervising other person), and "supervised" (reverse r
 - **Companionship Relation**: Accompanying or Accompanied relation between two persons or couples.
 - **Companionship Health**: The status of the companionship relation, determined by the frequency of meetings and communication.
 - **Companion Support Health**: The status of support provided by Companionship Delegate to Companion, determined by the frequency of their meetings and list of provided trainings.
-- **Companionship Eligibility**: The status that determines whether a person/couple is eligible for Companionship Relation (to become Accompanied person/couple).
 - **Accompanying Readiness**: The status that determines if person/couple can-be/is Companion. Possible values:
   - **Not Candidate**: Person/couple is not eligible to become Companion.
   - **Candidate**: Person/couple is candidate to become Companions - has enough experience, usually needs training.
@@ -46,6 +47,9 @@ and "supervising" (person supervising other person), and "supervised" (reverse r
   - **Commited**: Person/couple commited to Community life.
   - **In-Fraternity-Probation**: Person/couple commited to Community life and being in probation period of Fraternity of Jesus.
   - **Fraternity**: Person/couple commited to Community life and being member of Fraternity of Jesus.
+- **Companionship Eligibility**: The status that determines whether a person/couple is eligible for Companionship Relation (to become Accompanied person/couple).
+  - it is calculated parameter: anyone besides "Looker-On" is eligible for Companionship Relation. It is so since Companionship is provided to all Community Members,
+    (those who are just looking at the life of Community and considering whether to get involved are not formally Members).
 
 # Constraints
 
