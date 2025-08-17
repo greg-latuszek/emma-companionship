@@ -181,10 +181,7 @@ So, they are interested in following visuals:
 Even availability of those views is questionable since they are not interested in details but rather statistics. So, later phases may add some charts
 that may inform them about size of difficulties in companionship system, with filters for province, country, zone, community.
 
-Supervision Assignment: Supervision has parallel hierarchy to Delegates as seen above. No person can have both roles (separation of power). 
-Usually Supervisors are couples. When province Delegate enters persons/couples into system then Delegate knows Supervisor status and level so, 
-can enter it directly into system. Entering person/couple as province Head instantly builds supervising-supervised relation between that person/couple 
-and all members belonging to province. And accordingly: adding Country Head automatically builds supervising-supervised relation between that person/couple and all members belonging to country, and so on.
+
 
 Yet another people attribute has been uncovered: spoken languages. To be able to talk during companionship meeting people need to talk same language. 
 That is per default language of their geo-location - german for Germany habitants, french for France habitants etc. It is usually not a problem within province. 
@@ -214,12 +211,13 @@ Delegates are nominated by Community as a couple but that is just  informative f
 In theory it is possible that single person (f.ex. deacon) will be nominated as Companionship Delegate.
 
 3. How to handle big graphs that may be seen at "overall graph view"?
-Delegates are nominated per specific group within community. It might be province (around 200 people), or country (multiple provinces) or whole community. 
-That way we have uncover yet another hidden relation - people belong to: province, country, zone (like East Europe or any other multi-country group), 
-whole community (we have geographical hierarchy here). So basic "overall graph" should be limited to those people that are directly supported by Delegate. 
+(CD) are nominated per specific group within community. It might be province (around 200 people), or zone (multiple provinces) or whole community. 
+That way we have uncover yet another hidden relation - people belong to: sector, province, country, zone, 
+whole community (we have geographical hierarchy here). So basic "overall graph" should be limited to those people that are directly supported by (CD). 
 However, that relation is not strict set assignment without overlaps. There are cases when Companion can't be found within province
 (for example due to constraints like "Power separation") and then Delegates need to cooperate to find Companion from other province. 
-That overlapping should be solved that way: Delegates are allowed to add people to system only for own province but should be able to see Accompanying candidates from whole community (all provinces).
+That overlapping should be solved that way: (CD) are allowed to add people to system only for own province but should be able 
+to see Companion candidates from whole community (all provinces with province filter).
 
 4. How to handle cross-province companionship?
 Assigning cross-province companionship will be joint effort of both Delegates and Accompanying and Accompanied - detailed flow is TBD for now.
@@ -383,6 +381,12 @@ Steps:
 Delegate adds person/couple as Supervisor at Sector/Province/Country/Zone/Community level.
 
 System auto-creates supervising-supervised relations for all people in that scope.
+
+Context: Supervision has parallel hierarchy to Companionship Delegates as seen above. No person can have both roles (separation of power). 
+Usually Supervisors are couples. When (CD) enters persons/couples into system then Delegate knows Supervisor status and level so, 
+can enter it directly into system. Entering person/couple as province Head instantly builds supervising-supervised relation between that person/couple 
+and all members belonging to province. And accordingly: adding Country Head automatically builds supervising-supervised relation 
+between that person/couple and all members belonging to country, and so on.
 
 Rule enforced: no one may simultaneously hold Supervisor and Companionship Delegate role.
 
