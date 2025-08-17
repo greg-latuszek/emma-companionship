@@ -102,21 +102,31 @@ In very rare cases, confidentiality may be broken - detailed rules TBD
      husband accompanies consecrated men (and accordingly: wife accompanies consecrated women)
 
 3. Accompanying consecrated person has additional constraints:
-2.a. only "experienced" may accompany those less experienced, it means that deacons, seminarians can't accompany priest nor monk; 
-     if husband or wife accompanies consecrated person it must be person having status "experienced" (means having some years of marial experience to be able to wisely provide companionship guidance)
+3.a. general rule: only "experienced" may accompany those less experienced, it means that seminarians should nor accompany deacons, nor priest; 
+     if husband or wife accompanies consecrated person it must be person having status "experienced" 
+     (means having some years of marital experience to be able to wisely provide companionship guidance)
+3.b. Accompanying priests - Companion should have "In-Fraternity-Probation"/"Fraternity" status, 
+3.c. Accompanying deacons - Companion should have "In-Fraternity-Probation"/"Fraternity" status, 
+     Moreover, if deacon is maried then for Companionship (for him and his wife) we need couple.
+3.d. Accompanying consecrated brother - Companion should have "In-Fraternity-Probation"/"Fraternity" status, best if also consecrated brother.
+3.e. Accompanying consecrated sister - Companion should have "In-Fraternity-Probation"/"Fraternity" status, best if also consecrated sister.
+3.f. Accompanying seminarians (not strictly consecrated yet) - Companion should have "In-Fraternity-Probation"/"Fraternity" status,
 
-4. Separation of superiority and companionship rule - it means: person supervising other person (see Hierarchical terms) can't accompany that person. 
+4. Accompanying member of Fraternity of Jesus - Companion should have "In-Fraternity-Probation"/"Fraternity" status,
+   If Accompanied member of Fraternity of Jesus is maried we have couple-to-couple companionship need.
+
+5. Separation of superiority and companionship rule - it means: person supervising other person (see Hierarchical terms) can't accompany that person. 
    Rule is to protect openness in the relation without impact of supervisor dependence.
-4.a. That constraint may cause that system can't find Companion for given Accompanied person/couple locally inside province. 
+5.a. That constraint may cause that system can't find Companion for given Accompanied person/couple locally inside province. 
    In such case, Companionship Delegate (CD) should try to find Companion from other province (cross-province companionship search workflow). 
 
-5. Companionship eligibility - rule is that all community members are eligible for companionship, so, 
+6. Companionship eligibility - rule is that all community members are eligible for companionship, so, 
    people engaged at "Looker-On" level are "not eligible" - in such case those are not allowed to build accompanying-accompanied relation
 
-6. Duration of Companionship Service: basic is for 5 years (configurable), may be extended and shortened mainly on request from Companion. 
+7. Duration of Companionship Service: basic is for 5 years (configurable), may be extended and shortened mainly on request from Companion. 
    At the end of basic Duration Companion must be asked "do you still want to be in service?"
 
-7. language barrier - Companionship Relation may be established only if both Accompanied and Companion speak same language (or have common language) 
+8. Language barrier - Companionship Relation may be established only if both Accompanied and Companion speak same language (or have common language) 
    - this is to ensure that Companionship Dialogs can be conducted in understandable way. 
    That is per default language of their geo-location - German for Germany inhabitants, French for France inhabitants etc. It is usually not a problem within province. 
    But if we need cross-province companionship it may appear that it crosses country/language borders. So, we have to know that people can communicate. 
@@ -152,7 +162,8 @@ Described problem has a graph nature so, application should be able to visually 
   - the no-discussion hard constraint here is "power separation rule". 
   - Soft constraint here is "all available are overwhelmed" - soft since we prefer face-to-face interaction so, other province may mean long distance
     and only voice/video meetings --> so, (CD) may ask overwhelmed person/couple for "yet another accompanied" for the good of Accompanied person/couple.
-  - next Soft constraint here is "prefer Fraternity" - if Accompanied engagement status is "In-Fraternity-Probation" or "Fraternity" then we prefer to find Companion 
+  - next Soft constraint here is "prefer Fraternity" - if Accompanied engagement status is "In-Fraternity-Probation" or "Fraternity" 
+    or Accompanied is priest or deacon then we prefer to find Companion 
     from Fraternity of Jesus (or in probation to it) since they are more engaged in Community life and have better understanding of its values
     and local province may have no such Companion candidates.
   - that view when presenting cross-province candidates should show all available Companions from all provinces 
