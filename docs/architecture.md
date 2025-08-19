@@ -10,18 +10,18 @@ Here is the drafted section for your review.
 
 ### Technical Summary
 
-The architecture for `emmaCompanionship` is a unified full-stack application built entirely in **TypeScript**. It leverages the **Next.js framework** for both the frontend (React) and the backend API (API Routes), all managed within a single **Monorepo**. The backend is designed as a **Modular Monolith**, with each internal module adhering to the **Hexagonal Architecture** pattern to ensure maintainability and future portability. The initial deployment will be a standalone web application using **PostgreSQL** for data persistence.
+The architecture for `emmaCompanionship` is a unified full-stack application built entirely in **TypeScript**. It leverages the **Next.js framework** for both the frontend (React) and the backend API (API Routes), all managed within a single **Monorepo**. The backend is designed as a **Modular Monolith**, with each internal module adhering to the **Hexagonal Architecture** pattern to ensure maintainability and future portability. For the POC, the application and its **PostgreSQL** database will be hosted on **Vercel**.
 
 ### Platform and Infrastructure Choice
 
-  * **Platform**: The application is a self-contained, full-stack Next.js application. For the initial POC, it will be hosted on a platform optimized for this framework, such as Vercel.
-  * **Key Services**: The primary infrastructure service will be a managed **PostgreSQL** database.
-  * [cite\_start]**Deployment Regions**: A single region will be sufficient for the POC (e.g., Western Europe). [cite: 760]
+  * **Platform**: The application is a self-contained, full-stack Next.js application. For the initial POC, it will be hosted on **Vercel's Hobby tier**.
+  * **Database**: We will use **Vercel Postgres**, also on the Hobby tier.
+  * **Deployment Regions**: A single region will be sufficient for the POC (e.g., Western Europe). 
+  * **Key Features**: This provides a no-cost, scalable, and secure environment with automated backups (Point-in-Time Recovery) and custom domain support.
 
 ### Repository Structure
 
-  * **Structure**: **Monorepo**. [cite\_start]This structure simplifies dependency management and code sharing between the frontend and backend. [cite: 904]
-  * [cite\_start]**Package Organization**: The monorepo will contain separate packages for the `web` application (frontend and backend logic) and any `shared` code, such as TypeScript types. [cite: 972]
+  * **Structure**: **Monorepo**. This structure simplifies dependency management and allows for easy code and type sharing between the frontend, backend, and any other packages.
 
 ### High-Level Architecture Diagram
 
@@ -47,15 +47,14 @@ graph TD
 
 ### Architectural Patterns
 
-  * **Modular Monolith**: The backend, while deployed as a single unit, will be internally organized into distinct modules (e.g., "Members", "Relationships"). [cite\_start]This prevents code entanglement and improves maintainability. [cite: 909]
-  * **Hexagonal Architecture (Ports & Adapters)**: Each module's core business logic will be isolated from external concerns like the database or framework. [cite\_start]This is the key to making our logic reusable and testable, enabling a potential future pivot to SPFx. [cite: 909]
-  * [cite\_start]**Serverless API**: The Next.js backend API will be deployed as serverless functions, providing excellent scalability and cost-efficiency. [cite: 754]
+  * **Modular Monolith**: The backend, while deployed as a single unit, will be internally organized into distinct modules (e.g., "Members", "Relationships").
+  * **Hexagonal Architecture (Ports & Adapters)**: Each module's core business logic is isolated from external concerns (the database, frameworks), making it reusable and independently testable.
+  * **Serverless API**: The Next.js backend API will be deployed as serverless functions, providing excellent scalability and cost-efficiency.
 
 -----
 
 ### Rationale
 
-My rationale for this section is to formalize the foundational decisions we made in our ADR discussion. The diagram provides a clear visual map of the system, while the pattern descriptions establish the core principles that will guide all subsequent, more detailed design work.
+My rationale for this section is to consolidate our decisions from the ADRs into a formal section of the architecture document, centered around a clear visual diagram that shows how all the pieces fit together. This provides a complete overview before we dive into more detailed component designs.
 
 -----
-
