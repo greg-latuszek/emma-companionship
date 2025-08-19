@@ -48,3 +48,13 @@
         * We are relying on the platform's standard security measures and the legal protection of the DPA. We have explicitly decided to **defer more complex Application-Level Encryption** until a potential post-POC production phase.
 
 ---
+### **ADR-006: Graph Visualization Technology**
+
+* **Status**: Accepted
+* **Context**: The application's core user experience, as defined in the PRD, revolves around an interactive graph for visualizing and managing relationships. Key required features include rendering custom nodes and edges, filtering, and drag-and-drop interactions to support the "quick record" feature. We needed to select a high-level TypeScript library compatible with our Next.js and React stack to implement this functionality efficiently without building it from a low-level tool like D3.js.
+* **Decision**: We will use the **React Flow** library as our primary technology for all graph visualization and interaction features.
+* **Consequences**:
+    * **Positive**: React Flow is a modern library built specifically for React, ensuring seamless integration with our stack. It provides built-in, highly customizable support for the exact features we need, which will significantly accelerate the development of Epics 2 and 4. Its excellent documentation and strong community reduce development risk.
+    * **Negative**: We are adding a significant third-party dependency that we are responsible for maintaining. While very flexible, we will be working within the architectural patterns provided by the React Flow library.
+
+---
