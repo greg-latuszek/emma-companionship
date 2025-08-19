@@ -32,3 +32,19 @@
 * **Consequences**: This provides an extremely smooth migration path. PostgreSQL is a robust, industry-standard choice that is well-supported by our TypeScript tooling (e.g., Prisma) and can easily model our graph-like data. Our Hexagonal architecture makes this a low-risk decision, as the data "adapter" can be easily swapped in the future.
 
 ---
+
+### **ADR-005: POC Hosting and Database Platform**
+
+* **Status**: Accepted
+* **Context**: For the Proof of Concept (POC) phase, we require a publicly accessible hosting solution for our standalone Next.js application. The primary requirements were rapid deployment, minimal to no cost, a strong security and privacy posture for sensitive data, and a straightforward developer experience. We needed to select a platform for both the application and its PostgreSQL database.
+* **Decision**: We will use the **Vercel** platform for hosting our Next.js application and **Vercel Postgres** for our database. For the duration of the POC, we will utilize the **free Hobby tier** for both services. We will secure access by using a custom domain.
+* **Consequences**:
+    * **Positive**:
+        * **Cost**: The total infrastructure cost for the POC is projected to be **$0**.
+        * **Speed & Simplicity**: Vercel is highly optimized for Next.js, providing a near-instantaneous "push-to-deploy" workflow, which is ideal for rapid iteration during the POC.
+        * **Security Baseline**: The platform provides a robust security foundation out of the box, including HTTPS, encryption at rest for the database, automated backups with Point-in-Time Recovery, and a legally binding **Data Processing Agreement (DPA)** that governs data privacy.
+    * **Negative**:
+        * This decision is for the **POC only**. The chosen platform is not intended as the final production environment without further review.
+        * We are relying on the platform's standard security measures and the legal protection of the DPA. We have explicitly decided to **defer more complex Application-Level Encryption** until a potential post-POC production phase.
+
+---
