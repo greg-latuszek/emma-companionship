@@ -58,3 +58,15 @@
     * **Negative**: We are adding a significant third-party dependency that we are responsible for maintaining. While very flexible, we will be working within the architectural patterns provided by the React Flow library.
 
 ---
+### **ADR-007: Client-Side State Management Strategy**
+
+* **Status**: Accepted
+* **Context**: Modern React applications require a clear strategy for managing state, which can be broadly categorized into "Client State" (UI state, e.g., if a modal is open) and "Server State" (cached backend data from an API). Our initial tech stack included **Zustand**, a simple client state library. A "Hindsight Reflection" revealed a future risk where developers might misuse this simple store to also manage complex server data, leading to bugs and maintenance issues as the application grows.
+* **Decision**: We will adopt a disciplined, dual-library strategy for state management:
+    1.  **Zustand** will be used exclusively for managing pure, global **Client State**.
+    2.  **TanStack Query** will be added to the tech stack and used exclusively for managing all **Server State**. This includes fetching, caching, synchronizing, and updating data from our backend API.
+* **Consequences**:
+    * **Positive**: This separation of concerns is a modern best practice that will significantly improve the reliability and maintainability of our frontend. TanStack Query provides powerful, built-in features for caching and automatic data refetching that will improve performance and reduce the amount of custom code we need to write.
+    * **Negative**: We are adding one more library to our tech stack. However, the benefits in code quality and long-term developer experience far outweigh this minor cost.
+
+---
