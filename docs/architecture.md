@@ -73,35 +73,42 @@ graph TD
 
 -----
 
-## \#\# Data Models
+## Data Models
 
-This section defines the core data structures as TypeScript interfaces. For stronger type-safety, all ID fields use a custom `UUID` branded type instead of a generic `string`.
+###  Architectural Note on Role Management
+
+To provide clarity for the development team, this section details the reasoning behind our role-management data model.
+
+Our initial, simpler models (with flags like `isDelegate` or direct links like `managesUnitId` on the `Member` record) failed to capture two critical business rules:
+
+1.  A member's role (like Delegate or Supervisor) is always tied to a specific **scope** (e.g., a Province, a Zone).
+2.  A member's physical location can be **different** from the scope of their role (e.g., a Zone Delegate for "Europe" might live in a specific province in Poland).
+
+The chosen design solves this by creating a dedicated `RoleAssignment` model. This model acts as a link, explicitly connecting a **Member** to a **Role** for a specific **Scope** (`GeographicUnit`). This approach is highly flexible, accurately models the community's structure, and is the key to correctly implementing complex features like automated supervision and the "power separation" rule.
 
 ```typescript
 // A branded type for UUIDs to enforce type-safety
 export type UUID = string & { readonly __brand: 'UUID' };
 ```
 
-### \#\#\# GeographicUnit
+###  GeographicUnit
 
-**Purpose**: Defines the organizational and geographical tree structure of the community. This model is the key to automating the creation of supervision relationships.
+**Purpose**: Defines the organizational and geographical tree structure of the community.
 
 **TypeScript Interface**:
 
 ```typescript
 interface GeographicUnit {
   id: UUID;
-  name: string;
+  name: string; // e.g., "Cracow Area", "Poland South Province"
   type: 'sector' | 'province' | 'country' | 'zone' | 'community';
   parentId?: UUID; // Foreign Key to another GeographicUnit
-  headId?: UUID; // Foreign Key to a Member or Couple
-  headType?: 'member' | 'couple';
 }
 ```
 
-### \#\#\# Member
+###  Member
 
-**Purpose**: The central entity representing an individual person within the community.
+**Purpose**: The central entity representing an individual person within the community. This model is intentionally kept simple, with all role and leadership information handled by the `RoleAssignment` model.
 
 **TypeScript Interface**:
 
@@ -115,9 +122,7 @@ interface Member {
   communityEngagementStatus: 'Looker-On' | 'In-Probation' | 'Commited' | 'In-Fraternity-Probation' | 'Fraternity';
   accompanyingReadiness: 'Not Candidate' | 'Candidate' | 'Ready' | 'Active' | 'Overwhelmed' | 'Deactivated';
   languages: string[];
-  geographicUnitId: UUID; // Foreign Key to GeographicUnit
-  isDelegate: boolean;
-  isSupervisor: boolean;
+  geographicUnitId: UUID; // The unit they BELONG to.
 
   // Optional fields
   email?: string;
@@ -130,7 +135,7 @@ interface Member {
 }
 ```
 
-### \#\#\# Couple
+###  Couple
 
 **Purpose**: Groups two `Member` entities so they can be treated as a single unit.
 
@@ -146,15 +151,32 @@ interface Couple {
 }
 ```
 
-### \#\#\# Note on the `Supervision` Model
+###  Role & RoleAssignment
 
-A dedicated `Supervision` model is not needed. This relationship is implicitly defined by the `headId` on a `GeographicUnit`, which is a more efficient and maintainable approach.
+**Purpose**: A flexible system to assign roles (like Supervisor or Delegate) to Members with a specific geographical scope.
 
-### \#\#\# Companionship
+**TypeScript Interfaces**:
 
-**Purpose**: Represents the voluntary, supportive `companionship` relationship.
+```typescript
+interface Role {
+  id: UUID;
+  name: 'Companionship Delegate' | 'Supervisor' | 'Admin'; 
+  level: 'sector' | 'province' | 'country' | 'zone' | 'international';
+}
 
-**TypeScript Interface**:
+interface RoleAssignment {
+  id: UUID;
+  memberId: UUID;   // Foreign Key to the Member
+  roleId: UUID;     // Foreign Key to the Role
+  scopeId: UUID;    // Foreign Key to GeographicUnit (the scope of the role)
+}
+```
+
+###  Companionship, ApprovalProcess & ApprovalStep
+
+**Purpose**: These models manage the lifecycle of a voluntary `Companionship`, including the flexible, multi-step approval workflow.
+
+**TypeScript Interfaces**:
 
 ```typescript
 interface Companionship {
@@ -168,18 +190,10 @@ interface Companionship {
   startDate: Date;
   endDate?: Date;
 }
-```
 
-### \#\#\# ApprovalProcess & ApprovalStep
-
-**Purpose**: These models manage the complex, multi-step approval workflow for a new `Companionship` proposal.
-
-**TypeScript Interface**:
-
-```typescript
 interface ApprovalProcess {
   id: UUID;
-  companionshipId: UUID; // Links to the Companionship being approved
+  companionshipId: UUID;
   status: 'in_progress' | 'approved' | 'rejected';
   steps: ApprovalStep[]; 
 }
@@ -190,3 +204,48 @@ interface ApprovalStep {
   decisionDate?: Date;
 }
 ```
+
+-----
+
+## Components
+
+Our backend will be composed of the following core modules.
+
+###  Component Interaction Diagram
+
+```mermaid
+graph TD
+    subgraph "Application Backend"
+        Relationship["Relationship Module"] --> Member["Member Management Module"]
+        Relationship --> Auth["Auth Module"]
+        
+        Member --> Auth
+        Member --> Geo["Geographic Module"]
+    end
+```
+
+###  1. Auth Module
+
+  * **Responsibility**: User registration, login, session management, and decoding access tokens to provide user identity.
+  * **Dependencies**: None.
+
+###  2. Geographic Module
+
+  * **Responsibility**: Manages the `GeographicUnit` organizational tree.
+  * **Dependencies**: None.
+
+###  3. Member Management Module
+
+  * **Responsibility**: Manages the business logic for `Member` and `Couple` entities, and importantly, manages `RoleAssignment` records to grant members roles like Supervisor or Delegate.
+  * **Dependencies**: Depends on `Auth` (for permissions) and `Geographic` (to validate scope).
+
+###  4. Relationship Module
+
+  * **Responsibility**: Manages the lifecycle of `Companionship` relationships and the `ApprovalProcess` workflow.
+  * **Dependencies**: Depends on `Auth` and `Member Management` (which contains role info) to perform its complex rule validations.
+
+-----
+
+## External APIs
+
+For the MVP, there are no required integrations with external third-party APIs for core business logic.
