@@ -72,3 +72,121 @@ graph TD
 | **CI/CD** | GitHub Actions | N/A | Continuous integration & deployment | Tightly integrated with GitHub, powerful, and easy to configure. |
 
 -----
+
+## \#\# Data Models
+
+This section defines the core data structures as TypeScript interfaces. For stronger type-safety, all ID fields use a custom `UUID` branded type instead of a generic `string`.
+
+```typescript
+// A branded type for UUIDs to enforce type-safety
+export type UUID = string & { readonly __brand: 'UUID' };
+```
+
+### \#\#\# GeographicUnit
+
+**Purpose**: Defines the organizational and geographical tree structure of the community. This model is the key to automating the creation of supervision relationships.
+
+**TypeScript Interface**:
+
+```typescript
+interface GeographicUnit {
+  id: UUID;
+  name: string;
+  type: 'sector' | 'province' | 'country' | 'zone' | 'community';
+  parentId?: UUID; // Foreign Key to another GeographicUnit
+  headId?: UUID; // Foreign Key to a Member or Couple
+  headType?: 'member' | 'couple';
+}
+```
+
+### \#\#\# Member
+
+**Purpose**: The central entity representing an individual person within the community.
+
+**TypeScript Interface**:
+
+```typescript
+interface Member {
+  id: UUID;
+  firstName: string;
+  lastName: string;
+  gender: 'male' | 'female';
+  maritalStatus: 'single' | 'married' | 'widowed' | 'consecrated';
+  communityEngagementStatus: 'Looker-On' | 'In-Probation' | 'Commited' | 'In-Fraternity-Probation' | 'Fraternity';
+  accompanyingReadiness: 'Not Candidate' | 'Candidate' | 'Ready' | 'Active' | 'Overwhelmed' | 'Deactivated';
+  languages: string[];
+  geographicUnitId: UUID; // Foreign Key to GeographicUnit
+  isDelegate: boolean;
+  isSupervisor: boolean;
+
+  // Optional fields
+  email?: string;
+  phone?: string;
+  dateOfBirth?: Date;
+  imageUrl?: string;
+  notes?: string;
+  consecratedStatus?: 'priest' | 'deacon' | 'seminarian' | 'sister' | 'brother';
+  coupleId?: UUID;
+}
+```
+
+### \#\#\# Couple
+
+**Purpose**: Groups two `Member` entities so they can be treated as a single unit.
+
+**TypeScript Interface**:
+
+```typescript
+interface Couple {
+  id: UUID;
+  member1Id: UUID; // Foreign Key to Member
+  member2Id: UUID; // Foreign Key to Member
+  weddingDate?: Date;
+  numberOfChildren?: number;
+}
+```
+
+### \#\#\# Note on the `Supervision` Model
+
+A dedicated `Supervision` model is not needed. This relationship is implicitly defined by the `headId` on a `GeographicUnit`, which is a more efficient and maintainable approach.
+
+### \#\#\# Companionship
+
+**Purpose**: Represents the voluntary, supportive `companionship` relationship.
+
+**TypeScript Interface**:
+
+```typescript
+interface Companionship {
+  id: UUID;
+  companionId: UUID;
+  companionType: 'member' | 'couple';
+  accompaniedId: UUID;
+  accompaniedType: 'member' | 'couple';
+  status: 'proposed' | 'active' | 'archived';
+  healthStatus?: 'green' | 'yellow' | 'red' | 'gray';
+  startDate: Date;
+  endDate?: Date;
+}
+```
+
+### \#\#\# ApprovalProcess & ApprovalStep
+
+**Purpose**: These models manage the complex, multi-step approval workflow for a new `Companionship` proposal.
+
+**TypeScript Interface**:
+
+```typescript
+interface ApprovalProcess {
+  id: UUID;
+  companionshipId: UUID; // Links to the Companionship being approved
+  status: 'in_progress' | 'approved' | 'rejected';
+  steps: ApprovalStep[]; 
+}
+
+interface ApprovalStep {
+  approverRole: 'province_head' | 'country_head' | 'zone_delegate' | 'zone_delegate_for_priests' | 'zone_delegate_for_consecrated_sisters' | 'zone_companionship_delegate' | 'international_companionship_delegate' | 'general_moderator' | 'companion' | 'accompanied';
+  status: 'pending' | 'approved' | 'rejected';
+  decisionDate?: Date;
+}
+```
