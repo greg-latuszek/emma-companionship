@@ -268,3 +268,83 @@ graph TD
 ## External APIs
 
 For the MVP, there are no required integrations with external third-party APIs for core business logic.
+
+-----
+
+## Core Workflows
+
+This section visualizes how our components and modules interact to accomplish key user journeys from the PRD. These diagrams are a **guide, not a rigid contract**. Their purpose is to be directionally correct and to validate our component design. The development team should use them to understand the architectural intent, but they are empowered to make implementation improvements as long as the core architectural principles are respected.
+
+### Guided Companionship Assignment
+
+This diagram illustrates the sequence of interactions when a Delegate uses the wizard to propose a new companionship.
+
+```mermaid
+sequenceDiagram
+    actor User as Delegate
+    participant FE as Frontend (Next.js)
+    participant API as Backend API (Next.js)
+    participant RM as Relationship Module
+    participant MM as Member Module
+    participant DB as PostgreSQL Database
+
+    User->>+FE: 1. Clicks 'Assign Companion' for a Member
+    FE->>+API: 2. GET /api/members/{id}/eligible-companions
+    API->>+RM: 3. getEligibleCompanions(memberId)
+    RM->>+MM: 4. listMembersByUnit(unitId)
+    MM->>+DB: 5. Query for members with constraints
+    DB-->>-MM: Member data
+    MM-->>-RM: Filtered member list
+    RM-->>-API: Eligible candidates
+    API-->>-FE: 200 OK with candidate list
+    FE-->>-User: Displays assignment wizard with candidates
+
+    User->>+FE: 6. Selects candidate and submits proposal
+    FE->>+API: 7. POST /api/companionships (proposal data)
+    API->>+RM: 8. proposeCompanionship(data)
+    Note over RM, DB: Creates Companionship (status: 'proposed')<br/>and an associated ApprovalProcess
+    RM->>+DB: 9. INSERT Companionship & ApprovalProcess
+    DB-->>-RM: Confirms creation
+    RM-->>-API: Success
+    API-->>-FE: 201 Created
+    FE-->>-User: Shows "Proposal Sent for Approval"
+```
+
+#### Architectural Note on "Hard" and "Soft" Constraints
+
+As documented in **ADR-010**, Step 5 of the above diagram ("Query for members with constraints") represents a sophisticated filtering logic. The API will not return a single list. It will first filter out all candidates violating **Hard Constraints** (e.g., gender, language) and then partition the rest into two lists: `perfectMatches` and `softConstraintViolations` (e.g., power separation, overwhelmed). This allows the UI to present a nuanced choice to the Delegate.
+
+### Data Import Workflow
+
+This diagram illustrates the stateless workflow when a Delegate uploads a spreadsheet to bulk-create new members. We explicitly chose this simpler, stateless approach for the MVP to reduce code complexity.
+
+```mermaid
+sequenceDiagram
+    actor User as Delegate
+    participant FE as Frontend (Next.js)
+    participant API as Backend API (Next.js)
+    participant MM as Member Module
+    participant DB as PostgreSQL Database
+
+    User->>+FE: 1. Selects spreadsheet file in UI
+    FE-->>-User: 2. UI shows file is ready for analysis
+
+    User->>+FE: 3. Clicks 'Analyze'
+    FE->>+API: 4. POST /api/members/import/analyze (file data)
+    API->>+MM: 5. analyzeSpreadsheet(file)
+    MM-->>-API: Returns detected column headers
+    API-->>-FE: 200 OK with column headers
+    FE-->>-User: 6. Displays mapping UI (e.g., "Map 'Email Address' to 'email'")
+
+    User->>+FE: 7. Defines mappings and clicks 'Import'
+    FE->>+API: 8. POST /api/members/import/execute (file data + mappings)
+    API->>+MM: 9. executeImport(file, mappings)
+    Note over MM, DB: Module validates each row,<br/>builds a bulk insert transaction,<br/>and logs any errors.
+    MM->>+DB: 10. Bulk INSERT INTO members
+    DB-->>-MM: Confirms successful inserts
+    MM-->>-API: 11. Returns summary (e.g., "50 created, 5 errors")
+    API-->>-FE: 200 OK with import summary
+    FE-->>-User: 12. Displays success message and error report
+```
+
+-----
