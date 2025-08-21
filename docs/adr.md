@@ -70,3 +70,13 @@
     * **Negative**: We are adding one more library to our tech stack. However, the benefits in code quality and long-term developer experience far outweigh this minor cost.
 
 ---
+### **ADR-008: `ApprovalProcess` Logic Placement**
+
+* **Status**: Accepted
+* **Context**: The `Relationship` module is responsible for managing both the state of a `Companionship` and the complex, multi-step `ApprovalProcess` required to create one. This creates a risk of the module becoming overly complex and violating the Single Responsibility Principle. We considered creating a separate, top-level `Approval Workflow` module to better separate these concerns.
+* **Decision**: For the MVP, the `ApprovalProcess` logic will be implemented **within the `Relationship` module**. However, it is a **mandatory architectural requirement** that this logic be built as a **distinct, internally isolated sub-component**. It must be designed with the explicit goal of being easily extracted into its own top-level module in a future release without a major rewrite.
+* **Consequences**:
+    * **Positive**: This approach simplifies the top-level architecture for the MVP, as the `ApprovalProcess` is currently only used by `Companionship` relationships. It provides a clear and straightforward path for future refactoring, preventing long-term technical debt.
+    * **Negative**: This is a pragmatic compromise on architectural purity; the `Relationship` module temporarily holds more than one core responsibility. The reusability of the approval logic for other domains is deferred.
+
+---

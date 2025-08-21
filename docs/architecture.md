@@ -256,7 +256,10 @@ graph TD
 ###  4. Relationship Module
 
   * **Responsibility**: Manages the lifecycle of `Companionship` relationships and the `ApprovalProcess` workflow.
-  * **Dependencies**: Depends on `Auth` and `Member Management` (which contains role info) to perform its complex rule validations.
+  * **Dependencies**: Depends on `Auth` and `Member Management` (which contains role info) and `Geographic` to perform its complex rule validations.
+  * **Design Constraint**: For the MVP, the `ApprovalProcess` logic will be built as a distinct, isolated sub-component *within* this module, designed for easy extraction in the future if needed.
+
+
 
 -----
 
