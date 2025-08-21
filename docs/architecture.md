@@ -205,6 +205,20 @@ interface ApprovalStep {
 }
 ```
 
+###  Note on the `Supervision` Model
+A dedicated `Supervision` model is not needed. This relationship is implicitly defined by Role, Geography and `Member.geographicUnitId`.
+- Member is in some Geographical unit (e.g., Sector).
+- Another Member has a Role (Sector Head) that is scoped to that Sector
+- Another Member has a Role (Province Head) that is scoped to Province of that Sector
+- Another Member has a Role (Country Head) that is scoped to Country of that Province
+- and so on...
+
+###  Note on the Companionship Delegates
+As for Supervisors, Companionship Delegates responsibility (which Members they take care for) is implicitly defined by Role, Geography and `Member.geographicUnitId`.
+- Member is in some Geographical unit (e.g., Province).
+- Another Member has a Role Companionship Delegate that is scoped to that Geographical unit
+- Another Member has a Role Zone Companionship Delegate that is scoped to Zone where mentioned Province belongs
+
 -----
 
 ## Components
