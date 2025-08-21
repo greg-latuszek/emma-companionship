@@ -80,3 +80,27 @@
     * **Negative**: This is a pragmatic compromise on architectural purity; the `Relationship` module temporarily holds more than one core responsibility. The reusability of the approval logic for other domains is deferred.
 
 ---
+### **ADR-009: Decoupled Role and Scope Management**
+
+* **Status**: Accepted
+* **Context**: The application must model complex, non-parallel hierarchies. A member's leadership role (`Supervisor`) is tied directly to the **geographical hierarchy**, while their `Companionship Delegate` role is not. [cite_start]For example, a Zone Delegate may live in one province but be responsible for an entire zone[cite: 1]. This creates a complex modeling challenge, further complicated by the "power separation" business rule. Our goal was to find a data model that could handle this flexibility.
+
+    * **Past Approach 1: Simple Flags**: Our initial idea was to use simple boolean flags on the `Member` model (e.g., `isDelegate`). This was insufficient because it could not capture the **scope** of the role (i.e., *which* province or zone a person was a delegate for).
+
+    * **Past Approach 2: Direct Links**: We then attempted to link roles directly to the `GeographicUnit` by adding fields like `managesUnitId` to the `Member` model. This approach failed because it assumed the delegate and leadership hierarchies were the same, and it introduced a problematic **circular dependency** between our `Member` and `Geographic` modules.
+
+* **Decision**: We will implement a dedicated and flexible role management system composed of two new models: **`Role`** and **`RoleAssignment`**.
+    1. The `Role` model defines the types of roles available (e.g., 'Supervisor', 'Companionship Delegate').
+    2. The `RoleAssignment` model links a `Member` to a `Role` for a specific `scopeId` (which points to a `GeographicUnit`).
+    3. The `Member` model is simplified and contains no direct role information.
+
+* **Consequences**:
+    * **Positive**:
+        * **Accurately Models Reality**: This design correctly models that a member's location (`geographicUnitId`) and their role's scope (`scopeId`) are separate concepts, solving the non-parallel hierarchy problem.
+        * **Flexible & Extensible**: New roles or changes to the hierarchy can be implemented in the future with minimal to no database schema changes.
+        * **Decoupled**: It removes the circular dependency between modules and creates a clean separation of concerns, making the system more maintainable and testable.
+        * **Enables Core Logic**: This model makes it possible to correctly implement complex business rules like the "power separation" constraint.
+    * **Negative**:
+        * The data model is more abstract than the initial attempts and requires more database joins to determine a user's full set of permissions. This is a necessary trade-off to accurately reflect the complexity of the business domain.
+
+---
