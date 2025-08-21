@@ -238,28 +238,30 @@ graph TD
     end
 ```
 
-###  1. Auth Module
+### 1. Auth Module
 
   * **Responsibility**: User registration, login, session management, and decoding access tokens to provide user identity.
+  * **Key Interfaces**: `registerUser()`, `loginUser()`, `getCurrentUser()`, `decodeToken()`.
   * **Dependencies**: None.
 
-###  2. Geographic Module
+### 2. Geographic Module
 
   * **Responsibility**: Manages the `GeographicUnit` organizational tree.
+  * **Key Interfaces**: `getUnitById(id)`, `getUnitTree()`, `getDescendantUnits(unitId)`.
   * **Dependencies**: None.
 
-###  3. Member Management Module
+### 3. Member Management Module
 
-  * **Responsibility**: Manages the business logic for `Member` and `Couple` entities, and importantly, manages `RoleAssignment` records to grant members roles like Supervisor or Delegate.
+  * **Responsibility**: Manages the business logic for `Member` and `Couple` entities, and manages `RoleAssignment` records to grant members roles like Supervisor or Delegate.
+  * **Key Interfaces**: `getMemberById(id)`, `listMembersByUnit(unitId)`, `createMember(data)`, `updateMember(id, data)`, `assignRoleToMember(memberId, roleId, scopeId)`, `getMemberRoles(memberId)`.
   * **Dependencies**: Depends on `Auth` (for permissions) and `Geographic` (to validate scope).
 
-###  4. Relationship Module
+### 4. Relationship Module
 
-  * **Responsibility**: Manages the lifecycle of `Companionship` relationships and the `ApprovalProcess` workflow.
-  * **Dependencies**: Depends on `Auth` and `Member Management` (which contains role info) and `Geographic` to perform its complex rule validations.
+  * **Responsibility**: Manages the entire lifecycle of `Companionship` relationships and the `ApprovalProcess` workflow.
+  * **Key Interfaces**: `proposeCompanionship(data)`, `getApprovalProcess(companionshipId)`, `advanceApprovalStep(processId, decision)`, `getGraphDataForUnit(unitId)`.
+  * **Dependencies**: Depends on `Auth` and `Member Management` (which contains role info) to perform its complex rule validations.
   * **Design Constraint**: For the MVP, the `ApprovalProcess` logic will be built as a distinct, isolated sub-component *within* this module, designed for easy extraction in the future if needed.
-
-
 
 -----
 
