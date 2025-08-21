@@ -103,4 +103,33 @@
     * **Negative**:
         * The data model is more abstract than the initial attempts and requires more database joins to determine a user's full set of permissions. This is a necessary trade-off to accurately reflect the complexity of the business domain.
 
----
+-----
+
+### **ADR-010: Candidate Search with Hard and Soft Constraints**
+
+  * **Status**: Accepted
+  * **Context**: The workflow for finding eligible companions requires filtering members against a complex set of business rules. An initial analysis treated all rules as equal, which does not reflect the real-world process where some rules are absolute ("hard constraints") and others can be exceptions under special circumstances ("soft constraints").
+  * **Decision**: The candidate search logic and its corresponding API endpoint (`GET /api/members/{id}/eligible-companions`) will implement a hard and soft constraint model.
+    1.  The backend will first filter out all candidates who violate any **Hard Constraints** (e.g., gender, language).
+    2.  It will then partition the remaining candidates into two lists: `perfectMatches` and `softConstraintViolations`.
+    3.  The API will return a structured response containing both lists. The TypeScript interface for this response will be:
+        ```typescript
+        interface EligibleCompanionsResponse {
+          // Candidates who meet ALL constraints
+          perfectMatches: Member[];
+          
+          // Candidates who violate soft constraints but are still options
+          softConstraintViolations: {
+            member: Member;
+            violations: {
+              constraint: 'power_separation' | 'experience' | 'overwhelmed';
+              details: string; // e.g., "This person is a supervisor to the accompanied."
+            }[];
+          }[];
+        }
+        ```
+  * **Consequences**:
+      * **Positive**: This provides a much more intelligent API response, allowing the UI to present a nuanced choice to the Delegate and accurately modeling the business process.
+      * **Negative**: This increases the complexity of both the backend business logic and the frontend component that must render the two distinct lists.
+
+-----
