@@ -1,8 +1,8 @@
-Excellent. Let's proceed with creating the architecture.
+## Introduction
+This document outlines the complete fullstack architecture for emmaCompanionship. It serves as the single source of truth for development, ensuring consistency across the stack.
 
-We have already established the foundational principles in our Architectural Decision Records (ADRs). The next step is to formalize these into the **High-Level Architecture** section of our document. This section will provide a comprehensive overview of the system's structure and the core patterns that will guide its development.
-
-Here is the drafted section for your review.
+### Starter Template or Existing Project
+The project will be built from scratch using TypeScript and the Next.js framework.
 
 -----
 
@@ -21,7 +21,7 @@ The architecture for `emmaCompanionship` is a unified full-stack application bui
 
 ### Repository Structure
 
-  * **Structure**: **Monorepo**. This structure simplifies dependency management and allows for easy code and type sharing between the frontend, backend, and any other packages.
+  * **Structure**: **Monorepo**, managed with a tool like Turborepo. This structure simplifies dependency management and allows for easy code and type sharing between the frontend, backend, and any other packages.
 
 ### High-Level Architecture Diagram
 
@@ -348,3 +348,66 @@ sequenceDiagram
 ```
 
 -----
+
+## Unified Project Structure
+This section provides a detailed folder and file layout for our monorepo. 
+This structure is the physical blueprint that the development team will use, ensuring that our architectural patterns, 
+like the Modular Monolith, are clearly reflected in the codebase.
+
+```
+/emma-companionship/
+|
+├── apps/
+|   └── web/                      # The Next.js full-stack application
+|       ├── src/
+|       |   ├── app/              # Next.js App Router: pages, layouts, etc.
+|       |   ├── components/       # Frontend: React components specific to this app
+|       |   └── lib/
+|       |       ├── api/          # Frontend: Logic for calling the backend API (using TanStack Query)
+|       |       └── modules/      # Backend: Our Modular Monolith lives here
+|       |           ├── auth/     # Auth Module
+|       |           ├── geo/      # Geographic Module
+|       |           ├── member/   # Member Management Module
+|       |           └── relationship/ # Relationship Module
+|       └── package.json
+|
+├── packages/
+|   ├── ui/                       # Shared, headless UI components (e.g., Button, Card)
+|   |   └── package.json
+|   ├── shared-types/             # Our shared TypeScript interfaces (Member, Couple, etc.)
+|   |   └── package.json
+|   └── config/                   # Shared configurations (ESLint, TypeScript, etc.)
+|       ├── eslint-preset.js
+|       └── tsconfig.base.json
+|
+├── docs/                         # Project documentation
+|   ├── prd.md
+|   ├── architecture.md
+|   └── risks.md
+|
+├── .gitignore
+├── package.json                  # Root package.json for the monorepo
+└── turbo.json                    # Turborepo configuration
+
+```
+### Rationale
+Rationale is to establish a clean, scalable, and conventional monorepo structure that is optimized for our chosen tool, Turborepo. 
+The standard apps and packages directories provide a clear separation between deployable applications and shared code.
+
+Most importantly, the backend structure within apps/web/src/lib/modules/ provides a clear, 
+physical representation of our Modular Monolith decision, making it intuitive for developers to follow our architectural patterns.
+
+-----
+
+-----
+## Error Handling, Logging, and Observability
+This section defines our strategy for creating a robust and maintainable application.
+
+### Error Handling
+We will use a centralized middleware in the backend to catch specific, thrown errors and format them into a standard ApiError JSON response for the frontend. try/catch blocks will be used within modules to handle recoverable errors (like retries) internally.
+
+### Logging
+The central error middleware will log the full error details (stack trace, etc.) along with a unique requestId that is also sent to the client. This allows us to trace user-facing errors directly to our logs. The logger will be configured to redact sensitive PII.
+
+### Monitoring & Observability
+For the POC, we will rely on the powerful, built-in analytics and monitoring provided by Vercel. We will defer a custom observability stack (like Prometheus/Grafana) to a post-POC phase.
