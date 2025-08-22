@@ -350,11 +350,10 @@ sequenceDiagram
 -----
 
 ## Unified Project Structure
-This section provides a detailed folder and file layout for our monorepo. 
-This structure is the physical blueprint that the development team will use, ensuring that our architectural patterns, 
-like the Modular Monolith, are clearly reflected in the codebase.
 
-```
+This layout, using the standard `apps` and `packages` directories, is optimized for our chosen tool, Turborepo. The backend structure within `apps/web/src/lib/modules` provides a clear, physical representation of our Modular Monolith and Hexagonal Architecture decisions, making it intuitive for developers to follow our patterns.
+
+```plaintext
 /emma-companionship/
 |
 ├── apps/
@@ -388,26 +387,170 @@ like the Modular Monolith, are clearly reflected in the codebase.
 ├── .gitignore
 ├── package.json                  # Root package.json for the monorepo
 └── turbo.json                    # Turborepo configuration
-
 ```
-### Rationale
-Rationale is to establish a clean, scalable, and conventional monorepo structure that is optimized for our chosen tool, Turborepo. 
-The standard apps and packages directories provide a clear separation between deployable applications and shared code.
-
-Most importantly, the backend structure within apps/web/src/lib/modules/ provides a clear, 
-physical representation of our Modular Monolith decision, making it intuitive for developers to follow our architectural patterns.
 
 -----
 
+## Development Workflow
+
+This section outlines the specific commands and steps for a developer to set up and run the project locally. By using pnpm for package management and Docker for the database, we create a consistent and isolated development environment that works on any machine.
+
+### Local Development Setup
+
+#### Prerequisites
+
+Before starting, a developer must have the following tools installed:
+
+  * **Node.js** (\~20.x LTS)
+  * **pnpm** (for package management in the monorepo)
+  * **Docker** and **Docker Compose** (to run the local PostgreSQL database)
+  * **Git**
+
+#### Initial One-Time Setup
+
+To set up the project for the first time, a developer will run these commands:
+
+```bash
+# 1. Clone the repository
+git clone <repository_url> emma-companionship
+cd emma-companionship
+
+# 2. Install all dependencies for the monorepo
+pnpm install
+
+# 3. Create a local environment file from the template
+cp .env.example .env
+
+# 4. Start the local PostgreSQL database in a Docker container
+pnpm db:start
+
+# 5. Apply the database schema
+pnpm db:migrate
+```
+
+#### Daily Development Commands
+
+```bash
+# Start the Next.js development server (with Turborepo)
+pnpm dev
+
+# Run all tests across the monorepo
+pnpm test
+
+# Run the linter to check for code quality and style
+pnpm lint
+```
+
+#### Git Hooks & Code Quality Automation
+
+To automate code quality, we will use **Husky** to manage a `pre-commit` Git hook. This hook will trigger **lint-staged**, which will automatically run **Prettier** (for code formatting) and **ESLint** (for code analysis) on all staged files. This ensures that no code that violates our formatting or quality rules can be committed to the repository.
+
+### Environment Configuration
+
+The `.env` file will contain the following required variables for the application to run locally.
+
+```bash
+# .env - Local Environment Variables
+
+# PostgreSQL connection string for Prisma
+DATABASE_URL="postgresql://user:password@localhost:5432/emma_db?schema=public"
+
+# Auth.js secret and URL
+NEXTAUTH_SECRET="a_secure_random_string_for_development"
+NEXTAUTH_URL="http://localhost:3000"
+```
+
 -----
+
+## Deployment Architecture
+
+This outlines our strategy for automatically deploying the application to Vercel using a Git-flow model.
+
+### Deployment Strategy
+
+  * **Application Deployment**: We will leverage Vercel's native Next.js integration. When code is pushed to our GitHub repository, Vercel will automatically build the application, deploying the frontend to its global Edge Network and the backend API routes as Serverless Functions.
+  * **Database Deployment**: Database schema changes (migrations) are critical. Any pull request that includes a new Prisma migration will require the migration script to be run against the production database as an explicit step in the CI/CD pipeline **after** the application code has been successfully deployed.
+
+### CI/CD Pipeline (GitHub Actions)
+
+We will use GitHub Actions for our CI/CD pipeline. The workflow, triggered on pushes and pull requests to the `main` branch, will lint, test, build, deploy to Vercel, and then run database migrations.
+
+### Environments
+
+| Environment | Trigger | URL | Purpose |
+| :--- | :--- | :--- | :--- |
+| **Production** | Merge/Push to `main` | `(custom domain)` | Live application for all users. |
+| **Preview** | Pull Request to `main` | `*.vercel.app` (unique) | Isolate and test new features before merging. Will connect to a Staging DB populated with seeded/anonymized data. |
+| **Development** | N/A | `localhost:3000` | Developer's local machine. |
+
+-----
+
+## Security and Performance
+
+This section defines the specific, non-functional requirements that will ensure our application is safe, secure, and fast for our users.
+
+### Security Requirements
+
+  * **Authentication**: All sensitive data and actions will be protected behind our **Auth.js** implementation. Passwords will be securely hashed using a modern algorithm like Argon2.
+  * **Input Validation**: All data received by the backend API from any client **must** be validated using a schema library (like Zod) to prevent injection and data corruption attacks.
+  * **CORS Policy**: The Next.js backend will be configured with a strict Cross-Origin Resource Sharing (CORS) policy to only accept requests from our official frontend domain.
+  * **Secure Cookies**: Auth.js will be configured to use secure, HTTP-only, and same-site cookies for session management, preventing Cross-Site Scripting (XSS) attacks from stealing session tokens.
+  * **Content Security Policy (CSP)**: We will implement a strict CSP header to mitigate the risk of XSS attacks by defining which sources of content are permitted to be loaded.
+
+### Performance Optimization
+
+  * **Frontend Performance**:
+      * **Code Splitting**: We will leverage Next.js's automatic code splitting by page.
+      * **Server Components**: We will use Next.js App Router's Server Components by default to minimize the amount of JavaScript shipped to the client.
+      * **Data Caching**: We will use **TanStack Query** to intelligently cache data on the client, avoiding redundant API calls.
+  * **Backend Performance**:
+      * **Response Time Target**: The P95 (95th percentile) API response time for typical read operations should be **under 200ms**.
+      * **Database Optimization**: We will add database indexes to all foreign key columns and any other columns that are frequently used in query filters.
+  * **Infrastructure**:
+      * **CDN**: All static assets will be automatically served from Vercel's global Content Delivery Network (CDN).
+
+-----
+
+## Coding Standards
+
+This section establishes a minimal set of high-impact rules that are mandatory for all developers, including AI agents, to enforce our architectural decisions.
+
+### Core Standards
+
+  * **Language**: The entire project will be written in **TypeScript (\~5.x)** with the `strict` flag enabled. The `any` type is forbidden.
+  * **Formatting**: We will use **Prettier** for all code formatting, enforced automatically by a pre-commit hook.
+  * **Linting**: We will use **ESLint** to catch potential bugs and enforce key architectural rules.
+
+### Critical Rules
+
+1.  **Enforced Module Boundaries**: Direct cross-module imports of internal, non-public components are strictly forbidden. Modules may only interact through their public API interfaces. An automated linting script will enforce this.
+2.  **State Management Discipline**: State management must be strictly separated. Use **Zustand** only for pure UI state. Use **TanStack Query** for all server state.
+3.  **Type-Safe Environment Variables**: Never access `process.env` directly in application code. All environment variables must be exposed through a dedicated, type-safe configuration module.
+4.  **Centralized API Error Handling**: All backend API handlers must use a centralized error handling middleware.
+
+### Naming Conventions
+
+| Element | Convention | Example |
+| :--- | :--- | :--- |
+| Component Files | PascalCase.tsx | `UserProfile.tsx` |
+| Hook Files | useCamelCase.ts | `useAuth.ts` |
+| API Route Files | kebab-case/route.ts | `app/api/user-profile/route.ts`|
+| Prisma Models | PascalCase | `model Member { ... }` |
+
+-----
+
 ## Error Handling, Logging, and Observability
-This section defines our strategy for creating a robust and maintainable application.
+
+This section defines our unified strategy for creating a robust and maintainable application.
 
 ### Error Handling
-We will use a centralized middleware in the backend to catch specific, thrown errors and format them into a standard ApiError JSON response for the frontend. try/catch blocks will be used within modules to handle recoverable errors (like retries) internally.
+
+We will use a centralized middleware in the backend to catch specific, thrown errors and format them into a standard `ApiError` JSON response for the frontend. Within our modules, `try/catch` blocks will be used to handle recoverable errors (like retries) internally without exposing them to the user.
 
 ### Logging
-The central error middleware will log the full error details (stack trace, etc.) along with a unique requestId that is also sent to the client. This allows us to trace user-facing errors directly to our logs. The logger will be configured to redact sensitive PII.
+
+The central error middleware will log the full, detailed error (including a stack trace) along with a unique `requestId` that is also sent to the client. This allows us to trace user-facing errors directly to our logs for rapid troubleshooting. The logger will be configured to redact sensitive PII.
 
 ### Monitoring & Observability
-For the POC, we will rely on the powerful, built-in analytics and monitoring provided by Vercel. We will defer a custom observability stack (like Prometheus/Grafana) to a post-POC phase.
+
+For the POC, we will rely on the powerful, built-in analytics and monitoring provided by Vercel. We will defer a custom observability stack (like Prometheus/Grafana) to a post-POC phase as a pragmatic choice to accelerate initial development.
