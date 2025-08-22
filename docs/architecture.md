@@ -564,12 +564,73 @@ This section defines our unified strategy for creating a robust and maintainable
 
 ### Error Handling
 
-We will use a centralized middleware in the backend to catch specific, thrown errors and format them into a standard `ApiError` JSON response for the frontend. Within our modules, `try/catch` blocks will be used to handle recoverable errors (like retries) internally without exposing them to the user.
+We will use a centralized middleware in the backend to catch specific, thrown errors and format them into a standard `ApiError` JSON response for the frontend. 
+Within our modules, `try/catch` blocks will be used to handle recoverable errors (like retries) internally without exposing them to the user.
+
+#### API Error Contract
+All errors returned from our backend API will adhere to a consistent JSON structure. This provides a predictable contract for the frontend.
+
+```typescript
+TypeScript Interface:
+interface ApiError {
+  error: {
+    code: string; // A machine-readable error code, e.g., 'VALIDATION_FAILED'
+    message: string; // A user-friendly message for display
+    details?: Record<string, any>; // e.g., A list of invalid form fields
+    timestamp: string; // The ISO 8601 timestamp of the error
+    requestId: string; // A unique ID for tracing this request through logs
+  };
+}
+```
+
+#### Backend Error Handling
+We will use a centralized error-handling middleware in our Next.js backend.
+
+1. Our business logic in the modules will throw specific, custom errors (e.g., NotFoundError, ValidationError).
+2. The middleware will catch these errors.
+3. It will then format the error into the standard ApiError JSON structure and send the appropriate HTTP status code (e.g., 404, 400).
+   This keeps our business logic clean and enforces the API contract.
+
+#### Frontend Error Handling
+Our frontend API client (using TanStack Query) will have a global error handler.
+
+1. When an API call fails, this handler will parse the ApiError JSON from the response.
+2. The error.message can be displayed directly to the user in a notification (e.g., a "toast").
+3. The error.details can be used to provide more specific feedback, such as highlighting which form fields are invalid.
+
+#### Error Flow Diagram
+
+```mermaid
+sequenceDiagram
+    participant FE as Frontend
+    participant API as Backend API
+    participant Module as Business Logic
+    
+    FE->>+API: Makes API Request
+    API->>+Module: Executes business logic
+    Module-->>-API: Throws specific error (e.g., ValidationError)
+    Note over API: Central error middleware catches error
+    API-->>-FE: Responds with 400 Bad Request and standard ApiError JSON
+    Note over FE: Global error handler parses ApiError
+    FE-->>FE: Displays user-friendly toast notification
+```
 
 ### Logging
 
-The central error middleware will log the full, detailed error (including a stack trace) along with a unique `requestId` that is also sent to the client. This allows us to trace user-facing errors directly to our logs for rapid troubleshooting. The logger will be configured to redact sensitive PII.
+Logging is intimately tied to error handling. It's the developer's side of the coin.
+
+Our strategy will be:
+
+- When our central error middleware catches an unrecoverable error, 
+  it will log the full, detailed error (including the stack trace) on the server before sending the user-friendly ApiError to the client.
+- Crucially, every log entry will include the unique requestId. 
+  This allows us to connect a generic error message a user sees on their screen directly to the detailed technical log on our backend for instant troubleshooting.
+- **We will add a critical rule:** The logger must be configured to automatically redact sensitive PII (Personally Identifiable Information) 
+  to ensure we never store user emails, phone numbers, etc., in plain text logs.
+
+For the POC, Vercel automatically collects and displays all server logs in its dashboard, which is sufficient for our initial needs.
 
 ### Monitoring & Observability
 
-For the POC, we will rely on the powerful, built-in analytics and monitoring provided by Vercel. We will defer a custom observability stack (like Prometheus/Grafana) to a post-POC phase as a pragmatic choice to accelerate initial development.
+For the POC, we will rely on the powerful, built-in analytics and monitoring provided by Vercel. 
+We will defer a custom observability stack (like Prometheus/Grafana) to a post-POC phase as a pragmatic choice to accelerate initial development.
