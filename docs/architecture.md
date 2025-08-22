@@ -471,6 +471,25 @@ This outlines our strategy for automatically deploying the application to Vercel
   * **Application Deployment**: We will leverage Vercel's native Next.js integration. When code is pushed to our GitHub repository, Vercel will automatically build the application, deploying the frontend to its global Edge Network and the backend API routes as Serverless Functions.
   * **Database Deployment**: Database schema changes (migrations) are critical. Any pull request that includes a new Prisma migration will require the migration script to be run against the production database as an explicit step in the CI/CD pipeline **after** the application code has been successfully deployed.
 
+#### Git Workflow
+
+We will follow Feature Branch Workflow:
+
+- The main branch is considered our stable, production-ready code.
+- Direct pushes to the main branch will be disabled.
+- To work on a feature (e.g., a user story), a developer creates a new branch from main (e.g., `feature/story-4.1-health-status`).
+- All work is done on that feature branch. When complete, the developer merges it back into main via a Pull Request.
+
+#### Notes on Preview Deployment Database
+
+A Preview Deployment is like a temporary, isolated Staging environment for a single feature.
+- When you first open a Pull Request, Vercel automatically builds and deploys the code from your feature branch.
+- If you then push new commits to that same branch, Vercel detects the push and automatically triggers a new build and deployment, updating the existing preview environment with your latest changes.
+- Database Connection: By default, a Vercel preview would try to connect to whatever database URL is in its environment variables. Connecting it to the Production DB is dangerous and bad practice. Instead, we will configure all Preview Deployments to connect to a dedicated Staging Database.
+- Populating the Staging DB: We should not use production data due to privacy. The best practice, which we will follow, is to use seeding scripts.
+   - We will create scripts that generate realistic but anonymized or fake data that mirrors the structure of our production data.
+   - When a developer needs to test a feature, they can run these scripts to populate the Staging DB with a fresh, clean, and safe set of data. This gives them a production-like environment without compromising any user privacy.
+
 ### CI/CD Pipeline (GitHub Actions)
 
 We will use GitHub Actions for our CI/CD pipeline. The workflow, triggered on pushes and pull requests to the `main` branch, will lint, test, build, deploy to Vercel, and then run database migrations.
