@@ -30,7 +30,91 @@ Key features will include:
 
 ## Target Users
 
-The primary user group for Phase 1 are the **Companionship Delegates (CD)** at all hierarchical levels (Province, Zone, International) and **Province Heads (PH)**. Their main goal is to effectively and efficiently manage the companionship system within their designated geographical area.
+### Primary User Segment: Province-Level Companionship Delegates (CD)
+
+**Demographic/Firmographic Profile:**
+- Religious community members with assigned (CD) role (individuals or married couples) 
+- Responsible for companionship system within a specific province (~200 members)
+- Experienced community members (frequently with "In-Fraternity-Probation" or "Fraternity" status)
+- Geographic scope: Province level (multiple sectors within a province)
+- Decision-making authority: Full operational control within their province
+
+**Current Behaviors and Workflows:**
+- Currently manage complex relationship networks using Excel spreadsheets
+- Manually track member attributes (gender, marital status, consecration, experience levels)
+- Spend significant time filtering potential companions against multiple constraints (gender matching, power separation, language barriers, experience requirements)
+- Coordinate cross-province assignments through phone/email with other delegates
+- Conduct periodic reviews of relationship health and companion workload
+- Handle change requests from accompanied members
+- Import and manage inconsistent data formats across different provinces
+
+**Specific Needs and Pain Points:**
+- **Visual comprehension gap:** Cannot easily visualize the entire relationship network 
+- **Constraint complexity:** Must manually verify multiple rules (gender, experience, power separation, language compatibility)
+- **Overwhelm detection:** Difficulty identifying companions supporting too many people
+- **Health monitoring:** No systematic way to track meeting frequency and relationship health
+- **Cross-province coordination:** Cumbersome process for finding companions outside their province
+- **Data inconsistency:** Excel formats vary across provinces, causing import/cleanup difficulties
+
+**Goals They're Trying to Achieve:**
+- Ensure 100% of eligible community members have active companionships
+- Maintain healthy relationship balance (prevent companion overwhelm)
+- Efficiently identify and assign suitable companions while respecting all constraints
+- Monitor and improve overall relationship health within their province
+- Reduce administrative burden and time-to-assignment for new companionships
+
+### Secondary User Segment: Province Heads (PH)
+
+**Demographic/Firmographic Profile:**
+- Community leaders (individuals or couples) with supervisory authority
+- Geographic scope: Province level (same as CD but different role)
+- Work closely with Province-level Companionship Delegates
+- Have both oversight and operational responsibilities
+
+**Current Behaviors and Workflows:**
+- Collaborate with Province-level CDs on companionship decisions
+- Need visibility into same operational data as CDs for decision support
+- Participate in exception handling and complex assignments
+- Provide guidance on difficult cases requiring leadership input
+
+**Specific Needs and Pain Points:**
+- Need same level of detail as Province CDs for collaborative decision-making
+- Require operational visibility without role confusion
+- Must understand relationship network health for leadership decisions
+
+**Goals They're Trying to Achieve:**
+- Support effective companionship management within their province
+- Provide leadership guidance on complex relationship assignments
+- Ensure system compliance with community rules and values
+
+### Tertiary User Segment: Higher-Level Delegates (Zone & International CD)
+
+**Demographic/Firmographic Profile:**
+- Senior community leaders responsible for multiple provinces (Zone level) or entire community (International level)
+- Leadership type is related with companionship not supervision
+- Geographic scope: Zone (multiple provinces) or International (entire community)
+- Focus on coordination and oversight rather than direct relationship management
+- Do not perform day-to-day companionship assignments
+
+**Current Behaviors and Workflows:**
+- Coordinate and train lower-level delegates
+- Monitor system health across multiple provinces
+- Focus on statistical trends rather than individual relationships
+- Handle escalations and policy decisions
+- Need aggregated views with filtering capabilities
+
+**Specific Needs and Pain Points:**
+- **Information overload:** Province-level detail becomes overwhelming at scale (thousands of relationships)
+- **Statistical focus:** Need health metrics and trends, not operational details
+- **Oversight without editing:** Need visibility for guidance but shouldn't perform operational tasks
+- **Scalability:** Current province-level views become unusable at zone/international scale
+
+**Goals They're Trying to Achieve:**
+- Monitor overall system health across their scope
+- Identify provinces needing support or intervention
+- Provide strategic guidance to lower-level delegates
+- Ensure consistent application of community rules across regions
+- Track success metrics and improvement trends
 
 ## Goals & Success Metrics
 
