@@ -420,6 +420,8 @@ Based on our Modular Monolith architecture and Hexagonal patterns, the backend i
 - `assignRoleToMember(memberId, roleId, scopeId)` - Grant roles with geographic scope
 - `getMemberRoles(memberId)` - Retrieve all roles for a member
 - `validateMemberConstraints(member)` - Enforce business rules
+- `analyzeSpreadsheet(file)` - Parse spreadsheet and detect column headers for import mapping
+- `executeImport(file, mappings)` - Bulk import members from spreadsheet with field mappings
 
 **Dependencies:** 
 - Auth Module (for permission validation)
@@ -466,10 +468,10 @@ Based on our Modular Monolith architecture and Hexagonal patterns, the backend i
 ```mermaid
 graph TD
     subgraph "Application Backend (Modular Monolith)"
-        A[Auth Module<br/>Authentication & Authorization]
-        G[Geographic Module<br/>Organizational Hierarchy]
-        M[Member Management Module<br/>Members, Couples & Roles]
-        R[Relationship Module<br/>Companionships & Approvals]
+        A["Auth Module<br/>Authentication & Authorization"]
+        G["Geographic Module<br/>Organizational Hierarchy"]
+        M["Member Management Module<br/>Members, Couples & Roles"]
+        R["Relationship Module<br/>Companionships & Approvals"]
         
         R --> M
         R --> A
@@ -478,8 +480,8 @@ graph TD
     end
     
     subgraph "External Systems"
-        DB[(PostgreSQL Database)]
-        UI[Next.js Frontend]
+        DB["PostgreSQL Database"]
+        UI["Next.js Frontend"]
     end
     
     A --> DB
@@ -498,19 +500,19 @@ graph TD
 ```mermaid
 graph TD
     subgraph "Relationship Module (Hexagonal Architecture)"
-        RC[Relationship Core<br/>Business Logic]
-        AC[Approval Core<br/>Workflow Engine]
+        RC["Relationship Core<br/>Business Logic"]
+        AC["Approval Core<br/>Workflow Engine"]
         
         subgraph "Ports (Interfaces)"
-            RP[Relationship Port]
-            AP[Approval Port]
-            GP[Graph Port]
+            RP["Relationship Port"]
+            AP["Approval Port"]
+            GP["Graph Port"]
         end
         
         subgraph "Adapters"
-            DA[Database Adapter]
-            AA[Auth Adapter]
-            MA[Member Adapter]
+            DA["Database Adapter"]
+            AA["Auth Adapter"]
+            MA["Member Adapter"]
         end
         
         RC --> RP
@@ -528,29 +530,29 @@ graph TD
 
 ```mermaid
 sequenceDiagram
-    participant UI as Frontend
-    participant R as Relationship Module
-    participant M as Member Module
-    participant A as Auth Module
-    participant DB as Database
+    participant UI as "Frontend"
+    participant R as "Relationship Module"
+    participant M as "Member Module"
+    participant A as "Auth Module"
+    participant DB as "Database"
     
-    UI->>+R: proposeCompanionship(data)
-    R->>+M: validateMemberRoles(companionId, accompaniedId)
-    M->>+A: checkPermissions(userId, 'propose')
-    A-->>-M: authorized
-    M-->>-R: validation passed
+    UI->>+R: "proposeCompanionship(data)"
+    R->>+M: "validateMemberRoles(companionId, accompaniedId)"
+    M->>+A: "checkPermissions(userId, 'propose')"
+    A-->>-M: "authorized"
+    M-->>-R: "validation passed"
     
-    R->>+R: createApprovalWorkflow()
-    R->>+DB: INSERT Companionship, ApprovalProcess
-    DB-->>-R: records created
+    R->>+R: "createApprovalWorkflow()"
+    R->>+DB: "INSERT Companionship, ApprovalProcess"
+    DB-->>-R: "records created"
     
     loop For each approval step
-        R->>+M: findApproversByRole(requiredRole, scope)
-        M-->>-R: approver list
-        R->>UI: notifyApprovers(approvers)
+        R->>+M: "findApproversByRole(requiredRole, scope)"
+        M-->>-R: "approver list"
+        R->>UI: "notifyApprovers(approvers)"
     end
     
-    R-->>-UI: proposal submitted with workflow ID
+    R-->>-UI: "proposal submitted with workflow ID"
 ```
 
 -----
@@ -563,78 +565,339 @@ For the MVP, there are no required integrations with external third-party APIs f
 
 ## Core Workflows
 
-This section visualizes how our components and modules interact to accomplish key user journeys from the PRD. These diagrams are a **guide, not a rigid contract**. Their purpose is to be directionally correct and to validate our component design. The development team should use them to understand the architectural intent, but they are empowered to make implementation improvements as long as the core architectural principles are respected.
+This section illustrates key system workflows using sequence diagrams, showing component interactions, error handling paths, and async operations for critical user journeys identified in the PRD.
 
-### Guided Companionship Assignment
+### User Authentication and Authorization Workflow
+**PRD Reference:** Story 1.2 - User Authentication & Role Management
 
-This diagram illustrates the sequence of interactions when a Delegate uses the wizard to propose a new companionship.
+This workflow shows how Delegates securely access the system and obtain proper permissions.
 
 ```mermaid
 sequenceDiagram
     actor User as Delegate
-    participant FE as Frontend (Next.js)
-    participant API as Backend API (Next.js)
-    participant RM as Relationship Module
-    participant MM as Member Module
-    participant DB as PostgreSQL Database
+    participant FE as "Frontend (Next.js)"
+    participant API as "Backend API (Next.js)"
+    participant Auth as "Auth Module"
+    participant Member as "Member Module"
+    participant DB as "PostgreSQL Database"
 
-    User->>+FE: 1. Clicks 'Assign Companion' for a Member
-    FE->>+API: 2. GET /api/members/{id}/eligible-companions
-    API->>+RM: 3. getEligibleCompanions(memberId)
-    RM->>+MM: 4. listMembersByUnit(unitId)
-    MM->>+DB: 5. Query for members with constraints
-    DB-->>-MM: Member data
-    MM-->>-RM: Filtered member list
-    RM-->>-API: Eligible candidates
-    API-->>-FE: 200 OK with candidate list
-    FE-->>-User: Displays assignment wizard with candidates
-
-    User->>+FE: 6. Selects candidate and submits proposal
-    FE->>+API: 7. POST /api/companionships (proposal data)
-    API->>+RM: 8. proposeCompanionship(data)
-    Note over RM, DB: Creates Companionship (status: 'proposed')<br/>and an associated ApprovalProcess
-    RM->>+DB: 9. INSERT Companionship & ApprovalProcess
-    DB-->>-RM: Confirms creation
-    RM-->>-API: Success
-    API-->>-FE: 201 Created
-    FE-->>-User: Shows "Proposal Sent for Approval"
+    User->>+FE: "1. Enters credentials and submits login"
+    FE->>+API: "2. POST /api/auth/login (credentials)"
+    API->>+Auth: "3. loginUser(credentials)"
+    
+    Auth->>+DB: "4. Query user credentials"
+    DB-->>-Auth: "User record or null"
+    
+    alt Valid credentials
+        Auth->>Auth: "5. Generate JWT token"
+        Auth-->>-API: "Token with user ID"
+        API->>+Member: "6. getMemberRoles(userId)"
+        Member->>+DB: "7. Query role assignments"
+        DB-->>-Member: "Role data"
+        Member-->>-API: "User roles and permissions"
+        API-->>-FE: "200 OK with token and roles"
+        FE-->>-User: "Redirect to dashboard"
+    else Invalid credentials
+        Auth-->>-API: "Authentication failed"
+        API-->>-FE: "401 Unauthorized"
+        FE-->>-User: "Display error message"
+    end
 ```
 
-#### Architectural Note on "Hard" and "Soft" Constraints
+### Member Creation and Management Workflow
+**PRD Reference:** Stories 1.3, 1.4 - Create and Edit Community Members
 
-As documented in **ADR-010**, Step 5 of the above diagram ("Query for members with constraints") represents a sophisticated filtering logic. The API will not return a single list. It will first filter out all candidates violating **Hard Constraints** (e.g., gender, language) and then partition the rest into two lists: `perfectMatches` and `softConstraintViolations` (e.g., power separation, overwhelmed). This allows the UI to present a nuanced choice to the Delegate.
-
-### Data Import Workflow
-
-This diagram illustrates the stateless workflow when a Delegate uploads a spreadsheet to bulk-create new members. We explicitly chose this simpler, stateless approach for the MVP to reduce code complexity.
+This workflow demonstrates member lifecycle management with validation and geographic assignment.
 
 ```mermaid
 sequenceDiagram
     actor User as Delegate
-    participant FE as Frontend (Next.js)
-    participant API as Backend API (Next.js)
-    participant MM as Member Module
-    participant DB as PostgreSQL Database
+    participant FE as "Frontend (Next.js)"
+    participant API as "Backend API (Next.js)"
+    participant Auth as "Auth Module"
+    participant Member as "Member Module"
+    participant Geo as "Geographic Module"
+    participant DB as "PostgreSQL Database"
 
-    User->>+FE: 1. Selects spreadsheet file in UI
-    FE-->>-User: 2. UI shows file is ready for analysis
+    User->>+FE: "1. Fills member form and submits"
+    FE->>+API: "2. POST /api/members (member data)"
+    API->>+Auth: "3. hasPermission(userId, 'create_member', scopeId)"
+    Auth-->>-API: "Permission granted"
+    
+    API->>+Member: "4. validateMemberConstraints(memberData)"
+    Member->>+Geo: "5. validateUnitScope(memberData.geographicUnitId)"
+    Geo-->>-Member: "Valid geographic unit"
+    Member-->>-API: "Validation passed"
+    
+    API->>+Member: "6. createMember(memberData)"
+    Member->>+DB: "7. INSERT member record"
+    
+    alt Success
+        DB-->>-Member: "Member created with ID"
+        Member-->>-API: "Member object"
+        API-->>-FE: "201 Created"
+        FE-->>-User: "Success notification"
+    else Validation error
+        DB-->>-Member: "Constraint violation"
+        Member-->>-API: "Validation error details"
+        API-->>-FE: "400 Bad Request"
+        FE-->>-User: "Display validation errors"
+    end
+```
 
-    User->>+FE: 3. Clicks 'Analyze'
-    FE->>+API: 4. POST /api/members/import/analyze (file data)
-    API->>+MM: 5. analyzeSpreadsheet(file)
-    MM-->>-API: Returns detected column headers
-    API-->>-FE: 200 OK with column headers
-    FE-->>-User: 6. Displays mapping UI (e.g., "Map 'Email Address' to 'email'")
+### Data Import Workflow
+**PRD Reference:** Story 3.1 - Flexible Data Import from CSV/Excel
 
-    User->>+FE: 7. Defines mappings and clicks 'Import'
-    FE->>+API: 8. POST /api/members/import/execute (file data + mappings)
-    API->>+MM: 9. executeImport(file, mappings)
-    Note over MM, DB: Module validates each row,<br/>builds a bulk insert transaction,<br/>and logs any errors.
-    MM->>+DB: 10. Bulk INSERT INTO members
-    DB-->>-MM: Confirms successful inserts
-    MM-->>-API: 11. Returns summary (e.g., "50 created, 5 errors")
-    API-->>-FE: 200 OK with import summary
-    FE-->>-User: 12. Displays success message and error report
+This stateless workflow enables bulk member import with sophisticated field mapping and error handling.
+
+```mermaid
+sequenceDiagram
+    actor User as Delegate
+    participant FE as "Frontend (Next.js)"
+    participant API as "Backend API (Next.js)"
+    participant Member as "Member Module"
+    participant DB as "PostgreSQL Database"
+
+    User->>+FE: "1. Selects spreadsheet file"
+    FE-->>-User: "2. File ready for analysis"
+
+    User->>+FE: "3. Clicks 'Analyze'"
+    FE->>+API: "4. POST /api/members/import/analyze (file data)"
+    API->>+Member: "5. analyzeSpreadsheet(file)"
+    Member-->>-API: "Detected column headers"
+    API-->>-FE: "200 OK with column mappings"
+    FE-->>-User: "6. Display field mapping interface"
+
+    User->>+FE: "7. Defines mappings and clicks 'Import'"
+    FE->>+API: "8. POST /api/members/import/execute (file + mappings)"
+    API->>+Member: "9. executeImport(file, mappings)"
+    
+    Note over Member, DB: "Async processing:<br/>Validate each row,<br/>Build bulk transaction,<br/>Log errors"
+    
+    Member->>+DB: "10. BEGIN TRANSACTION"
+    Member->>+DB: "11. Bulk INSERT valid members"
+    
+    alt All valid
+        DB-->>-Member: "All records inserted"
+        Member-->>-API: "Success summary"
+        API-->>-FE: "200 OK with results"
+        FE-->>-User: "Success message"
+    else Partial success
+        DB-->>-Member: "Some records failed"
+        Member-->>-API: "Partial success with error details"
+        API-->>-FE: "207 Multi-Status"
+        FE-->>-User: "Summary with error report"
+    else Complete failure
+        Member->>DB: "ROLLBACK"
+        Member-->>-API: "Import failed"
+        API-->>-FE: "400 Bad Request"
+        FE-->>-User: "Error message"
+    end
+```
+
+### Guided Companionship Assignment Workflow
+**PRD Reference:** Story 3.2 - Guided Companionship Assignment Wizard
+
+This workflow shows the sophisticated matching algorithm and approval process initiation.
+
+```mermaid
+sequenceDiagram
+    actor User as Delegate
+    participant FE as "Frontend (Next.js)"
+    participant API as "Backend API (Next.js)"
+    participant Relationship as "Relationship Module"
+    participant Member as "Member Module"
+    participant Auth as "Auth Module"
+    participant DB as "PostgreSQL Database"
+
+    User->>+FE: "1. Clicks 'Assign Companion' for Member"
+    FE->>+API: "2. GET /api/members/{id}/eligible-companions"
+    API->>+Relationship: "3. evaluateMatchingConstraints(memberId, unitScope)"
+    Relationship->>+Member: "4. listMembersByUnit(unitId, eligibilityFilters)"
+    Member->>+DB: "5. Query with hard constraints"
+    DB-->>-Member: "Candidate members"
+    Member-->>-Relationship: "Filtered candidates"
+    
+    Note over Relationship: "ADR-010: Partition candidates<br/>into perfectMatches and<br/>softConstraintViolations"
+    
+    Relationship-->>-API: "{perfectMatches, softViolations}"
+    API-->>-FE: "200 OK with categorized candidates"
+    FE-->>-User: "Display assignment wizard"
+
+    User->>+FE: "6. Selects companion and submits"
+    FE->>+API: "7. POST /api/companionships (proposal)"
+    API->>+Auth: "8. hasPermission(userId, 'propose_companionship')"
+    Auth-->>-API: "Permission granted"
+    
+    API->>+Relationship: "9. proposeCompanionship(companionData)"
+    Relationship->>+DB: "10. BEGIN TRANSACTION"
+    Relationship->>+DB: "11. INSERT Companionship (status: 'proposed')"
+    Relationship->>+DB: "12. INSERT ApprovalProcess"
+    DB-->>-Relationship: "Records created"
+    Relationship->>+DB: "13. COMMIT"
+    Relationship-->>-API: "Companionship with approval workflow"
+    API-->>-FE: "201 Created"
+    FE-->>-User: "Proposal sent for approval"
+```
+
+### Manual Companionship Creation Workflow
+**PRD Reference:** Story 2.2 - Manually Create and Manage Companionship Relationships
+
+This workflow handles direct companionship creation by authorized Delegates.
+
+```mermaid
+sequenceDiagram
+    actor User as Delegate
+    participant FE as "Frontend (Next.js)"
+    participant API as "Backend API (Next.js)"
+    participant Relationship as "Relationship Module"
+    participant Auth as "Auth Module"
+    participant DB as "PostgreSQL Database"
+
+    User->>+FE: "1. Manual companion assignment form"
+    FE->>+API: "2. POST /api/companionships/direct (companion, accompanied)"
+    API->>+Auth: "3. hasPermission(userId, 'create_companionship_direct')"
+    
+    alt Has direct creation permission
+        Auth-->>-API: "Permission granted"
+        API->>+Relationship: "4. proposeCompanionship(data, skipApproval: true)"
+        Relationship->>+DB: "5. INSERT Companionship (status: 'active')"
+        DB-->>-Relationship: "Companionship created"
+        Relationship-->>-API: "Active companionship"
+        API-->>-FE: "201 Created"
+        FE-->>-User: "Companionship created"
+    else Requires approval
+        Auth-->>-API: "Requires approval workflow"
+        API->>+Relationship: "4. proposeCompanionship(data)"
+        Note over Relationship: "Standard approval process"
+        Relationship-->>-API: "Approval workflow initiated"
+        API-->>-FE: "202 Accepted"
+        FE-->>-User: "Sent for approval"
+    end
+```
+
+### Health Status Tracking Workflow
+**PRD Reference:** Story 4.1 - Track and Display Relationship Health
+
+This workflow demonstrates health status updates and monitoring.
+
+```mermaid
+sequenceDiagram
+    actor User as Delegate
+    participant FE as "Frontend (Next.js)"
+    participant API as "Backend API (Next.js)"
+    participant Relationship as "Relationship Module"
+    participant DB as "PostgreSQL Database"
+
+    User->>+FE: "1. Updates companionship health status"
+    FE->>+API: "2. PATCH /api/companionships/{id}/health (status)"
+    API->>+Relationship: "3. getCompanionshipHealth(companionshipId)"
+    Relationship->>+DB: "4. Query current companionship"
+    DB-->>-Relationship: "Companionship data"
+    
+    Relationship->>+Relationship: "5. Validate status transition"
+    Relationship->>+DB: "6. UPDATE health status with timestamp"
+    DB-->>-Relationship: "Status updated"
+    Relationship-->>-API: "Updated companionship"
+    API-->>-FE: "200 OK"
+    FE-->>-User: "Health status updated"
+    
+    Note over FE: "Async: Update graph visualization<br/>to reflect new health color"
+```
+
+### Drag-and-Drop Reassignment Workflow
+**PRD Reference:** Story 4.2 - "Quick Record" Drag-and-Drop Reassignment
+
+This workflow handles the interactive graph reassignment feature.
+
+```mermaid
+sequenceDiagram
+    actor User as Delegate
+    participant FE as "Frontend (Next.js)"
+    participant API as "Backend API (Next.js)"
+    participant Relationship as "Relationship Module"
+    participant Auth as "Auth Module"
+    participant DB as "PostgreSQL Database"
+
+    User->>+FE: "1. Drags accompanied node to new companion"
+    FE->>FE: "2. Client-side validation"
+    FE->>+API: "3. POST /api/companionships/reassign (oldId, newCompanionId, accompaniedId)"
+    
+    API->>+Auth: "4. hasPermission(userId, 'reassign_companionship')"
+    Auth-->>-API: "Permission granted"
+    
+    API->>+Relationship: "5. evaluateMatchingConstraints(newCompanionId, accompaniedId)"
+    Relationship-->>-API: "Constraints validation"
+    
+    alt Valid reassignment
+        API->>+Relationship: "6. proposeCompanionship(newPairing)"
+        Relationship->>+DB: "7. UPDATE old companionship (status: 'archived')"
+        Relationship->>+DB: "8. INSERT new companionship (status: 'proposed')"
+        DB-->>-Relationship: "Reassignment recorded"
+        Relationship-->>-API: "New proposal created"
+        API-->>-FE: "200 OK with new relationship"
+        FE-->>-User: "Graph updated, 'Reassignment proposed'"
+    else Constraint violation
+        API-->>-FE: "400 Bad Request with violations"
+        FE->>FE: "Revert drag operation"
+        FE-->>-User: "Show constraint violation message"
+    end
+```
+
+### Graph Filtering and Visualization Workflow
+**PRD Reference:** Story 4.3 - Graph Filtering Capabilities
+
+This workflow demonstrates the dynamic graph filtering system for focused relationship viewing.
+
+```mermaid
+sequenceDiagram
+    actor User as Delegate
+    participant FE as "Frontend (Next.js)"
+    participant API as "Backend API (Next.js)"
+    participant Relationship as "Relationship Module"
+    participant Member as "Member Module"
+    participant Geo as "Geographic Module"
+    participant DB as "PostgreSQL Database"
+
+    User->>+FE: "1. Opens graph view and applies filters"
+    FE->>+API: "2. GET /api/graph/{unitId}?filters=healthStatus,memberType,roleType"
+    API->>+Relationship: "3. getGraphDataForUnit(unitId, filterCriteria)"
+    
+    par Fetch relationship data
+        Relationship->>+DB: "4a. Query companionships with health filters"
+        DB-->>-Relationship: "Filtered companionships"
+    and Fetch member data
+        Relationship->>+Member: "4b. listMembersByUnit(unitId, memberFilters)"
+        Member->>+DB: "5b. Query members with type/role filters"
+        DB-->>-Member: "Filtered members"
+        Member-->>-Relationship: "Member subset"
+    and Fetch geographic scope
+        Relationship->>+Geo: "4c. getDescendantUnits(unitId)"
+        Geo->>+DB: "5c. Query geographic hierarchy"
+        DB-->>-Geo: "Unit tree"
+        Geo-->>-Relationship: "Scope boundaries"
+    end
+    
+    Note over Relationship: "Async aggregation:<br/>Build graph JSON with nodes,<br/>edges, positions, and metadata"
+    
+    Relationship-->>-API: "Graph data with applied filters"
+    API-->>-FE: "200 OK with graph JSON"
+    FE->>FE: "6. Render filtered graph visualization"
+    FE-->>-User: "Updated graph view"
+    
+    User->>+FE: "7. Changes filter criteria"
+    FE->>FE: "8. Debounced filter update"
+    Note over FE: "Client-side optimization:<br/>Cache full dataset,<br/>apply filters locally for<br/>immediate visual feedback"
+    
+    alt Significant filter change
+        FE->>+API: "9. New API request with updated filters"
+        Note over API, DB: "Repeat data fetch process"
+        API-->>-FE: "Fresh filtered data"
+        FE-->>-User: "Re-rendered graph"
+    else Minor filter change
+        FE->>FE: "9. Apply filters to cached data"
+        FE-->>-User: "Instantly updated view"
+    end
 ```
 
 -----
