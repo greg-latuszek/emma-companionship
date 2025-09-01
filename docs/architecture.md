@@ -10,9 +10,13 @@ The project will be built from scratch using TypeScript and the Next.js framewor
 
 ### Technical Summary
 
-The architecture for `emmaCompanionship` is a unified full-stack application built entirely in **TypeScript**. It leverages the **Next.js framework** for both the frontend (React) and the backend API (API Routes), all managed within a single **Monorepo**. The backend is designed as a **Modular Monolith**, with each internal module adhering to the **Hexagonal Architecture** pattern to ensure maintainability and future portability. For the POC, the application and its **PostgreSQL** database will be hosted on **Vercel**.
+The `emmaCompanionship` system employs a **Modular Monolith** architecture style, delivering a unified full-stack TypeScript application via **Next.js** that combines React frontend components with serverless API routes in a single deployment unit. The core components include four distinct business modules (Auth, Geographic, Member Management, and Relationship) that interact through well-defined interfaces, with **PostgreSQL** serving as the centralized data layer and **React Flow** powering the interactive relationship graph visualization. Primary technology choices center on the **TypeScript/Next.js/Vercel** stack for rapid development and deployment, while **Hexagonal Architecture** patterns within each module ensure clean separation of business logic from external concerns. This architecture directly supports the PRD goals of improving Delegate operational efficiency by providing a scalable, maintainable foundation for the complex relationship management workflows, automated constraint enforcement, and visual dashboards that replace manual spreadsheet-based processes.
 
-### Platform and Infrastructure Choice
+### High Level Overview
+
+Based on the PRD's Technical Assumptions, the system adopts a **Modular Monolith** architectural style that balances development simplicity with future scalability needs. The **Monorepo** structure decision enables unified TypeScript type sharing across frontend and backend while maintaining clear module boundaries through Turborepo's workspace management. The service architecture follows a **single-deployment, multi-module** approach where business logic is organized into distinct modules (Auth, Geographic, Member, Relationship) that communicate through well-defined interfaces, preventing code entanglement while avoiding the operational complexity of microservices for the MVP. The primary user interaction flow centers on Delegates accessing a React-based dashboard to visualize relationship graphs, execute guided workflows (assignment wizard, data import), and perform direct manipulations (drag-and-drop reassignments) that trigger backend API calls to update the PostgreSQL database through the appropriate business module. Key architectural decisions include choosing **Hexagonal Architecture** within modules to ensure testability and future portability, **serverless deployment** on Vercel for cost-effective scaling, and **PostgreSQL** for reliable relationship data modeling that supports the complex constraints and approval workflows defined in the PRD.
+
+#### Platform and Infrastructure Choice
 
   * **Platform**: The application is a self-contained, full-stack Next.js application. For the initial POC, it will be hosted on **Vercel's Hobby tier**.
   * **Database**: We will use **Vercel Postgres**, also on the Hobby tier.
@@ -45,7 +49,7 @@ graph TD
     style D fill:#395E39
 ```
 
-### Architectural Patterns
+### Architectural and Design Patterns
 
   * **Modular Monolith**: The backend, while deployed as a single unit, will be internally organized into distinct modules (e.g., "Members", "Relationships").
   * **Hexagonal Architecture (Ports & Adapters)**: Each module's core business logic is isolated from external concerns (the database, frameworks), making it reusable and independently testable.
