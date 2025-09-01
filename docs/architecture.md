@@ -32,7 +32,7 @@ Based on the PRD's Technical Assumptions, the system adopts a **Modular Monolith
 
   * **Platform**: The application is a self-contained, full-stack Next.js application. For the initial POC, it will be hosted on **Vercel's Hobby tier**.
   * **Database**: We will use **Vercel Postgres**, also on the Hobby tier.
-  * **Deployment Regions**: A single region will be sufficient for the POC (e.g., Western Europe). 
+  * **Deployment Regions**: A single region will be sufficient for the POC (Europe Central/Frankfurt, optimized for Poland). 
   * **Key Features**: This provides a no-cost, scalable, and secure environment with automated backups (Point-in-Time Recovery) and custom domain support.
 
 ### Repository Structure
@@ -70,6 +70,14 @@ graph TD
 -----
 
 ## Tech Stack
+
+### Cloud Infrastructure
+
+- **Provider:** Vercel
+- **Key Services:** Next.js hosting (Edge Network + Serverless Functions), Vercel Postgres, Domain management, Analytics
+- **Deployment Regions:** Europe Central/Frankfurt (primary, optimized for Poland), with global edge distribution for static assets
+
+### Technology Stack Table
 
 | Category | Technology | Version | Purpose | Rationale |
 | :--- | :--- | :--- | :--- | :--- |
