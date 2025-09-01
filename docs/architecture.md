@@ -581,26 +581,26 @@ sequenceDiagram
     participant Member as "Member Module"
     participant DB as "PostgreSQL Database"
 
-    User->>+FE: "1. Enters credentials and submits login"
-    FE->>+API: "2. POST /api/auth/login (credentials)"
-    API->>+Auth: "3. loginUser(credentials)"
+    User->>FE: "1. Enters credentials and submits login"
+    FE->>API: "2. POST /api/auth/login (credentials)"
+    API->>Auth: "3. loginUser(credentials)"
     
-    Auth->>+DB: "4. Query user credentials"
-    DB-->>-Auth: "User record or null"
+    Auth->>DB: "4. Query user credentials"
+    DB-->>Auth: "User record or null"
     
     alt Valid credentials
         Auth->>Auth: "5. Generate JWT token"
-        Auth-->>-API: "Token with user ID"
-        API->>+Member: "6. getMemberRoles(userId)"
-        Member->>+DB: "7. Query role assignments"
-        DB-->>-Member: "Role data"
-        Member-->>-API: "User roles and permissions"
-        API-->>-FE: "200 OK with token and roles"
-        FE-->>-User: "Redirect to dashboard"
+        Auth-->>API: "Token with user ID"
+        API->>Member: "6. getMemberRoles(userId)"
+        Member->>DB: "7. Query role assignments"
+        DB-->>Member: "Role data"
+        Member-->>API: "User roles and permissions"
+        API-->>FE: "200 OK with token and roles"
+        FE-->>User: "Redirect to dashboard"
     else Invalid credentials
-        Auth-->>-API: "Authentication failed"
-        API-->>-FE: "401 Unauthorized"
-        FE-->>-User: "Display error message"
+        Auth-->>API: "Authentication failed"
+        API-->>FE: "401 Unauthorized"
+        FE-->>User: "Display error message"
     end
 ```
 
@@ -619,29 +619,29 @@ sequenceDiagram
     participant Geo as "Geographic Module"
     participant DB as "PostgreSQL Database"
 
-    User->>+FE: "1. Fills member form and submits"
-    FE->>+API: "2. POST /api/members (member data)"
-    API->>+Auth: "3. hasPermission(userId, 'create_member', scopeId)"
-    Auth-->>-API: "Permission granted"
+    User->>FE: "1. Fills member form and submits"
+    FE->>API: "2. POST /api/members (member data)"
+    API->>Auth: "3. hasPermission(userId, 'create_member', scopeId)"
+    Auth-->>API: "Permission granted"
     
-    API->>+Member: "4. validateMemberConstraints(memberData)"
-    Member->>+Geo: "5. validateUnitScope(memberData.geographicUnitId)"
-    Geo-->>-Member: "Valid geographic unit"
-    Member-->>-API: "Validation passed"
+    API->>Member: "4. validateMemberConstraints(memberData)"
+    Member->>Geo: "5. validateUnitScope(memberData.geographicUnitId)"
+    Geo-->>Member: "Valid geographic unit"
+    Member-->>API: "Validation passed"
     
-    API->>+Member: "6. createMember(memberData)"
-    Member->>+DB: "7. INSERT member record"
+    API->>Member: "6. createMember(memberData)"
+    Member->>DB: "7. INSERT member record"
     
     alt Success
-        DB-->>-Member: "Member created with ID"
-        Member-->>-API: "Member object"
-        API-->>-FE: "201 Created"
-        FE-->>-User: "Success notification"
+        DB-->>Member: "Member created with ID"
+        Member-->>API: "Member object"
+        API-->>FE: "201 Created"
+        FE-->>User: "Success notification"
     else Validation error
-        DB-->>-Member: "Constraint violation"
-        Member-->>-API: "Validation error details"
-        API-->>-FE: "400 Bad Request"
-        FE-->>-User: "Display validation errors"
+        DB-->>Member: "Constraint violation"
+        Member-->>API: "Validation error details"
+        API-->>FE: "400 Bad Request"
+        FE-->>User: "Display validation errors"
     end
 ```
 
@@ -658,40 +658,40 @@ sequenceDiagram
     participant Member as "Member Module"
     participant DB as "PostgreSQL Database"
 
-    User->>+FE: "1. Selects spreadsheet file"
-    FE-->>-User: "2. File ready for analysis"
+    User->>FE: "1. Selects spreadsheet file"
+    FE-->>User: "2. File ready for analysis"
 
-    User->>+FE: "3. Clicks 'Analyze'"
-    FE->>+API: "4. POST /api/members/import/analyze (file data)"
-    API->>+Member: "5. analyzeSpreadsheet(file)"
-    Member-->>-API: "Detected column headers"
-    API-->>-FE: "200 OK with column mappings"
-    FE-->>-User: "6. Display field mapping interface"
+    User->>FE: "3. Clicks 'Analyze'"
+    FE->>API: "4. POST /api/members/import/analyze (file data)"
+    API->>Member: "5. analyzeSpreadsheet(file)"
+    Member-->>API: "Detected column headers"
+    API-->>FE: "200 OK with column mappings"
+    FE-->>User: "6. Display field mapping interface"
 
-    User->>+FE: "7. Defines mappings and clicks 'Import'"
-    FE->>+API: "8. POST /api/members/import/execute (file + mappings)"
-    API->>+Member: "9. executeImport(file, mappings)"
+    User->>FE: "7. Defines mappings and clicks 'Import'"
+    FE->>API: "8. POST /api/members/import/execute (file + mappings)"
+    API->>Member: "9. executeImport(file, mappings)"
     
     Note over Member, DB: "Async processing:<br/>Validate each row,<br/>Build bulk transaction,<br/>Log errors"
     
-    Member->>+DB: "10. BEGIN TRANSACTION"
-    Member->>+DB: "11. Bulk INSERT valid members"
+    Member->>DB: "10. BEGIN TRANSACTION"
+    Member->>DB: "11. Bulk INSERT valid members"
     
     alt All valid
-        DB-->>-Member: "All records inserted"
-        Member-->>-API: "Success summary"
-        API-->>-FE: "200 OK with results"
-        FE-->>-User: "Success message"
+        DB-->>Member: "All records inserted"
+        Member-->>API: "Success summary"
+        API-->>FE: "200 OK with results"
+        FE-->>User: "Success message"
     else Partial success
-        DB-->>-Member: "Some records failed"
-        Member-->>-API: "Partial success with error details"
-        API-->>-FE: "207 Multi-Status"
-        FE-->>-User: "Summary with error report"
+        DB-->>Member: "Some records failed"
+        Member-->>API: "Partial success with error details"
+        API-->>FE: "207 Multi-Status"
+        FE-->>User: "Summary with error report"
     else Complete failure
         Member->>DB: "ROLLBACK"
-        Member-->>-API: "Import failed"
-        API-->>-FE: "400 Bad Request"
-        FE-->>-User: "Error message"
+        Member-->>API: "Import failed"
+        API-->>FE: "400 Bad Request"
+        FE-->>User: "Error message"
     end
 ```
 
@@ -710,34 +710,34 @@ sequenceDiagram
     participant Auth as "Auth Module"
     participant DB as "PostgreSQL Database"
 
-    User->>+FE: "1. Clicks 'Assign Companion' for Member"
-    FE->>+API: "2. GET /api/members/{id}/eligible-companions"
-    API->>+Relationship: "3. evaluateMatchingConstraints(memberId, unitScope)"
-    Relationship->>+Member: "4. listMembersByUnit(unitId, eligibilityFilters)"
-    Member->>+DB: "5. Query with hard constraints"
-    DB-->>-Member: "Candidate members"
-    Member-->>-Relationship: "Filtered candidates"
+    User->>FE: "1. Clicks 'Assign Companion' for Member"
+    FE->>API: "2. GET /api/members/{id}/eligible-companions"
+    API->>Relationship: "3. evaluateMatchingConstraints(memberId, unitScope)"
+    Relationship->>Member: "4. listMembersByUnit(unitId, eligibilityFilters)"
+    Member->>DB: "5. Query with hard constraints"
+    DB-->>Member: "Candidate members"
+    Member-->>Relationship: "Filtered candidates"
     
     Note over Relationship: "ADR-010: Partition candidates<br/>into perfectMatches and<br/>softConstraintViolations"
     
-    Relationship-->>-API: "{perfectMatches, softViolations}"
-    API-->>-FE: "200 OK with categorized candidates"
-    FE-->>-User: "Display assignment wizard"
+    Relationship-->>API: "{perfectMatches, softViolations}"
+    API-->>FE: "200 OK with categorized candidates"
+    FE-->>User: "Display assignment wizard"
 
-    User->>+FE: "6. Selects companion and submits"
-    FE->>+API: "7. POST /api/companionships (proposal)"
-    API->>+Auth: "8. hasPermission(userId, 'propose_companionship')"
-    Auth-->>-API: "Permission granted"
+    User->>FE: "6. Selects companion and submits"
+    FE->>API: "7. POST /api/companionships (proposal)"
+    API->>Auth: "8. hasPermission(userId, 'propose_companionship')"
+    Auth-->>API: "Permission granted"
     
-    API->>+Relationship: "9. proposeCompanionship(companionData)"
-    Relationship->>+DB: "10. BEGIN TRANSACTION"
-    Relationship->>+DB: "11. INSERT Companionship (status: 'proposed')"
-    Relationship->>+DB: "12. INSERT ApprovalProcess"
-    DB-->>-Relationship: "Records created"
-    Relationship->>+DB: "13. COMMIT"
-    Relationship-->>-API: "Companionship with approval workflow"
-    API-->>-FE: "201 Created"
-    FE-->>-User: "Proposal sent for approval"
+    API->>Relationship: "9. proposeCompanionship(companionData)"
+    Relationship->>DB: "10. BEGIN TRANSACTION"
+    Relationship->>DB: "11. INSERT Companionship (status: 'proposed')"
+    Relationship->>DB: "12. INSERT ApprovalProcess"
+    DB-->>Relationship: "Records created"
+    Relationship->>DB: "13. COMMIT"
+    Relationship-->>API: "Companionship with approval workflow"
+    API-->>FE: "201 Created"
+    FE-->>User: "Proposal sent for approval"
 ```
 
 ### Manual Companionship Creation Workflow
@@ -754,25 +754,25 @@ sequenceDiagram
     participant Auth as "Auth Module"
     participant DB as "PostgreSQL Database"
 
-    User->>+FE: "1. Manual companion assignment form"
-    FE->>+API: "2. POST /api/companionships/direct (companion, accompanied)"
-    API->>+Auth: "3. hasPermission(userId, 'create_companionship_direct')"
+    User->>FE: "1. Manual companion assignment form"
+    FE->>API: "2. POST /api/companionships/direct (companion, accompanied)"
+    API->>Auth: "3. hasPermission(userId, 'create_companionship_direct')"
     
     alt Has direct creation permission
-        Auth-->>-API: "Permission granted"
-        API->>+Relationship: "4. proposeCompanionship(data, skipApproval: true)"
-        Relationship->>+DB: "5. INSERT Companionship (status: 'active')"
-        DB-->>-Relationship: "Companionship created"
-        Relationship-->>-API: "Active companionship"
-        API-->>-FE: "201 Created"
-        FE-->>-User: "Companionship created"
+        Auth-->>API: "Permission granted"
+        API->>Relationship: "4. proposeCompanionship(data, skipApproval: true)"
+        Relationship->>DB: "5. INSERT Companionship (status: 'active')"
+        DB-->>Relationship: "Companionship created"
+        Relationship-->>API: "Active companionship"
+        API-->>FE: "201 Created"
+        FE-->>User: "Companionship created"
     else Requires approval
-        Auth-->>-API: "Requires approval workflow"
-        API->>+Relationship: "4. proposeCompanionship(data)"
+        Auth-->>API: "Requires approval workflow"
+        API->>Relationship: "4. proposeCompanionship(data)"
         Note over Relationship: "Standard approval process"
-        Relationship-->>-API: "Approval workflow initiated"
-        API-->>-FE: "202 Accepted"
-        FE-->>-User: "Sent for approval"
+        Relationship-->>API: "Approval workflow initiated"
+        API-->>FE: "202 Accepted"
+        FE-->>User: "Sent for approval"
     end
 ```
 
@@ -789,18 +789,18 @@ sequenceDiagram
     participant Relationship as "Relationship Module"
     participant DB as "PostgreSQL Database"
 
-    User->>+FE: "1. Updates companionship health status"
-    FE->>+API: "2. PATCH /api/companionships/{id}/health (status)"
-    API->>+Relationship: "3. getCompanionshipHealth(companionshipId)"
-    Relationship->>+DB: "4. Query current companionship"
-    DB-->>-Relationship: "Companionship data"
+    User->>FE: "1. Updates companionship health status"
+    FE->>API: "2. PATCH /api/companionships/{id}/health (status)"
+    API->>Relationship: "3. getCompanionshipHealth(companionshipId)"
+    Relationship->>DB: "4. Query current companionship"
+    DB-->>Relationship: "Companionship data"
     
-    Relationship->>+Relationship: "5. Validate status transition"
-    Relationship->>+DB: "6. UPDATE health status with timestamp"
-    DB-->>-Relationship: "Status updated"
-    Relationship-->>-API: "Updated companionship"
-    API-->>-FE: "200 OK"
-    FE-->>-User: "Health status updated"
+    Relationship->>Relationship: "5. Validate status transition"
+    Relationship->>DB: "6. UPDATE health status with timestamp"
+    DB-->>Relationship: "Status updated"
+    Relationship-->>API: "Updated companionship"
+    API-->>FE: "200 OK"
+    FE-->>User: "Health status updated"
     
     Note over FE: "Async: Update graph visualization<br/>to reflect new health color"
 ```
@@ -819,28 +819,28 @@ sequenceDiagram
     participant Auth as "Auth Module"
     participant DB as "PostgreSQL Database"
 
-    User->>+FE: "1. Drags accompanied node to new companion"
+    User->>FE: "1. Drags accompanied node to new companion"
     FE->>FE: "2. Client-side validation"
-    FE->>+API: "3. POST /api/companionships/reassign (oldId, newCompanionId, accompaniedId)"
+    FE->>API: "3. POST /api/companionships/reassign (oldId, newCompanionId, accompaniedId)"
     
-    API->>+Auth: "4. hasPermission(userId, 'reassign_companionship')"
-    Auth-->>-API: "Permission granted"
+    API->>Auth: "4. hasPermission(userId, 'reassign_companionship')"
+    Auth-->>API: "Permission granted"
     
-    API->>+Relationship: "5. evaluateMatchingConstraints(newCompanionId, accompaniedId)"
-    Relationship-->>-API: "Constraints validation"
+    API->>Relationship: "5. evaluateMatchingConstraints(newCompanionId, accompaniedId)"
+    Relationship-->>API: "Constraints validation"
     
     alt Valid reassignment
-        API->>+Relationship: "6. proposeCompanionship(newPairing)"
-        Relationship->>+DB: "7. UPDATE old companionship (status: 'archived')"
-        Relationship->>+DB: "8. INSERT new companionship (status: 'proposed')"
-        DB-->>-Relationship: "Reassignment recorded"
-        Relationship-->>-API: "New proposal created"
-        API-->>-FE: "200 OK with new relationship"
-        FE-->>-User: "Graph updated, 'Reassignment proposed'"
+        API->>Relationship: "6. proposeCompanionship(newPairing)"
+        Relationship->>DB: "7. UPDATE old companionship (status: 'archived')"
+        Relationship->>DB: "8. INSERT new companionship (status: 'proposed')"
+        DB-->>Relationship: "Reassignment recorded"
+        Relationship-->>API: "New proposal created"
+        API-->>FE: "200 OK with new relationship"
+        FE-->>User: "Graph updated, 'Reassignment proposed'"
     else Constraint violation
-        API-->>-FE: "400 Bad Request with violations"
+        API-->>FE: "400 Bad Request with violations"
         FE->>FE: "Revert drag operation"
-        FE-->>-User: "Show constraint violation message"
+        FE-->>User: "Show constraint violation message"
     end
 ```
 
@@ -859,44 +859,44 @@ sequenceDiagram
     participant Geo as "Geographic Module"
     participant DB as "PostgreSQL Database"
 
-    User->>+FE: "1. Opens graph view and applies filters"
-    FE->>+API: "2. GET /api/graph/{unitId}?filters=healthStatus,memberType,roleType"
-    API->>+Relationship: "3. getGraphDataForUnit(unitId, filterCriteria)"
+    User->>FE: "1. Opens graph view and applies filters"
+    FE->>API: "2. GET /api/graph/{unitId}?filters=healthStatus,memberType,roleType"
+    API->>Relationship: "3. getGraphDataForUnit(unitId, filterCriteria)"
     
     par Fetch relationship data
-        Relationship->>+DB: "4a. Query companionships with health filters"
-        DB-->>-Relationship: "Filtered companionships"
+        Relationship->>DB: "4a. Query companionships with health filters"
+        DB-->>Relationship: "Filtered companionships"
     and Fetch member data
-        Relationship->>+Member: "4b. listMembersByUnit(unitId, memberFilters)"
-        Member->>+DB: "5b. Query members with type/role filters"
-        DB-->>-Member: "Filtered members"
-        Member-->>-Relationship: "Member subset"
+        Relationship->>Member: "4b. listMembersByUnit(unitId, memberFilters)"
+        Member->>DB: "5b. Query members with type/role filters"
+        DB-->>Member: "Filtered members"
+        Member-->>Relationship: "Member subset"
     and Fetch geographic scope
-        Relationship->>+Geo: "4c. getDescendantUnits(unitId)"
-        Geo->>+DB: "5c. Query geographic hierarchy"
-        DB-->>-Geo: "Unit tree"
-        Geo-->>-Relationship: "Scope boundaries"
+        Relationship->>Geo: "4c. getDescendantUnits(unitId)"
+        Geo->>DB: "5c. Query geographic hierarchy"
+        DB-->>Geo: "Unit tree"
+        Geo-->>Relationship: "Scope boundaries"
     end
     
     Note over Relationship: "Async aggregation:<br/>Build graph JSON with nodes,<br/>edges, positions, and metadata"
     
-    Relationship-->>-API: "Graph data with applied filters"
-    API-->>-FE: "200 OK with graph JSON"
+    Relationship-->>API: "Graph data with applied filters"
+    API-->>FE: "200 OK with graph JSON"
     FE->>FE: "6. Render filtered graph visualization"
-    FE-->>-User: "Updated graph view"
+    FE-->>User: "Updated graph view"
     
-    User->>+FE: "7. Changes filter criteria"
+    User->>FE: "7. Changes filter criteria"
     FE->>FE: "8. Debounced filter update"
     Note over FE: "Client-side optimization:<br/>Cache full dataset,<br/>apply filters locally for<br/>immediate visual feedback"
     
     alt Significant filter change
-        FE->>+API: "9. New API request with updated filters"
+        FE->>API: "9. New API request with updated filters"
         Note over API, DB: "Repeat data fetch process"
-        API-->>-FE: "Fresh filtered data"
-        FE-->>-User: "Re-rendered graph"
+        API-->>FE: "Fresh filtered data"
+        FE-->>User: "Re-rendered graph"
     else Minor filter change
         FE->>FE: "9. Apply filters to cached data"
-        FE-->>-User: "Instantly updated view"
+        FE-->>User: "Instantly updated view"
     end
 ```
 
