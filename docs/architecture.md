@@ -161,7 +161,18 @@ export type UUID = string & { readonly __brand: 'UUID' };
 
 **Purpose**: Defines the organizational and geographical tree structure of the community.
 
-**TypeScript Interface**:
+**Key Attributes**:
+- id: Unique identifier - Primary key for the geographic unit
+- name: Display name - Human-readable name (e.g., "Cracow Area", "Poland South Province")
+- type: Unit classification - Hierarchical level (sector, province, country, zone, community)
+- parentId: Hierarchical reference - Links to parent unit for tree structure
+
+**Relationships**:
+- Parent-Child: Self-referential hierarchy where units can contain other units
+- Member Assignment: Members belong to exactly one geographic unit
+- Role Scope: Roles are scoped to specific geographic units
+
+**TypeScript Interface** *(Development Reference)*:
 
 ```typescript
 interface GeographicUnit {
@@ -176,7 +187,25 @@ interface GeographicUnit {
 
 **Purpose**: The central entity representing an individual person within the community. This model is intentionally kept simple, with all role and leadership information handled by the `RoleAssignment` model.
 
-**TypeScript Interface**:
+**Key Attributes**:
+- id: Unique identifier - Primary key for the member
+- firstName, lastName: Personal identification - Core identity fields
+- gender: Biological classification - Required for companionship matching rules
+- maritalStatus: Relationship state - Affects companion assignment eligibility
+- communityEngagementStatus: Participation level - Member's commitment stage in community
+- accompanyingReadiness: Mentor capacity - Availability and ability to guide others
+- languages: Communication capabilities - Multi-language support for matching
+- geographicUnitId: Location assignment - The geographic unit where member belongs
+- Optional fields: Contact info, demographics, notes, consecration status, couple linkage
+
+**Relationships**:
+- Geographic Assignment: Belongs to exactly one GeographicUnit
+- Role Assignments: Can have multiple roles in different scopes via RoleAssignment
+- Couple Formation: Can be linked to another Member via Couple entity
+- Companionship Participation: Can be companion or accompanied in multiple relationships
+- Supervision Hierarchy: Implicitly supervised based on geographic unit and role structure
+
+**TypeScript Interface** *(Development Reference)*:
 
 ```typescript
 interface Member {
@@ -205,7 +234,18 @@ interface Member {
 
 **Purpose**: Groups two `Member` entities so they can be treated as a single unit.
 
-**TypeScript Interface**:
+**Key Attributes**:
+- id: Unique identifier - Primary key for the couple
+- member1Id, member2Id: Partner references - Links to two Member entities forming the couple
+- weddingDate: Marriage date - Optional timestamp of their wedding
+- numberOfChildren: Family size - Optional count of children in the family
+
+**Relationships**:
+- Member Pairing: References exactly two Member entities
+- Companionship Unit: Can participate in companionships as a single entity
+- Geographic Inheritance: Derives location from constituent members' geographic units
+
+**TypeScript Interface** *(Development Reference)*:
 
 ```typescript
 interface Couple {
@@ -221,7 +261,23 @@ interface Couple {
 
 **Purpose**: A flexible system to assign roles (like Supervisor or Delegate) to Members with a specific geographical scope.
 
-**TypeScript Interfaces**:
+**Key Attributes**:
+- Role.id: Unique identifier - Primary key for role definition
+- Role.name: Role classification - Type of responsibility (Companionship Delegate, Supervisor, Admin)
+- Role.level: Authority scope - Geographic level where role operates
+- RoleAssignment.id: Unique identifier - Primary key for role assignment
+- RoleAssignment.memberId: Member reference - Who has the role
+- RoleAssignment.roleId: Role reference - What role is assigned
+- RoleAssignment.scopeId: Geographic scope - Where the role applies
+
+**Relationships**:
+- Role Definition: Role entity defines types and levels of responsibility
+- Member Assignment: RoleAssignment links Members to Roles for specific geographic scopes
+- Geographic Scoping: Roles are always bound to specific GeographicUnit scopes
+- Multiple Assignments: Members can have multiple roles in different scopes
+- Authority Hierarchy: Role levels create implicit supervision chains
+
+**TypeScript Interfaces** *(Development Reference)*:
 
 ```typescript
 interface Role {
@@ -242,7 +298,28 @@ interface RoleAssignment {
 
 **Purpose**: These models manage the lifecycle of a voluntary `Companionship`, including the flexible, multi-step approval workflow.
 
-**TypeScript Interfaces**:
+**Key Attributes**:
+- Companionship.id: Unique identifier - Primary key for the relationship
+- Companionship.companionId/Type: Mentor reference - Who provides guidance (Member or Couple)
+- Companionship.accompaniedId/Type: Mentee reference - Who receives guidance (Member or Couple)
+- Companionship.status: Lifecycle state - Current phase (proposed, active, archived)
+- Companionship.healthStatus: Relationship quality - Health indicator for monitoring
+- Companionship.startDate/endDate: Timeline - When relationship began and ended
+- ApprovalProcess.id: Unique identifier - Primary key for approval workflow
+- ApprovalProcess.companionshipId: Relationship reference - Links to pending companionship
+- ApprovalProcess.status: Workflow state - Overall approval status
+- ApprovalStep.approverRole: Authority type - Who needs to approve at this step
+- ApprovalStep.status: Step state - Individual approval decision status
+- ApprovalStep.decisionDate: Decision timestamp - When approval/rejection occurred
+
+**Relationships**:
+- Companionship Pairing: Links Members/Couples in mentor-mentee relationships
+- Approval Workflow: ApprovalProcess orchestrates multi-step approval for new companionships
+- Step Dependencies: ApprovalSteps define sequential approval requirements
+- Role-Based Approval: Steps reference specific roles that must approve
+- Status Tracking: Models track both relationship health and approval progress
+
+**TypeScript Interfaces** *(Development Reference)*:
 
 ```typescript
 interface Companionship {
