@@ -1922,43 +1922,89 @@ NEXTAUTH_URL="http://localhost:3000"
 
 ## Infrastructure and Deployment
 
-This outlines our strategy for automatically deploying the application to Vercel using a Git-flow model.
+This section defines our deployment architecture and practices using Infrastructure as Code principles with Vercel and GitHub Actions for optimal CI/CD automation.
+
+### Infrastructure as Code
+
+- **Tool:** Vercel CLI v33.0+ and GitHub Actions
+- **Location:** `.github/workflows/` and `vercel.json`
+- **Approach:** Declarative configuration using Vercel's platform-as-a-service model with GitHub Actions for CI/CD orchestration
 
 ### Deployment Strategy
 
-  * **Application Deployment**: We will leverage Vercel's native Next.js integration. When code is pushed to our GitHub repository, Vercel will automatically build the application, deploying the frontend to its global Edge Network and the backend API routes as Serverless Functions.
-  * **Database Deployment**: Database schema changes (migrations) are critical. Any pull request that includes a new Prisma migration will require the migration script to be run against the production database as an explicit step in the CI/CD pipeline **after** the application code has been successfully deployed.
+- **Strategy:** Git-based continuous deployment with Feature Branch Workflow
+- **CI/CD Platform:** GitHub Actions
+- **Pipeline Configuration:** `.github/workflows/deploy.yml`
 
-#### Git Workflow
+#### Application Deployment Process
 
-We will follow Feature Branch Workflow:
+We leverage Vercel's native Next.js integration for seamless deployment:
 
-- The main branch is considered our stable, production-ready code.
-- Direct pushes to the main branch will be disabled.
-- To work on a feature (e.g., a user story), a developer creates a new branch from main (e.g., `feature/story-4.1-health-status`).
-- All work is done on that feature branch. When complete, the developer merges it back into main via a Pull Request.
+1. **Frontend & API Deployment**: When code is pushed to GitHub, Vercel automatically builds the application, deploying the frontend to its global Edge Network and backend API routes as Serverless Functions.
 
-#### Notes on Preview Deployment Database
+2. **Database Migration Strategy**: Database schema changes (migrations) are handled separately from application deployment:
+   - Pull requests with Prisma migrations require explicit approval
+   - Migration scripts run against the production database **after** successful application deployment
+   - Zero-downtime migrations are ensured through backward-compatible schema changes
+
+3. **Git Workflow Implementation**:
+   - Main branch represents stable, production-ready code
+   - Direct pushes to main branch are disabled via branch protection rules
+   - Feature development follows: `main` → `feature/story-x.x-description` → Pull Request → `main`
+   - All changes require code review and automated testing before merge
+
+### Environments
+
+- **Production:** Live application for end users - Triggered by merge/push to `main` branch - Custom domain with production database
+- **Preview:** Isolated testing environment for each feature - Triggered by Pull Request to `main` - Unique `*.vercel.app` URL with staging database
+- **Development:** Local development environment - `localhost:3000` - Local PostgreSQL instance with seeded test data
+
+#### Preview Environment Database Strategy
+
+- **Isolation**: All Preview Deployments connect to a dedicated staging database to prevent production data exposure
+- **Data Seeding**: Staging database populated with realistic but anonymized test data using automated seeding scripts
+- **Data Privacy**: No production data is used in non-production environments to ensure user privacy compliance
 
 A Preview Deployment is like a temporary, isolated Staging environment for a single feature.
 - When you first open a Pull Request, Vercel automatically builds and deploys the code from your feature branch.
 - If you then push new commits to that same branch, Vercel detects the push and automatically triggers a new build and deployment, updating the existing preview environment with your latest changes.
-- Database Connection: By default, a Vercel preview would try to connect to whatever database URL is in its environment variables. Connecting it to the Production DB is dangerous and bad practice. Instead, we will configure all Preview Deployments to connect to a dedicated Staging Database.
-- Populating the Staging DB: We should not use production data due to privacy. The best practice, which we will follow, is to use seeding scripts.
-   - We will create scripts that generate realistic but anonymized or fake data that mirrors the structure of our production data.
-   - When a developer needs to test a feature, they can run these scripts to populate the Staging DB with a fresh, clean, and safe set of data. This gives them a production-like environment without compromising any user privacy.
 
-### CI/CD Pipeline (GitHub Actions)
+### Environment Promotion Flow
 
-We will use GitHub Actions for our CI/CD pipeline. The workflow, triggered on pushes and pull requests to the `main` branch, will lint, test, build, deploy to Vercel, and then run database migrations.
+```text
+Development (Local)
+        ↓
+   Feature Branch
+        ↓
+   Pull Request → Preview Environment (Staging DB)
+        ↓
+   Code Review & Automated Testing
+        ↓
+   Merge to Main → Production Deployment
+        ↓
+   Database Migration (if required)
+        ↓
+   Production Verification
+```
 
-### Environments
+The promotion flow ensures that:
+1. All code changes are tested in isolation via Preview environments
+2. Database migrations are applied safely after application deployment
+3. Production deployments are atomic and can be rolled back if necessary
+4. Each environment uses appropriate data sources (local → staging → production)
 
-| Environment | Trigger | URL | Purpose |
-| :--- | :--- | :--- | :--- |
-| **Production** | Merge/Push to `main` | `(custom domain)` | Live application for all users. |
-| **Preview** | Pull Request to `main` | `*.vercel.app` (unique) | Isolate and test new features before merging. Will connect to a Staging DB populated with seeded/anonymized data. |
-| **Development** | N/A | `localhost:3000` | Developer's local machine. |
+### Rollback Strategy
+
+- **Primary Method:** Git-based rollback using Vercel's deployment history and database migration reversals
+- **Trigger Conditions:** Failed health checks, critical errors in production, or manual intervention due to business requirements
+- **Recovery Time Objective:** Under 5 minutes for application rollback, under 15 minutes for database rollback including migration reversals
+
+#### Rollback Procedures
+
+1. **Application Rollback**: Use Vercel dashboard or CLI to revert to previous successful deployment
+2. **Database Rollback**: Execute pre-prepared rollback migration scripts for schema changes
+3. **Verification**: Automated health checks confirm system stability post-rollback
+4. **Communication**: Automated notifications to development team and stakeholders
 
 -----
 
