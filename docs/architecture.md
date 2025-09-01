@@ -6,7 +6,7 @@ The project will be built from scratch using TypeScript and the Next.js framewor
 
 -----
 
-## High-Level Architecture
+## High Level Architecture
 
 ### Technical Summary
 
@@ -23,7 +23,7 @@ The architecture for `emmaCompanionship` is a unified full-stack application bui
 
   * **Structure**: **Monorepo**, managed with a tool like Turborepo. This structure simplifies dependency management and allows for easy code and type sharing between the frontend, backend, and any other packages.
 
-### High-Level Architecture Diagram
+### High Level Project Diagram
 
 ```mermaid
 graph TD
@@ -349,7 +349,7 @@ sequenceDiagram
 
 -----
 
-## Unified Project Structure
+## Source Tree
 
 This layout, using the standard `apps` and `packages` directories, is optimized for our chosen tool, Turborepo. The backend structure within `apps/web/src/lib/modules` provides a clear, physical representation of our Modular Monolith and Hexagonal Architecture decisions, making it intuitive for developers to follow our patterns.
 
@@ -462,7 +462,7 @@ NEXTAUTH_URL="http://localhost:3000"
 
 -----
 
-## Deployment Architecture
+## Infrastructure and Deployment
 
 This outlines our strategy for automatically deploying the application to Vercel using a Git-flow model.
 
@@ -558,7 +558,7 @@ This section establishes a minimal set of high-impact rules that are mandatory f
 
 -----
 
-## Error Handling, Logging, and Observability
+## Error Handling Strategy
 
 This section defines our unified strategy for creating a robust and maintainable application.
 
