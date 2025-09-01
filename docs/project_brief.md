@@ -158,9 +158,34 @@ The initial version (Phase 1) will focus on providing the core management tools 
 
 ## Technical Considerations
 
-* **Platform**: The application will be a web application with a distinct frontend and backend.
-* **Extensibility**: The architecture must be designed to allow for the future development of a mobile app that reuses the backend services created in Phase 1.
-* **Open Source**: The project will be open-source to build trust and allow for verification of its confidentiality measures.
+### Platform Requirements
+
+- **Target Platforms:** Web application (primary), with mobile app extensibility for Phase 2
+- **Browser/OS Support:** Modern browsers (Chrome, Firefox, Safari, Edge) with responsive design for tablets and large screens
+- **Performance Requirements:** Sub-200ms response times for graph rendering, support for province-scale data (~200 members), progressive loading for larger datasets
+
+### Technology Preferences
+
+- **Frontend:** React-based SPA with interactive graph visualization capabilities (D3.js, vis.js, or similar)
+- **Backend:** Node.js/TypeScript API with RESTful architecture
+- **Database:** Relational database (PostgreSQL preferred) for complex relationship modeling and constraint enforcement
+- **Hosting/Infrastructure:** Vercel hosting with scalable architecture, considering cost-effectiveness for community use
+
+### Architecture Considerations
+
+- **Repository Structure:** Monorepo supporting frontend/backend separation and shared type definitions
+- **Service Architecture:** Modular backend design enabling future mobile app integration and third-party service connections
+- **Integration Requirements:** 
+  - CSV/Excel import capabilities for initial data loading
+  - Future calendar integration (Google Calendar, Outlook)
+  - Future communication tool integration (WhatsApp, secure voice/video calling)
+- **Security/Compliance:**
+  - Role-based access control with granular permissions
+  - Data encryption at rest and in transit
+  - Audit trails for all relationship modifications
+  - Open-source architecture for transparency and trust verification
+  - No dialogue content storage (confidentiality requirement)
+  - Secure authentication and session management
 
 ## Constraints & Assumptions
 
