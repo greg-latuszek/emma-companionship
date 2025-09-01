@@ -366,45 +366,192 @@ As for Supervisors, Companionship Delegates responsibility (which Members they t
 
 ## Components
 
-Our backend will be composed of the following core modules.
+Based on our Modular Monolith architecture and Hexagonal patterns, the backend is organized into four distinct modules with clear boundaries and interfaces.
 
-###  Component Interaction Diagram
+### Auth Module
+
+**Responsibility:** User registration, login, session management, and decoding access tokens to provide user identity across the entire application.
+
+**Key Interfaces:**
+- `registerUser(userData)` - Create new user accounts
+- `loginUser(credentials)` - Authenticate users and create sessions
+- `getCurrentUser(token)` - Retrieve current user identity
+- `decodeToken(jwt)` - Validate and extract user information from tokens
+- `hasPermission(userId, action, scope)` - Authorization checks
+
+**Dependencies:** None (foundational module)
+
+**Technology Stack:** 
+- Auth.js (NextAuth) v5.x for authentication framework
+- JWT tokens for stateless session management
+- Prisma ORM for user data persistence
+- bcrypt/Argon2 for password hashing
+- TypeScript strict mode for type safety
+
+### Geographic Module
+
+**Responsibility:** Manages the `GeographicUnit` organizational tree structure that defines community hierarchy and serves as the foundation for role scoping and member organization.
+
+**Key Interfaces:**
+- `getUnitById(id)` - Retrieve specific geographic unit
+- `getUnitTree()` - Get complete hierarchical structure
+- `getDescendantUnits(unitId)` - Find all child units in hierarchy
+- `getAncestorUnits(unitId)` - Get parent chain to root
+- `validateUnitScope(childId, parentId)` - Verify hierarchical relationships
+
+**Dependencies:** None (foundational module)
+
+**Technology Stack:**
+- Prisma ORM with PostgreSQL for hierarchical data storage
+- Recursive SQL queries for tree operations
+- TypeScript interfaces for geographic unit types
+- Zod schemas for input validation
+- Materialized path pattern for efficient tree queries
+
+### Member Management Module
+
+**Responsibility:** Manages business logic for `Member` and `Couple` entities, handles `RoleAssignment` records, and provides member search and filtering capabilities while enforcing community rules.
+
+**Key Interfaces:**
+- `getMemberById(id)` - Retrieve individual member details
+- `listMembersByUnit(unitId, filters)` - Search members within geographic scope
+- `createMember(memberData)` - Add new community members
+- `updateMember(id, changes)` - Modify member information
+- `assignRoleToMember(memberId, roleId, scopeId)` - Grant roles with geographic scope
+- `getMemberRoles(memberId)` - Retrieve all roles for a member
+- `validateMemberConstraints(member)` - Enforce business rules
+
+**Dependencies:** 
+- Auth Module (for permission validation)
+- Geographic Module (for scope validation and hierarchy queries)
+
+**Technology Stack:**
+- Prisma ORM with complex relational queries
+- PostgreSQL with indexes on foreign keys and search fields
+- TypeScript strict interfaces for member data
+- Zod schemas for comprehensive input validation
+- Business rule engine patterns for constraint validation
+
+### Relationship Module
+
+**Responsibility:** Manages the complete lifecycle of `Companionship` relationships, orchestrates the multi-step `ApprovalProcess` workflow, and provides graph data for visualization while enforcing complex community relationship rules.
+
+**Key Interfaces:**
+- `proposeCompanionship(companionData)` - Initiate new companionship proposals
+- `getApprovalProcess(companionshipId)` - Retrieve approval workflow status
+- `advanceApprovalStep(processId, decision)` - Process approval/rejection decisions
+- `getGraphDataForUnit(unitId)` - Generate visualization data for frontend
+- `evaluateMatchingConstraints(companionId, accompaniedId)` - Validate relationship rules
+- `getCompanionshipHealth(companionshipId)` - Assess relationship status
+
+**Dependencies:** 
+- Auth Module (for user identity and permissions)
+- Member Management Module (for role information and member data)
+- Geographic Module (for scope validation in approval workflows)
+
+**Technology Stack:**
+- Prisma ORM with complex transaction management
+- PostgreSQL with relationship-specific indexes
+- State machine patterns for approval workflow management
+- TypeScript union types for status management
+- Complex business rule validation engine
+- JSON aggregation for graph data generation
+
+**Design Constraint:** The `ApprovalProcess` logic is implemented as an isolated sub-component within this module, designed for easy extraction to a separate service if future requirements demand microservice decomposition.
+
+### Component Diagrams
+
+#### High-Level Module Dependencies (C4 Container View)
 
 ```mermaid
 graph TD
-    subgraph "Application Backend"
-        Relationship["Relationship Module"] --> Member["Member Management Module"]
-        Relationship --> Auth["Auth Module"]
+    subgraph "Application Backend (Modular Monolith)"
+        A[Auth Module<br/>Authentication & Authorization]
+        G[Geographic Module<br/>Organizational Hierarchy]
+        M[Member Management Module<br/>Members, Couples & Roles]
+        R[Relationship Module<br/>Companionships & Approvals]
         
-        Member --> Auth
-        Member --> Geo["Geographic Module"]
+        R --> M
+        R --> A
+        M --> A
+        M --> G
+    end
+    
+    subgraph "External Systems"
+        DB[(PostgreSQL Database)]
+        UI[Next.js Frontend]
+    end
+    
+    A --> DB
+    G --> DB
+    M --> DB
+    R --> DB
+    
+    UI --> A
+    UI --> G
+    UI --> M
+    UI --> R
+```
+
+#### Detailed Component Internal Structure
+
+```mermaid
+graph TD
+    subgraph "Relationship Module (Hexagonal Architecture)"
+        RC[Relationship Core<br/>Business Logic]
+        AC[Approval Core<br/>Workflow Engine]
+        
+        subgraph "Ports (Interfaces)"
+            RP[Relationship Port]
+            AP[Approval Port]
+            GP[Graph Port]
+        end
+        
+        subgraph "Adapters"
+            DA[Database Adapter]
+            AA[Auth Adapter]
+            MA[Member Adapter]
+        end
+        
+        RC --> RP
+        AC --> AP
+        RC --> GP
+        
+        RP --> DA
+        AP --> DA
+        RP --> MA
+        AC --> AA
     end
 ```
 
-### 1. Auth Module
+#### Complex Interaction Flow (Approval Process)
 
-  * **Responsibility**: User registration, login, session management, and decoding access tokens to provide user identity.
-  * **Key Interfaces**: `registerUser()`, `loginUser()`, `getCurrentUser()`, `decodeToken()`.
-  * **Dependencies**: None.
-
-### 2. Geographic Module
-
-  * **Responsibility**: Manages the `GeographicUnit` organizational tree.
-  * **Key Interfaces**: `getUnitById(id)`, `getUnitTree()`, `getDescendantUnits(unitId)`.
-  * **Dependencies**: None.
-
-### 3. Member Management Module
-
-  * **Responsibility**: Manages the business logic for `Member` and `Couple` entities, and manages `RoleAssignment` records to grant members roles like Supervisor or Delegate.
-  * **Key Interfaces**: `getMemberById(id)`, `listMembersByUnit(unitId)`, `createMember(data)`, `updateMember(id, data)`, `assignRoleToMember(memberId, roleId, scopeId)`, `getMemberRoles(memberId)`.
-  * **Dependencies**: Depends on `Auth` (for permissions) and `Geographic` (to validate scope).
-
-### 4. Relationship Module
-
-  * **Responsibility**: Manages the entire lifecycle of `Companionship` relationships and the `ApprovalProcess` workflow.
-  * **Key Interfaces**: `proposeCompanionship(data)`, `getApprovalProcess(companionshipId)`, `advanceApprovalStep(processId, decision)`, `getGraphDataForUnit(unitId)`.
-  * **Dependencies**: Depends on `Auth` and `Member Management` (which contains role info) to perform its complex rule validations.
-  * **Design Constraint**: For the MVP, the `ApprovalProcess` logic will be built as a distinct, isolated sub-component *within* this module, designed for easy extraction in the future if needed.
+```mermaid
+sequenceDiagram
+    participant UI as Frontend
+    participant R as Relationship Module
+    participant M as Member Module
+    participant A as Auth Module
+    participant DB as Database
+    
+    UI->>+R: proposeCompanionship(data)
+    R->>+M: validateMemberRoles(companionId, accompaniedId)
+    M->>+A: checkPermissions(userId, 'propose')
+    A-->>-M: authorized
+    M-->>-R: validation passed
+    
+    R->>+R: createApprovalWorkflow()
+    R->>+DB: INSERT Companionship, ApprovalProcess
+    DB-->>-R: records created
+    
+    loop For each approval step
+        R->>+M: findApproversByRole(requiredRole, scope)
+        M-->>-R: approver list
+        R->>UI: notifyApprovers(approvers)
+    end
+    
+    R-->>-UI: proposal submitted with workflow ID
+```
 
 -----
 
