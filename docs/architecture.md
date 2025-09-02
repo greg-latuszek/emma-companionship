@@ -2160,32 +2160,6 @@ For the POC, we rely on Vercel's built-in analytics and monitoring capabilities.
 
 -----
 
-## Security and Performance
-
-This section defines the specific, non-functional requirements that will ensure our application is safe, secure, and fast for our users.
-
-### Security Requirements
-
-  * **Authentication**: All sensitive data and actions will be protected behind our **Auth.js** implementation. Passwords will be securely hashed using a modern algorithm like Argon2.
-  * **Input Validation**: All data received by the backend API from any client **must** be validated using a schema library (like Zod) to prevent injection and data corruption attacks.
-  * **CORS Policy**: The Next.js backend will be configured with a strict Cross-Origin Resource Sharing (CORS) policy to only accept requests from our official frontend domain.
-  * **Secure Cookies**: Auth.js will be configured to use secure, HTTP-only, and same-site cookies for session management, preventing Cross-Site Scripting (XSS) attacks from stealing session tokens.
-  * **Content Security Policy (CSP)**: We will implement a strict CSP header to mitigate the risk of XSS attacks by defining which sources of content are permitted to be loaded.
-
-### Performance Optimization
-
-  * **Frontend Performance**:
-      * **Code Splitting**: We will leverage Next.js's automatic code splitting by page.
-      * **Server Components**: We will use Next.js App Router's Server Components by default to minimize the amount of JavaScript shipped to the client.
-      * **Data Caching**: We will use **TanStack Query** to intelligently cache data on the client, avoiding redundant API calls.
-  * **Backend Performance**:
-      * **Response Time Target**: The P95 (95th percentile) API response time for typical read operations should be **under 200ms**.
-      * **Database Optimization**: We will add database indexes to all foreign key columns and any other columns that are frequently used in query filters.
-  * **Infrastructure**:
-      * **CDN**: All static assets will be automatically served from Vercel's global Content Delivery Network (CDN).
-
------
-
 ## Coding Standards
 
 This section establishes a minimal set of high-impact rules that are mandatory for all developers, including AI agents, to enforce our architectural decisions.
@@ -2282,5 +2256,94 @@ This section defines the comprehensive testing approach for the emmaCompanionshi
   - Main branch: Full test suite + performance regression tests
 - **Performance Tests:** Jest-based performance tests for constraint validation algorithms, graph rendering with large datasets
 - **Security Tests:** Automated security testing for role-based access control, input validation, and data privacy compliance
+
+-----
+
+## Security
+
+This section defines MANDATORY security requirements for AI and human developers, focusing on implementation-specific rules that directly impact code generation and development patterns.
+
+### Input Validation
+
+- **Validation Library:** Zod for TypeScript schema validation
+- **Validation Location:** API boundary validation before any business logic processing
+- **Required Rules:**
+  - All external inputs MUST be validated using Zod schemas
+  - Validation at API boundary before processing
+  - Whitelist approach preferred over blacklist for input filtering
+  - Custom error messages for validation failures
+
+### Authentication & Authorization
+
+- **Auth Method:** Auth.js (NextAuth) with JWT tokens and secure session management
+- **Session Management:** Secure, HTTP-only, same-site cookies with configurable expiration
+- **Required Patterns:**
+  - Role-based access control (RBAC) with granular permissions for Province/Zone/International delegates
+  - Protected API routes with middleware-based authentication checks
+  - Automatic session refresh with sliding expiration
+  - Secure password hashing using Argon2 algorithm
+
+### Secrets Management
+
+- **Development:** Environment variables in `.env.local` files (never committed to version control)
+- **Production:** Vercel environment variables with encrypted storage
+- **Code Requirements:**
+  - NEVER hardcode secrets in source code
+  - Access via type-safe configuration service only
+  - No secrets in logs or error messages
+  - Rotate secrets regularly (API keys, database credentials)
+
+### API Security
+
+- **Rate Limiting:** Implement rate limiting per user/IP for API endpoints to prevent abuse
+- **CORS Policy:** Strict CORS configuration allowing only official frontend domain origins
+- **Security Headers:** Content Security Policy (CSP), X-Frame-Options, X-Content-Type-Options
+- **HTTPS Enforcement:** Force HTTPS in production with HSTS headers, reject HTTP connections
+
+### Data Protection
+
+- **Encryption at Rest:** Database encryption using Vercel Postgres built-in encryption
+- **Encryption in Transit:** TLS 1.3 for all API communications, encrypted database connections
+- **PII Handling:** Minimal PII collection, data anonymization for non-production environments
+- **Logging Restrictions:** Never log passwords, session tokens, or sensitive member data in application logs
+
+### Dependency Security
+
+- **Scanning Tool:** npm audit and Dependabot for vulnerability scanning
+- **Update Policy:** Security updates applied within 48 hours, regular dependency updates monthly
+- **Approval Process:** All new dependencies require security review and approval before integration
+
+### Security Testing
+
+- **SAST Tool:** ESLint security rules and SonarJS for static analysis
+- **DAST Tool:** Playwright security tests for authentication flows and input validation
+- **Penetration Testing:** Annual third-party security assessment for production system
+
+-----
+
+## Performance
+
+This section defines performance optimization requirements to ensure the application is fast and scalable for community users.
+
+### Frontend Performance
+
+- **Code Splitting:** Leverage Next.js automatic code splitting by page and dynamic imports for heavy components
+- **Server Components:** Use Next.js App Router Server Components by default to minimize client-side JavaScript
+- **Data Caching:** TanStack Query for intelligent client-side caching, avoiding redundant API calls
+- **Graph Optimization:** Progressive loading and virtualization for large relationship graphs
+
+### Backend Performance
+
+- **Response Time Target:** P95 (95th percentile) API response time under 200ms for typical read operations
+- **Database Optimization:** Indexes on all foreign key columns and frequently queried fields
+- **Connection Pooling:** Efficient database connection management for concurrent requests
+- **Query Optimization:** Optimized database queries with proper JOIN strategies and result pagination
+
+### Infrastructure Performance
+
+- **CDN:** Static assets served from Vercel's global Content Delivery Network
+- **Edge Computing:** Utilize Vercel Edge Functions for geographically distributed computation
+- **Caching Strategy:** Multi-layer caching (CDN, application-level, database query caching)
+- **Monitoring:** Performance monitoring with Core Web Vitals tracking and alerting
 
 -----
