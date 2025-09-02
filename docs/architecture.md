@@ -425,8 +425,6 @@ Based on our Modular Monolith architecture and Hexagonal patterns, the backend i
 - `assignRoleToMember(memberId, roleId, scopeId)` - Grant roles with geographic scope
 - `getMemberRoles(memberId)` - Retrieve all roles for a member
 - `validateMemberConstraints(member)` - Enforce business rules
-- `analyzeSpreadsheet(file)` - Parse spreadsheet and detect column headers for import mapping
-- `executeImport(file, mappings)` - Bulk import members from spreadsheet with field mappings
 
 **Dependencies:** 
 - Auth Module (for permission validation)
@@ -450,6 +448,8 @@ Based on our Modular Monolith architecture and Hexagonal patterns, the backend i
 - `getGraphDataForUnit(unitId)` - Generate visualization data for frontend
 - `evaluateMatchingConstraints(companionId, accompaniedId)` - Validate relationship rules
 - `getCompanionshipHealth(companionshipId)` - Assess relationship status
+- `analyzeDataImport(file)` - Parse spreadsheet and detect data structure for import mapping
+- `executeDataImport(file, mappings)` - Bulk import complete relational data (members + companionships) from spreadsheet
 
 **Dependencies:** 
 - Auth Module (for user identity and permissions)
@@ -667,34 +667,34 @@ sequenceDiagram
     FE-->>User: "2. File ready for analysis"
 
     User->>FE: "3. Clicks 'Analyze'"
-    FE->>API: "4. POST /api/members/import/analyze (file data)"
-    API->>Member: "5. analyzeSpreadsheet(file)"
-    Member-->>API: "Detected column headers"
+    FE->>API: "4. POST /api/data/import/analyze (file data)"
+    API->>Relationship: "5. analyzeDataImport(file)"
+    Relationship-->>API: "Detected data structure mappings"
     API-->>FE: "200 OK with column mappings"
     FE-->>User: "6. Display field mapping interface"
 
     User->>FE: "7. Defines mappings and clicks 'Import'"
-    FE->>API: "8. POST /api/members/import/execute (file + mappings)"
-    API->>Member: "9. executeImport(file, mappings)"
+    FE->>API: "8. POST /api/data/import/execute (file + mappings)"
+    API->>Relationship: "9. executeDataImport(file, mappings)"
     
-    Note over Member, DB: "Async processing:<br/>Validate each row,<br/>Build bulk transaction,<br/>Log errors"
+    Note over Relationship, DB: "Async processing:<br/>Validate each row,<br/>Build bulk transaction,<br/>Log errors"
     
-    Member->>DB: "10. BEGIN TRANSACTION"
-    Member->>DB: "11. Bulk INSERT valid members"
+    Relationship->>DB: "10. BEGIN TRANSACTION"
+    Relationship->>DB: "11. Bulk INSERT members & companionships"
     
     alt All valid
-        DB-->>Member: "All records inserted"
-        Member-->>API: "Success summary"
+        DB-->>Relationship: "All records inserted"
+        Relationship-->>API: "Success summary"
         API-->>FE: "200 OK with results"
         FE-->>User: "Success message"
     else Partial success
-        DB-->>Member: "Some records failed"
-        Member-->>API: "Partial success with error details"
+        DB-->>Relationship: "Some records failed"
+        Relationship-->>API: "Partial success with error details"
         API-->>FE: "207 Multi-Status"
         FE-->>User: "Summary with error report"
     else Complete failure
-        Member->>DB: "ROLLBACK"
-        Member-->>API: "Import failed"
+        Relationship->>DB: "ROLLBACK"
+        Relationship-->>API: "Import failed"
         API-->>FE: "400 Bad Request"
         FE-->>User: "Error message"
     end
@@ -1247,11 +1247,11 @@ paths:
                     items:
                       $ref: '#/components/schemas/Member'
 
-  /members/import/analyze:
+  /data/import/analyze:
     post:
       tags:
-        - Members
-      summary: Analyze spreadsheet for import mapping
+        - Data Import
+      summary: Analyze spreadsheet for complete data import mapping
       requestBody:
         required: true
         content:
@@ -1264,7 +1264,7 @@ paths:
                   format: binary
       responses:
         '200':
-          description: Detected column headers for mapping
+          description: Detected data structure and column headers for mapping
           content:
             application/json:
               schema:
@@ -1277,11 +1277,11 @@ paths:
                   suggestedMappings:
                     type: object
 
-  /members/import/execute:
+  /data/import/execute:
     post:
       tags:
-        - Members
-      summary: Execute bulk member import with field mappings
+        - Data Import
+      summary: Execute bulk data import (members + companionships) with field mappings
       requestBody:
         required: true
         content:
@@ -1296,7 +1296,7 @@ paths:
                   type: object
       responses:
         '200':
-          description: Import completed successfully
+          description: Data import (members + companionships) completed successfully
           content:
             application/json:
               schema:
