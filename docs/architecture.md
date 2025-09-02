@@ -2008,60 +2008,6 @@ The promotion flow ensures that:
 
 -----
 
-## Security and Performance
-
-This section defines the specific, non-functional requirements that will ensure our application is safe, secure, and fast for our users.
-
-### Security Requirements
-
-  * **Authentication**: All sensitive data and actions will be protected behind our **Auth.js** implementation. Passwords will be securely hashed using a modern algorithm like Argon2.
-  * **Input Validation**: All data received by the backend API from any client **must** be validated using a schema library (like Zod) to prevent injection and data corruption attacks.
-  * **CORS Policy**: The Next.js backend will be configured with a strict Cross-Origin Resource Sharing (CORS) policy to only accept requests from our official frontend domain.
-  * **Secure Cookies**: Auth.js will be configured to use secure, HTTP-only, and same-site cookies for session management, preventing Cross-Site Scripting (XSS) attacks from stealing session tokens.
-  * **Content Security Policy (CSP)**: We will implement a strict CSP header to mitigate the risk of XSS attacks by defining which sources of content are permitted to be loaded.
-
-### Performance Optimization
-
-  * **Frontend Performance**:
-      * **Code Splitting**: We will leverage Next.js's automatic code splitting by page.
-      * **Server Components**: We will use Next.js App Router's Server Components by default to minimize the amount of JavaScript shipped to the client.
-      * **Data Caching**: We will use **TanStack Query** to intelligently cache data on the client, avoiding redundant API calls.
-  * **Backend Performance**:
-      * **Response Time Target**: The P95 (95th percentile) API response time for typical read operations should be **under 200ms**.
-      * **Database Optimization**: We will add database indexes to all foreign key columns and any other columns that are frequently used in query filters.
-  * **Infrastructure**:
-      * **CDN**: All static assets will be automatically served from Vercel's global Content Delivery Network (CDN).
-
------
-
-## Coding Standards
-
-This section establishes a minimal set of high-impact rules that are mandatory for all developers, including AI agents, to enforce our architectural decisions.
-
-### Core Standards
-
-  * **Language**: The entire project will be written in **TypeScript (\~5.x)** with the `strict` flag enabled. The `any` type is forbidden.
-  * **Formatting**: We will use **Prettier** for all code formatting, enforced automatically by a pre-commit hook.
-  * **Linting**: We will use **ESLint** to catch potential bugs and enforce key architectural rules.
-
-### Critical Rules
-
-1.  **Enforced Module Boundaries**: Direct cross-module imports of internal, non-public components are strictly forbidden. Modules may only interact through their public API interfaces. An automated linting script will enforce this.
-2.  **State Management Discipline**: State management must be strictly separated. Use **Zustand** only for pure UI state. Use **TanStack Query** for all server state.
-3.  **Type-Safe Environment Variables**: Never access `process.env` directly in application code. All environment variables must be exposed through a dedicated, type-safe configuration module.
-4.  **Centralized API Error Handling**: All backend API handlers must use a centralized error handling middleware.
-
-### Naming Conventions
-
-| Element | Convention | Example |
-| :--- | :--- | :--- |
-| Component Files | PascalCase.tsx | `UserProfile.tsx` |
-| Hook Files | useCamelCase.ts | `useAuth.ts` |
-| API Route Files | kebab-case/route.ts | `app/api/user-profile/route.ts`|
-| Prisma Models | PascalCase | `model Member { ... }` |
-
------
-
 ## Error Handling Strategy
 
 This section defines our unified strategy for creating a robust and maintainable application.
@@ -2138,3 +2084,59 @@ For the POC, Vercel automatically collects and displays all server logs in its d
 
 For the POC, we will rely on the powerful, built-in analytics and monitoring provided by Vercel. 
 We will defer a custom observability stack (like Prometheus/Grafana) to a post-POC phase as a pragmatic choice to accelerate initial development.
+
+-----
+
+## Security and Performance
+
+This section defines the specific, non-functional requirements that will ensure our application is safe, secure, and fast for our users.
+
+### Security Requirements
+
+  * **Authentication**: All sensitive data and actions will be protected behind our **Auth.js** implementation. Passwords will be securely hashed using a modern algorithm like Argon2.
+  * **Input Validation**: All data received by the backend API from any client **must** be validated using a schema library (like Zod) to prevent injection and data corruption attacks.
+  * **CORS Policy**: The Next.js backend will be configured with a strict Cross-Origin Resource Sharing (CORS) policy to only accept requests from our official frontend domain.
+  * **Secure Cookies**: Auth.js will be configured to use secure, HTTP-only, and same-site cookies for session management, preventing Cross-Site Scripting (XSS) attacks from stealing session tokens.
+  * **Content Security Policy (CSP)**: We will implement a strict CSP header to mitigate the risk of XSS attacks by defining which sources of content are permitted to be loaded.
+
+### Performance Optimization
+
+  * **Frontend Performance**:
+      * **Code Splitting**: We will leverage Next.js's automatic code splitting by page.
+      * **Server Components**: We will use Next.js App Router's Server Components by default to minimize the amount of JavaScript shipped to the client.
+      * **Data Caching**: We will use **TanStack Query** to intelligently cache data on the client, avoiding redundant API calls.
+  * **Backend Performance**:
+      * **Response Time Target**: The P95 (95th percentile) API response time for typical read operations should be **under 200ms**.
+      * **Database Optimization**: We will add database indexes to all foreign key columns and any other columns that are frequently used in query filters.
+  * **Infrastructure**:
+      * **CDN**: All static assets will be automatically served from Vercel's global Content Delivery Network (CDN).
+
+-----
+
+## Coding Standards
+
+This section establishes a minimal set of high-impact rules that are mandatory for all developers, including AI agents, to enforce our architectural decisions.
+
+### Core Standards
+
+  * **Language**: The entire project will be written in **TypeScript (\~5.x)** with the `strict` flag enabled. The `any` type is forbidden.
+  * **Formatting**: We will use **Prettier** for all code formatting, enforced automatically by a pre-commit hook.
+  * **Linting**: We will use **ESLint** to catch potential bugs and enforce key architectural rules.
+
+### Critical Rules
+
+1.  **Enforced Module Boundaries**: Direct cross-module imports of internal, non-public components are strictly forbidden. Modules may only interact through their public API interfaces. An automated linting script will enforce this.
+2.  **State Management Discipline**: State management must be strictly separated. Use **Zustand** only for pure UI state. Use **TanStack Query** for all server state.
+3.  **Type-Safe Environment Variables**: Never access `process.env` directly in application code. All environment variables must be exposed through a dedicated, type-safe configuration module.
+4.  **Centralized API Error Handling**: All backend API handlers must use a centralized error handling middleware.
+
+### Naming Conventions
+
+| Element | Convention | Example |
+| :--- | :--- | :--- |
+| Component Files | PascalCase.tsx | `UserProfile.tsx` |
+| Hook Files | useCamelCase.ts | `useAuth.ts` |
+| API Route Files | kebab-case/route.ts | `app/api/user-profile/route.ts`|
+| Prisma Models | PascalCase | `model Member { ... }` |
+
+-----
