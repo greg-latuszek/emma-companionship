@@ -941,7 +941,7 @@ components:
             - code
             - message
             - timestamp
-            - requestId
+            - correlationId
           properties:
             code:
               type: string
@@ -954,7 +954,7 @@ components:
             timestamp:
               type: string
               format: date-time
-            requestId:
+            correlationId:
               type: string
               format: uuid
 
@@ -2010,45 +2010,31 @@ The promotion flow ensures that:
 
 ## Error Handling Strategy
 
-This section defines our unified strategy for creating a robust and maintainable application.
+This section defines our comprehensive error handling approach, guiding both AI and human developers in consistent error management across the entire application stack.
 
-### Error Handling
+### General Approach
 
-We will use a centralized middleware in the backend to catch specific, thrown errors and format them into a standard `ApiError` JSON response for the frontend. 
-Within our modules, `try/catch` blocks will be used to handle recoverable errors (like retries) internally without exposing them to the user.
+- **Error Model:** Centralized error middleware with standardized ApiError JSON contract for consistent frontend-backend communication
+- **Exception Hierarchy:** Three-tier hierarchy: System Errors (500), Business Logic Errors (400-series), and External API Errors (502/503/504) with custom exception classes inheriting from base Error types
+- **Error Propagation:** Errors bubble up from business logic modules → centralized middleware → formatted API responses → frontend global error handlers → user notifications
 
-#### API Error Contract
-All errors returned from our backend API will adhere to a consistent JSON structure. This provides a predictable contract for the frontend.
+#### Standardized Error Contract
+
+All errors returned from our backend API adhere to this consistent JSON structure:
 
 ```typescript
-TypeScript Interface:
 interface ApiError {
   error: {
-    code: string; // A machine-readable error code, e.g., 'VALIDATION_FAILED'
-    message: string; // A user-friendly message for display
-    details?: Record<string, any>; // e.g., A list of invalid form fields
-    timestamp: string; // The ISO 8601 timestamp of the error
-    requestId: string; // A unique ID for tracing this request through logs
+    code: string; // Machine-readable error code, e.g., 'VALIDATION_FAILED'
+    message: string; // User-friendly message for display
+    details?: Record<string, any>; // Additional context, e.g., invalid form fields
+    timestamp: string; // ISO 8601 timestamp of the error
+    correlationId: string; // Unique ID for tracing this request through logs
   };
 }
 ```
 
-#### Backend Error Handling
-We will use a centralized error-handling middleware in our Next.js backend.
-
-1. Our business logic in the modules will throw specific, custom errors (e.g., NotFoundError, ValidationError).
-2. The middleware will catch these errors.
-3. It will then format the error into the standard ApiError JSON structure and send the appropriate HTTP status code (e.g., 404, 400).
-   This keeps our business logic clean and enforces the API contract.
-
-#### Frontend Error Handling
-Our frontend API client (using TanStack Query) will have a global error handler.
-
-1. When an API call fails, this handler will parse the ApiError JSON from the response.
-2. The error.message can be displayed directly to the user in a notification (e.g., a "toast").
-3. The error.details can be used to provide more specific feedback, such as highlighting which form fields are invalid.
-
-#### Error Flow Diagram
+#### End-to-End Error Flow
 
 ```mermaid
 sequenceDiagram
@@ -2065,25 +2051,112 @@ sequenceDiagram
     FE-->>FE: Displays user-friendly toast notification
 ```
 
-### Logging
+### Logging Standards
 
-Logging is intimately tied to error handling. It's the developer's side of the coin.
+- **Library:** Built-in Node.js console with JSON structured logging for Vercel integration
+- **Format:** JSON structured logs with consistent schema for machine parsing and correlation
+- **Levels:** ERROR (unrecoverable failures), WARN (handled errors), INFO (request flows), DEBUG (detailed tracing for development)
+- **Required Context:**
+  - Correlation ID: UUID v4 format (e.g., `550e8400-e29b-41d4-a716-446655440000`) for request tracing
+  - Service Context: Module name, function name, and operation type for component identification
+  - User Context: Sanitized user identifier (no PII) and session context with automatic PII redaction
 
-Our strategy will be:
+#### Logging Implementation Strategy
 
-- When our central error middleware catches an unrecoverable error, 
-  it will log the full, detailed error (including the stack trace) on the server before sending the user-friendly ApiError to the client.
-- Crucially, every log entry will include the unique requestId. 
-  This allows us to connect a generic error message a user sees on their screen directly to the detailed technical log on our backend for instant troubleshooting.
-- **We will add a critical rule:** The logger must be configured to automatically redact sensitive PII (Personally Identifiable Information) 
-  to ensure we never store user emails, phone numbers, etc., in plain text logs.
+```typescript
+// Enhanced logging with correlation context
+class Logger {
+  constructor(private correlationId: string, private service: string) {}
+  
+  error(message: string, error?: Error, context?: object) {
+    console.error(JSON.stringify({
+      level: 'ERROR',
+      timestamp: new Date().toISOString(),
+      correlationId: this.correlationId,
+      service: this.service,
+      message,
+      error: error?.message,
+      stack: error?.stack,
+      ...this.sanitizeContext(context)
+    }));
+  }
+  
+  private sanitizeContext(context: object): object {
+    // Automatically redact PII fields (email, phone, etc.)
+    return context; // Implementation details for PII redaction
+  }
+}
+```
 
-For the POC, Vercel automatically collects and displays all server logs in its dashboard, which is sufficient for our initial needs.
+- **POC Approach**: Leverage Vercel's built-in log aggregation and dashboard for immediate development needs
+- **Critical Rule**: All logs must automatically redact sensitive PII to ensure privacy compliance (never store user emails, phone numbers, etc., in plain text logs.)
+
+### Error Handling Patterns
+
+#### Centralized Middleware at Backend
+
+We will use a centralized middleware in the backend to catch specific, thrown errors and format them into a standard `ApiError` JSON response for the frontend. 
+
+#### Recover whenever possible
+
+Within our modules, `try/catch` blocks will be used to handle recoverable errors (like retries) internally without exposing them to the user.
+
+#### External API Errors
+
+- **Retry Policy:** Exponential backoff with 3 attempts for 5xx errors, no retry for 4xx client errors
+- **Circuit Breaker:** Not implemented for POC (defer to post-POC phase due to minimal external API dependencies)
+- **Timeout Configuration:** 30-second timeout for all external HTTP requests with graceful degradation
+- **Error Translation:** Map external API errors to internal error codes (e.g., external 401 → internal `EXTERNAL_AUTH_FAILED`)
+
+#### Business Logic Errors
+
+- **Custom Exceptions:** Structured hierarchy with `ValidationError`, `NotFoundError`, `BusinessRuleError`, `PermissionError` extending base `AppError` class
+- **User-Facing Errors:** All business errors include user-friendly messages suitable for direct display in UI notifications
+- **Error Codes:** Hierarchical system with prefixes - `VALIDATION_*`, `NOT_FOUND_*`, `PERMISSION_*`, `BUSINESS_*` for consistent categorization
+
+```typescript
+// Example custom exception hierarchy
+class AppError extends Error {
+  constructor(
+    public code: string,
+    public userMessage: string,
+    public statusCode: number,
+    public details?: object
+  ) {
+    super(userMessage);
+  }
+}
+
+class ValidationError extends AppError {
+  constructor(message: string, fieldErrors: object) {
+    super('VALIDATION_FAILED', message, 400, fieldErrors);
+  }
+}
+
+class NotFoundError extends AppError {
+  constructor(resource: string, id: string) {
+    super('NOT_FOUND', `${resource} not found`, 404, { resource, id });
+  }
+}
+```
+
+#### Data Consistency
+
+- **Transaction Strategy:** Database transactions for multi-table operations with automatic rollback on errors, using Prisma's transaction API
+- **Compensation Logic:** Saga pattern for approval workflows - each step includes compensating actions for rollback scenarios
+- **Idempotency:** All state-changing API endpoints support idempotency keys to prevent duplicate operations during retries
+
+### Implementation Flow
+
+1. **Business Logic**: Modules throw specific custom errors with correlation context
+2. **Centralized Middleware**: Catches all errors, logs with full context, formats to ApiError JSON
+3. **Frontend Global Handler**: TanStack Query error handling parses ApiError and displays user notifications
+4. **Error Recovery**: Automatic retry for transient errors, manual retry options for user-recoverable errors
+5. **Observability**: Correlation IDs enable instant request tracing from user error reports to server logs
 
 ### Monitoring & Observability
 
-For the POC, we will rely on the powerful, built-in analytics and monitoring provided by Vercel. 
-We will defer a custom observability stack (like Prometheus/Grafana) to a post-POC phase as a pragmatic choice to accelerate initial development.
+For the POC, we rely on Vercel's built-in analytics and monitoring capabilities. Post-POC expansion will include custom observability stack (Prometheus/Grafana) with detailed error rate tracking, response time monitoring, and alert management.
 
 -----
 
