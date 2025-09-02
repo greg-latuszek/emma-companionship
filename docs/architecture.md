@@ -2221,3 +2221,66 @@ This section establishes a minimal set of high-impact rules that are mandatory f
 - **Utility Types:** Prefer built-in utility types (`Pick`, `Omit`, `Partial`) over manual type construction where applicable.
 
 -----
+
+## Test Strategy and Standards
+
+This section defines the comprehensive testing approach for the emmaCompanionship project, providing detailed guidance for QA agents and team reference. All testing practices must align with our TDD methodology and architectural decisions.
+
+### Testing Philosophy
+
+- **Approach:** Test-Driven Development (TDD) - Write tests before implementation code. Follow Red-Green-Refactor cycle for all new features.
+- **Coverage Goals:** Minimum 90% code coverage for business logic modules, 80% overall project coverage, 100% coverage for critical companionship constraint validation.
+- **Test Pyramid:** 70% Unit Tests, 20% Integration Tests, 10% End-to-End Tests - emphasizing fast, isolated unit tests with selective integration and E2E coverage.
+
+### Test Types and Organization
+
+#### Unit Tests
+
+- **Framework:** Jest ~29.x with TypeScript support
+- **File Convention:** `.test.ts` for logic, `.test.tsx` for components, co-located with source files
+- **Location:** Adjacent to source files (e.g., `Member.ts` → `Member.test.ts`)
+- **Mocking Library:** Jest built-in mocking with MSW for API mocking
+- **Coverage Requirement:** 90% for business logic modules (auth, member, relationship, geo modules)
+
+**AI Agent Requirements:**
+- Generate tests for all public methods using TDD approach
+- Cover edge cases and error conditions (constraint violations, boundary conditions)
+- Follow AAA pattern (Arrange, Act, Assert) consistently
+- Mock all external dependencies (database, APIs, file system)
+- Test companionship constraint validation exhaustively
+- Generate property-based tests for complex business rules
+
+#### Integration Tests
+
+- **Scope:** Module-to-module interactions, database operations, API endpoint integration
+- **Location:** `tests/integration/` directory with module-specific subdirectories
+- **Test Infrastructure:**
+  - **Database:** Testcontainers PostgreSQL for realistic database testing
+  - **File System:** Temporary directories for CSV/Excel import testing
+  - **External APIs:** Mock Service Worker (MSW) for API stubbing
+  - **Authentication:** Test user fixtures with role-based access scenarios
+
+#### End-to-End Tests
+
+- **Framework:** Playwright ~1.x with TypeScript
+- **Scope:** Critical user journeys - companionship assignment workflow, data import, health monitoring dashboards
+- **Environment:** Dedicated E2E test environment with staging database
+- **Test Data:** Seeded test database with realistic community structure and relationships
+
+### Test Data Management
+
+- **Strategy:** Factory pattern with realistic but anonymized test data generation
+- **Fixtures:** Static test data in `tests/fixtures/` organized by domain (members, relationships, geographic-units)
+- **Factories:** Dynamic test data generation using libraries like Faker.js for member attributes, custom factories for relationship constraints
+- **Cleanup:** Automatic database cleanup after each test using transaction rollback for unit tests, full database reset for integration tests
+
+### Continuous Testing
+
+- **CI Integration:** 
+  - Pre-commit: Unit tests and linting
+  - Pull Request: Full test suite (unit + integration + E2E)
+  - Main branch: Full test suite + performance regression tests
+- **Performance Tests:** Jest-based performance tests for constraint validation algorithms, graph rendering with large datasets
+- **Security Tests:** Automated security testing for role-based access control, input validation, and data privacy compliance
+
+-----
