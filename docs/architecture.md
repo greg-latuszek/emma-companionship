@@ -22,11 +22,6 @@ After evaluating available starter templates against our architectural requireme
 - ❌ **Missing**: Hexagonal Architecture, our specific tech stack (Prisma, Auth.js)
 - **Assessment**: Strong monorepo tooling but different from our chosen stack
 
-**4. Bullet Train (Ruby/Rails)**
-- ✅ **Matches**: Modular architecture concepts
-- ❌ **Missing**: Completely different technology stack (Ruby vs TypeScript)
-- **Assessment**: Architectural inspiration only, not usable
-
 #### **Decision: Hybrid Approach**
 
 **Selected Foundation**: **Vercel Turborepo Example** + **T3 Stack Patterns**
