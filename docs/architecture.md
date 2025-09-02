@@ -46,6 +46,12 @@ After evaluating available starter templates against our architectural requireme
 
 This hybrid approach balances rapid initial setup with our specific architectural requirements.
 
+### Change Log
+
+| Date | Version | Description | Author                        |
+| :--- | :--- | :--- |:------------------------------|
+| 2024-12-19 | 1.0.0 | Initial Architecture | Grzegorz Latuszek (Architect) |
+
 -----
 
 ## High Level Architecture
