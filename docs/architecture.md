@@ -311,7 +311,9 @@ interface RoleAssignment {
 - ApprovalProcess.status: Workflow state - Overall approval status
 - ApprovalStep.approverRole: Authority type - Who needs to approve at this step
 - ApprovalStep.status: Step state - Individual approval decision status
-- ApprovalStep.decisionDate: Decision timestamp - When approval/rejection occurred
+- ApprovalStep.approvalDate: Decision timestamp - When approval/rejection occurred
+- ApprovalStep.approvedBy: Decision maker - Member who made the approval/rejection decision
+- ApprovalStep.comments: Decision notes - Optional comments explaining the approval/rejection
 
 **Relationships**:
 - Companionship Pairing: Links Members/Couples in mentor-mentee relationships
@@ -345,7 +347,9 @@ interface ApprovalProcess {
 interface ApprovalStep {
   approverRole: 'province_head' | 'country_head' | 'zone_delegate' | 'zone_delegate_for_priests' | 'zone_delegate_for_consecrated_sisters' | 'zone_companionship_delegate' | 'international_companionship_delegate' | 'general_moderator' | 'companion' | 'accompanied';
   status: 'pending' | 'approved' | 'rejected';
-  decisionDate?: Date;
+  approvalDate?: Date;
+  approvedBy?: UUID;
+  comments?: string;
 }
 ```
 
@@ -1673,8 +1677,8 @@ CREATE TABLE approval_steps (
         'general_moderator', 'companion', 'accompanied'
     )),
     status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
-    decision_date TIMESTAMP WITH TIME ZONE,
-    decided_by UUID REFERENCES members(id),
+    approval_date TIMESTAMP WITH TIME ZONE,
+    approved_by UUID REFERENCES members(id),
     comments TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     
@@ -1685,7 +1689,7 @@ CREATE TABLE approval_steps (
 CREATE INDEX idx_approval_steps_process_id ON approval_steps(approval_process_id);
 CREATE INDEX idx_approval_steps_status ON approval_steps(status);
 CREATE INDEX idx_approval_steps_approver_role ON approval_steps(approver_role);
-CREATE INDEX idx_approval_steps_decided_by ON approval_steps(decided_by);
+CREATE INDEX idx_approval_steps_approved_by ON approval_steps(approved_by);
 
 -- ====================================
 -- Audit and History Schema
