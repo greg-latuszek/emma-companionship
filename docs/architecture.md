@@ -2192,16 +2192,9 @@ This section establishes a minimal set of high-impact rules that are mandatory f
 
 ### Core Standards
 
-  * **Language**: The entire project will be written in **TypeScript (\~5.x)** with the `strict` flag enabled. The `any` type is forbidden.
-  * **Formatting**: We will use **Prettier** for all code formatting, enforced automatically by a pre-commit hook.
-  * **Linting**: We will use **ESLint** to catch potential bugs and enforce key architectural rules.
-
-### Critical Rules
-
-1.  **Enforced Module Boundaries**: Direct cross-module imports of internal, non-public components are strictly forbidden. Modules may only interact through their public API interfaces. An automated linting script will enforce this.
-2.  **State Management Discipline**: State management must be strictly separated. Use **Zustand** only for pure UI state. Use **TanStack Query** for all server state.
-3.  **Type-Safe Environment Variables**: Never access `process.env` directly in application code. All environment variables must be exposed through a dedicated, type-safe configuration module.
-4.  **Centralized API Error Handling**: All backend API handlers must use a centralized error handling middleware.
+- **Languages & Runtimes:** TypeScript (~5.x) with `strict` flag enabled. The `any` type is forbidden. Node.js (~20.x LTS).
+- **Style & Linting:** Prettier for code formatting enforced by pre-commit hooks. ESLint with architectural rules enforcement.
+- **Test Organization:** Test files use `.test.ts/.test.tsx` suffix, co-located with source files. Fixtures in `__tests__/fixtures/` directories.
 
 ### Naming Conventions
 
@@ -2211,5 +2204,20 @@ This section establishes a minimal set of high-impact rules that are mandatory f
 | Hook Files | useCamelCase.ts | `useAuth.ts` |
 | API Route Files | kebab-case/route.ts | `app/api/user-profile/route.ts`|
 | Prisma Models | PascalCase | `model Member { ... }` |
+
+### Critical Rules
+
+- **Enforced Module Boundaries:** Direct cross-module imports of internal, non-public components are strictly forbidden. Modules may only interact through their public API interfaces. An automated linting script will enforce this.
+- **State Management Discipline:** State management must be strictly separated. Use Zustand only for pure UI state. Use TanStack Query for all server state.
+- **Type-Safe Environment Variables:** Never access `process.env` directly in application code. All environment variables must be exposed through a dedicated, type-safe configuration module.
+- **Centralized API Error Handling:** All backend API handlers must use a centralized error handling middleware.
+
+### Language-Specific Guidelines
+
+#### TypeScript Specifics
+
+- **Strict Type Safety:** All function parameters and return types must be explicitly typed. No implicit `any` allowed.
+- **Module Declaration:** Use `export type` for type-only exports to enable proper tree-shaking.
+- **Utility Types:** Prefer built-in utility types (`Pick`, `Omit`, `Partial`) over manual type construction where applicable.
 
 -----
