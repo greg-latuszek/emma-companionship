@@ -1627,6 +1627,7 @@ CREATE TABLE companionships (
     accompanied_type VARCHAR(10) NOT NULL CHECK (accompanied_type IN ('member', 'couple')),
     status VARCHAR(20) NOT NULL DEFAULT 'proposed' CHECK (status IN ('proposed', 'active', 'archived')),
     health_status VARCHAR(10) CHECK (health_status IN ('green', 'yellow', 'red', 'gray')),
+    health_status_updated_at TIMESTAMP WITH TIME ZONE,  -- When the health status was last changed
     start_date DATE NOT NULL DEFAULT CURRENT_DATE,
     end_date DATE,
     notes TEXT,
