@@ -133,3 +133,24 @@
       * **Negative**: This increases the complexity of both the backend business logic and the frontend component that must render the two distinct lists.
 
 -----
+
+### **ADR-011: Authentication Strategy - Phased Implementation**
+
+* **Status**: Accepted
+* **Context**: The application requires user authentication for community delegates to access the system. A complete email/password authentication system typically needs email verification during registration and password reset functionality for forgotten passwords, which would require integrating an external email service (Resend, SendGrid, etc.). We evaluated three approaches: (1) Full email/password with email service integration, (2) Simplified email/password with manual admin verification for POC, and (3) OAuth-first approach bypassing email infrastructure entirely. Given POC timeline constraints and the goal to minimize external dependencies, we needed to choose an approach that balances rapid development with a clear path to production-ready authentication.
+* **Decision**: We will implement a **phased authentication strategy**:
+    1. **POC Phase**: Simplified email/password authentication with **manual admin verification**. User accounts are created with unverified status and require admin approval/activation. No email verification or password reset functionality during POC.
+    2. **Post-POC Phase 2**: Migration to **OAuth-first authentication** using Auth.js built-in OAuth providers (Google, Microsoft) to eliminate the need for email service integration while providing better security and user experience.
+* **Consequences**:
+    * **Positive**:
+        * **POC Speed**: Eliminates email service integration complexity, allowing faster POC delivery and validation of core business logic.
+        * **Zero External Dependencies**: No third-party email service costs or setup required during POC phase.
+        * **Clear Migration Path**: Auth.js v5.x natively supports OAuth providers, making Phase 2 transition straightforward with minimal architecture changes.
+        * **Better Long-term Security**: OAuth eliminates password storage risks and provides enterprise-grade authentication through established providers.
+        * **User Experience**: Post-POC users authenticate with existing corporate/personal accounts they already trust.
+    * **Negative**:
+        * **POC Manual Overhead**: Admin manual verification creates operational burden during POC phase.
+        * **Limited POC Usability**: Users cannot reset passwords independently, requiring admin intervention for account issues.
+        * **Temporary Architecture**: POC authentication workflows will be replaced rather than evolved, requiring code changes during Phase 2 migration.
+
+-----

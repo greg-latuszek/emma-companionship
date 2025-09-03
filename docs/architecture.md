@@ -70,6 +70,7 @@ Based on the PRD's Technical Assumptions, the system adopts a **Modular Monolith
 - [ADR-008: ApprovalProcess Logic Placement](adr.md#adr-008-approvalprocess-logic-placement) - Approval workflow component organization
 - [ADR-009: Decoupled Role and Scope Management](adr.md#adr-009-decoupled-role-and-scope-management) - Flexible role assignment architecture
 - [ADR-010: Candidate Search with Hard and Soft Constraints](adr.md#adr-010-candidate-search-with-hard-and-soft-constraints) - Constraint-based matching algorithm design
+- [ADR-011: Authentication Strategy - Phased Implementation](adr.md#adr-011-authentication-strategy---phased-implementation) - POC manual verification with post-POC OAuth migration
 
 #### Platform and Infrastructure Choice
 
