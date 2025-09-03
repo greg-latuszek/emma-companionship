@@ -72,7 +72,7 @@ Based on the PRD's Technical Assumptions, the system adopts a **Modular Monolith
 - [ADR-010: Candidate Search with Hard and Soft Constraints](adr.md#adr-010-candidate-search-with-hard-and-soft-constraints) - Constraint-based matching algorithm design
 - [ADR-011: Authentication Strategy - Phased Implementation](adr.md#adr-011-authentication-strategy---phased-implementation) - POC manual verification with post-POC OAuth migration
 
-#### Platform and Infrastructure Choice
+### Platform and Infrastructure Choice
 
   * **Platform**: The application is a self-contained, full-stack Next.js application. For the initial POC, it will be hosted on **Vercel's Hobby tier**.
   * **Database**: We will use **Vercel Postgres**, also on the Hobby tier.
