@@ -782,6 +782,105 @@ sequenceDiagram
     end
 ```
 
+### Supervision Role Assignment Workflow
+**PRD Reference:** Story 2.3 - Automate Supervision Relationship Management
+
+This workflow demonstrates how Community Delegates (CD) assign supervisory roles to members, which automatically establishes supervision relationships through geographic hierarchy.
+
+```mermaid
+sequenceDiagram
+    actor User as Community Delegate
+    participant FE as "Frontend (Next.js)"
+    participant API as "Backend API (Next.js)"
+    participant Member as "Member Module"
+    participant Geo as "Geographic Module"
+    participant DB as "PostgreSQL Database"
+
+    User->>FE: "1. Opens supervision assignment form"
+    
+    par Load available roles and units
+        FE->>API: "2a. GET /api/roles?level=supervisor"
+        API->>DB: "3a. Query supervisor roles"
+        DB-->>API: "Available roles"
+        API-->>FE: "Supervisor role options"
+    and
+        FE->>API: "2b. GET /api/geographic-units"
+        API->>Geo: "3b. getGeographicUnits()"
+        Geo->>DB: "4b. Query units"
+        DB-->>Geo: "Unit hierarchy"
+        Geo-->>API: "Geographic unit tree"
+        API-->>FE: "Unit selection options"
+    end
+    
+    FE-->>User: "Display role and unit selection"
+    User->>FE: "4. Selects unit and confirms assignment"
+    FE->>API: "5. POST /api/role-assignments"
+    
+    API->>Member: "6. assignSupervisorRole(memberId, unitId)"
+    Member->>DB: "7. BEGIN TRANSACTION"
+    
+    par Create role assignment
+        Member->>DB: "8a. INSERT INTO role_assignments"
+    and Validate geographic scope
+        Member->>Geo: "8b. validateUnitScope(unitId)"
+        Geo->>DB: "9b. Check unit hierarchy"
+        DB-->>Geo: "Validation result"
+    end
+    
+    Member->>DB: "10. COMMIT"
+    
+    Note over API: "Supervision relationships now\nimplicitly defined through\nrole and geographic scope"
+    
+    API-->>FE: "201 Created"
+    FE-->>User: "Supervision role assigned"
+```
+
+Note: Supervision relationships are implicit through the `RoleAssignment` and `GeographicUnit` models. When a member is assigned a supervisory role for a geographic unit:
+1. They automatically supervise all members whose `geographicUnitId` belongs to their assigned unit's hierarchy
+2. No explicit supervision relationship records are needed
+3. The system can determine supervision relationships by querying roles and geographic hierarchy
+
+### Initial Graph View Implementation Workflow
+**PRD Reference:** Story 2.4 - V1 Graph View for All Relationships
+
+This workflow shows how the system builds and renders the initial view-only graph visualization of both companionship and supervision relationships.
+
+```mermaid
+sequenceDiagram
+    actor User as Delegate
+    participant FE as "Frontend (Next.js)"
+    participant API as "Backend API (Next.js)"
+    participant Relationship as "Relationship Module"
+    participant Member as "Member Module"
+    participant DB as "PostgreSQL Database"
+
+    User->>FE: "1. Opens graph view page"
+    FE->>API: "2. GET /api/graph/{unitId}"
+    
+    par Fetch relationships
+        API->>Relationship: "3a. getCompanionshipRelations(unitId)"
+        Relationship->>DB: "4a. Query companionships"
+        DB-->>Relationship: "Active companionships"
+        Relationship-->>API: "Companionship edges"
+    and Fetch supervision structure
+        API->>Relationship: "3b. getSupervisionRelations(unitId)"
+        Relationship->>DB: "4b. Query supervision"
+        DB-->>Relationship: "Supervision hierarchy"
+        Relationship-->>API: "Supervision edges"
+    and Fetch member data
+        API->>Member: "3c. getMembersInUnit(unitId)"
+        Member->>DB: "4c. Query members"
+        DB-->>Member: "Member details"
+        Member-->>API: "Node data"
+    end
+    
+    Note over API: "5. Build graph structure\nwith distinct visual styles\nfor each relationship type"
+    
+    API-->>FE: "6. Complete graph data"
+    FE->>FE: "7. Render view-only graph\nwith React Flow"
+    FE-->>User: "Display graph visualization"
+```
+
 ### Health Status Tracking Workflow
 **PRD Reference:** Story 4.1 - Track and Display Relationship Health
 
