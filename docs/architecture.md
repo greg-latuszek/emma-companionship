@@ -1538,6 +1538,7 @@ CREATE TABLE members (
     
     -- Optional contact and personal information
     email VARCHAR(255) UNIQUE,
+    password_hash VARCHAR(255) NOT NULL, -- Argon2 hashed password
     phone VARCHAR(50),
     date_of_birth DATE,
     image_url TEXT,
