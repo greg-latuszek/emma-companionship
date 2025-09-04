@@ -2360,6 +2360,240 @@ sequenceDiagram
 
 -----
 
+## Frontend Architecture
+
+This section defines frontend-specific architecture details for our Next.js application, including component organization, state management, routing patterns, and service layer integration.
+
+### Component Architecture
+
+Our component architecture follows Next.js App Router conventions with clear separation between Server and Client Components, organized by feature domain and complexity levels for maximum maintainability and developer experience.
+
+#### Component Organization
+
+```
+apps/web/src/
+├── app/                          # Next.js App Router pages
+│   ├── layout.tsx               # Root layout (Server Component)
+│   ├── page.tsx                 # Home page (Server Component)
+│   ├── (auth)/                  # Route groups for auth pages
+│   │   ├── login/page.tsx       # Login page (Client Component)
+│   │   └── layout.tsx           # Auth layout (Server Component)
+│   ├── dashboard/
+│   │   ├── page.tsx             # Dashboard (Server Component)
+│   │   └── loading.tsx          # Loading UI (Server Component)
+│   ├── members/
+│   │   ├── page.tsx             # Member list (Server Component)
+│   │   ├── [id]/page.tsx        # Member detail (Server Component)
+│   │   ├── [id]/edit/page.tsx   # Member edit (Client Component)
+│   │   └── create/page.tsx      # Member creation (Client Component)
+│   └── graph/
+│       ├── page.tsx             # Graph view (Client Component)
+│       └── error.tsx            # Error boundary (Client Component)
+│
+├── components/                   # Reusable components
+│   ├── ui/                      # Basic UI primitives (shadcn/ui)
+│   │   ├── button.tsx           # Base Button component
+│   │   ├── input.tsx            # Base Input component
+│   │   ├── card.tsx             # Base Card component
+│   │   ├── dialog.tsx           # Modal dialog component
+│   │   ├── toast.tsx            # Toast notification component
+│   │   └── index.ts             # Barrel exports
+│   │
+│   ├── forms/                   # Complex form components
+│   │   ├── MemberForm.tsx       # Member CRUD form (Client Component)
+│   │   ├── CompanionshipForm.tsx # Companionship form (Client Component)
+│   │   ├── RoleAssignmentForm.tsx # Role assignment (Client Component)
+│   │   └── ImportWizard.tsx     # Data import wizard (Client Component)
+│   │
+│   ├── graph/                   # Graph visualization components
+│   │   ├── GraphContainer.tsx   # Main graph wrapper (Client Component)
+│   │   ├── NodeRenderer.tsx     # Custom node components
+│   │   ├── EdgeRenderer.tsx     # Custom edge components
+│   │   ├── FilterPanel.tsx      # Graph filtering UI
+│   │   ├── GraphMinimap.tsx     # Navigation minimap
+│   │   └── ExportButton.tsx     # Graph export functionality
+│   │
+│   ├── dashboard/               # Dashboard-specific components
+│   │   ├── MemberOverview.tsx   # Member statistics card
+│   │   ├── HealthStatusCards.tsx # Health status overview
+│   │   ├── QuickActions.tsx     # Common action buttons
+│   │   ├── RecentActivity.tsx   # Activity feed
+│   │   └── SearchBar.tsx        # Global search component
+│   │
+│   ├── layout/                  # Layout components
+│   │   ├── Navigation.tsx       # Main navigation (Client Component)
+│   │   ├── Sidebar.tsx          # Collapsible sidebar
+│   │   ├── Header.tsx           # Page header with user menu
+│   │   ├── Footer.tsx           # Application footer
+│   │   └── BreadcrumbNav.tsx    # Breadcrumb navigation
+│   │
+│   └── providers/               # Context providers
+│       ├── AuthProvider.tsx     # Authentication context
+│       ├── ThemeProvider.tsx    # Dark/light theme context
+│       ├── QueryProvider.tsx    # TanStack Query provider
+│       ├── ToastProvider.tsx    # Toast notification provider
+│       └── PermissionProvider.tsx # Role-based access control
+```
+
+**Organization Principles:**
+
+1. **Server-First Approach:** Default to Server Components for better performance and SEO
+2. **Client Boundaries:** Mark Client Components only when interactivity is required
+3. **Feature-Based Grouping:** Organize components by business domain
+4. **Complexity Separation:** Basic UI → Complex Forms → Feature-Specific
+5. **Composition Over Inheritance:** Small, composable components
+
+#### Component Template
+
+```typescript
+// Example: Complex form component with full patterns
+'use client';
+
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { CreateMemberRequest, CreateMemberRequestSchema } from '@/packages/shared-types';
+import { memberService } from '@/lib/api/memberService';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from '@/components/ui/toast';
+
+interface MemberFormProps {
+  initialData?: Partial<CreateMemberRequest>;
+  onSuccess?: (member: Member) => void;
+  onCancel?: () => void;
+}
+
+export function MemberForm({ initialData, onSuccess, onCancel }: MemberFormProps) {
+  const queryClient = useQueryClient();
+  
+  // Form state management with validation
+  const form = useForm<CreateMemberRequest>({
+    resolver: zodResolver(CreateMemberRequestSchema),
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      gender: 'male',
+      ...initialData,
+    },
+  });
+
+  // Server state mutation with optimistic updates
+  const createMember = useMutation({
+    mutationFn: memberService.createMember,
+    onMutate: async (newMember) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['members'] });
+      
+      // Optimistic update
+      const previousMembers = queryClient.getQueryData(['members']);
+      queryClient.setQueryData(['members'], (old: Member[] = []) => [
+        ...old,
+        { ...newMember, id: 'temp-' + Date.now() }
+      ]);
+      
+      return { previousMembers };
+    },
+    onError: (err, newMember, context) => {
+      // Rollback optimistic update
+      queryClient.setQueryData(['members'], context?.previousMembers);
+      toast.error('Failed to create member: ' + err.message);
+    },
+    onSuccess: (member) => {
+      // Invalidate and refetch
+      queryClient.invalidateQueries({ queryKey: ['members'] });
+      toast.success('Member created successfully');
+      onSuccess?.(member);
+      form.reset();
+    },
+  });
+
+  // Form submission handler
+  const onSubmit = (data: CreateMemberRequest) => {
+    createMember.mutate(data);
+  };
+
+  return (
+    <Card className="w-full max-w-2xl mx-auto">
+      <CardHeader>
+        <CardTitle>Create New Member</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          {/* Form fields with validation */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Input
+                {...form.register('firstName')}
+                placeholder="First Name"
+                aria-invalid={!!form.formState.errors.firstName}
+                aria-describedby={form.formState.errors.firstName ? 'firstName-error' : undefined}
+              />
+              {form.formState.errors.firstName && (
+                <p id="firstName-error" className="text-red-500 text-sm mt-1">
+                  {form.formState.errors.firstName.message}
+                </p>
+              )}
+            </div>
+            
+            <div>
+              <Input
+                {...form.register('lastName')}
+                placeholder="Last Name"
+                aria-invalid={!!form.formState.errors.lastName}
+                aria-describedby={form.formState.errors.lastName ? 'lastName-error' : undefined}
+              />
+              {form.formState.errors.lastName && (
+                <p id="lastName-error" className="text-red-500 text-sm mt-1">
+                  {form.formState.errors.lastName.message}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex justify-end space-x-2">
+            {onCancel && (
+              <Button type="button" variant="outline" onClick={onCancel}>
+                Cancel
+              </Button>
+            )}
+            <Button 
+              type="submit" 
+              disabled={createMember.isPending}
+              aria-describedby="submit-status"
+            >
+              {createMember.isPending ? 'Creating...' : 'Create Member'}
+            </Button>
+          </div>
+          
+          {/* Screen reader status */}
+          <div id="submit-status" className="sr-only">
+            {createMember.isPending && 'Creating member, please wait'}
+          </div>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Export with display name for debugging
+MemberForm.displayName = 'MemberForm';
+```
+
+**Component Pattern Features:**
+
+1. **TypeScript Integration:** Full type safety with shared interfaces
+2. **Form Management:** React Hook Form with Zod validation
+3. **Server State:** TanStack Query with optimistic updates
+4. **Error Handling:** User-friendly error messages and rollback
+5. **Accessibility:** ARIA labels, screen reader support, keyboard navigation
+6. **Performance:** Proper re-render optimization and loading states
+
+-----
+
 ## Database Schema
 
 This section transforms our conceptual data models into concrete PostgreSQL database schemas with proper relationships, constraints, and indexes for optimal performance and data integrity.
