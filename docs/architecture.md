@@ -2819,6 +2819,380 @@ interface AuthContextType {
 - **Debounced Updates:** Prevent excessive API calls from user interactions
 - **Code Splitting:** Lazy loading of heavy state management code
 
+### Routing Architecture
+
+Our routing architecture leverages Next.js App Router with file-based routing, implementing modern patterns for authentication, authorization, and user experience optimization.
+
+#### Route Organization
+
+```
+apps/web/src/app/
+├── layout.tsx                    # Root layout with providers
+├── page.tsx                      # Home page (public)
+├── loading.tsx                   # Global loading UI
+├── error.tsx                     # Global error boundary
+├── not-found.tsx                 # 404 page
+│
+├── (auth)/                       # Route group for authentication
+│   ├── layout.tsx               # Auth layout (minimal, no navigation)
+│   ├── login/
+│   │   ├── page.tsx             # Login form
+│   │   └── loading.tsx          # Login loading state
+│   ├── register/
+│   │   └── page.tsx             # Registration (if enabled)
+│   └── forgot-password/
+│       └── page.tsx             # Password reset
+│
+├── (dashboard)/                  # Route group for authenticated app
+│   ├── layout.tsx               # Dashboard layout with navigation
+│   ├── dashboard/
+│   │   ├── page.tsx             # Main dashboard
+│   │   ├── loading.tsx          # Dashboard loading skeleton
+│   │   └── error.tsx            # Dashboard error boundary
+│   │
+│   ├── members/                 # Member management routes
+│   │   ├── page.tsx             # Member list with filters/search
+│   │   ├── loading.tsx          # Member list loading state
+│   │   ├── create/
+│   │   │   └── page.tsx         # Member creation form
+│   │   └── [id]/                # Dynamic member routes
+│   │       ├── page.tsx         # Member detail view
+│   │       ├── edit/
+│   │       │   └── page.tsx     # Member edit form
+│   │       ├── roles/
+│   │       │   └── page.tsx     # Role assignment for member
+│   │       └── companionships/
+│   │           └── page.tsx     # Member's companionship history
+│   │
+│   ├── companionships/          # Companionship management
+│   │   ├── page.tsx             # Companionship list
+│   │   ├── create/
+│   │   │   └── page.tsx         # Manual companionship creation
+│   │   ├── wizard/
+│   │   │   └── page.tsx         # Guided assignment wizard
+│   │   └── [id]/
+│   │       ├── page.tsx         # Companionship detail
+│   │       ├── edit/
+│   │       │   └── page.tsx     # Edit companionship
+│   │       └── approval/
+│   │           └── page.tsx     # Approval workflow interface
+│   │
+│   ├── graph/                   # Graph visualization
+│   │   ├── page.tsx             # Interactive graph view
+│   │   ├── loading.tsx          # Graph loading with skeleton
+│   │   └── error.tsx            # Graph-specific error handling
+│   │
+│   ├── import/                  # Data import workflows
+│   │   ├── page.tsx             # Import dashboard
+│   │   ├── upload/
+│   │   │   └── page.tsx         # File upload step
+│   │   ├── mapping/
+│   │   │   └── page.tsx         # Field mapping step
+│   │   ├── preview/
+│   │   │   └── page.tsx         # Data preview and validation
+│   │   └── results/
+│   │       └── page.tsx         # Import results and errors
+│   │
+│   ├── reports/                 # Reporting and analytics
+│   │   ├── page.tsx             # Report dashboard
+│   │   ├── health/
+│   │   │   └── page.tsx         # Relationship health reports
+│   │   ├── coverage/
+│   │   │   └── page.tsx         # Companionship coverage analysis
+│   │   └── export/
+│   │       └── page.tsx         # Data export utilities
+│   │
+│   └── settings/                # Application settings
+│       ├── page.tsx             # User preferences
+│       ├── profile/
+│       │   └── page.tsx         # User profile management
+│       ├── permissions/
+│       │   └── page.tsx         # Role and permission management
+│       └── system/
+│           └── page.tsx         # System configuration (admin only)
+│
+└── api/                         # API routes (separate from pages)
+    ├── auth/
+    │   └── [...nextauth]/
+    │       └── route.ts         # Auth.js configuration
+    ├── members/
+    │   ├── route.ts             # Member CRUD operations
+    │   └── [id]/
+    │       ├── route.ts         # Individual member operations
+    │       └── roles/
+    │           └── route.ts     # Member role management
+    ├── companionships/
+    │   ├── route.ts             # Companionship operations
+    │   ├── [id]/
+    │   │   └── route.ts         # Individual companionship operations
+    │   └── wizard/
+    │       └── route.ts         # Guided assignment API
+    ├── graph/
+    │   └── [unitId]/
+    │       ├── route.ts         # Graph data API
+    │       └── layout/
+    │           └── route.ts     # Graph layout persistence
+    └── import/
+        ├── analyze/
+        │   └── route.ts         # File analysis API
+        └── execute/
+            └── route.ts         # Import execution API
+```
+
+**Routing Principles:**
+
+1. **File-Based Routing:** Leverage Next.js conventions for intuitive navigation
+2. **Route Groups:** Organize related routes without affecting URL structure
+3. **Nested Layouts:** Provide appropriate context and navigation for each section
+4. **Loading States:** Implement skeleton UIs for better perceived performance
+5. **Error Boundaries:** Graceful error handling at appropriate route levels
+6. **SEO Optimization:** Server-side rendering for public pages
+
+#### Protected Route Pattern
+
+```typescript
+// middleware.ts - Global route protection
+import { withAuth } from 'next-auth/middleware';
+import { NextResponse } from 'next/server';
+
+export default withAuth(
+  function middleware(req) {
+    const { pathname } = req.nextUrl;
+    const token = req.nextauth.token;
+
+    // Public routes that don't require authentication
+    const publicRoutes = ['/login', '/register', '/forgot-password', '/'];
+    if (publicRoutes.some(route => pathname.startsWith(route))) {
+      return NextResponse.next();
+    }
+
+    // Redirect unauthenticated users to login
+    if (!token) {
+      const loginUrl = new URL('/login', req.url);
+      loginUrl.searchParams.set('callbackUrl', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    // Role-based route protection
+    const adminRoutes = ['/settings/system', '/settings/permissions'];
+    const delegateRoutes = ['/members', '/companionships', '/graph'];
+    
+    if (adminRoutes.some(route => pathname.startsWith(route))) {
+      if (!token.roles?.includes('admin')) {
+        return NextResponse.redirect(new URL('/dashboard', req.url));
+      }
+    }
+
+    if (delegateRoutes.some(route => pathname.startsWith(route))) {
+      if (!token.roles?.some(role => ['admin', 'delegate'].includes(role))) {
+        return NextResponse.redirect(new URL('/dashboard', req.url));
+      }
+    }
+
+    return NextResponse.next();
+  },
+  {
+    callbacks: {
+      authorized: ({ token }) => !!token,
+    },
+  }
+);
+
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api/auth (auth endpoints)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public folder
+     */
+    '/((?!api/auth|_next/static|_next/image|favicon.ico|public).*)',
+  ],
+};
+
+// Layout-level permission checking
+// apps/web/src/app/(dashboard)/layout.tsx
+import { redirect } from 'next/navigation';
+import { auth } from '@/lib/auth';
+import { Navigation } from '@/components/layout/Navigation';
+import { Sidebar } from '@/components/layout/Sidebar';
+import { PermissionProvider } from '@/components/providers/PermissionProvider';
+
+export default async function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const session = await auth();
+
+  // Server-side authentication check
+  if (!session?.user) {
+    redirect('/login');
+  }
+
+  // Server-side permission check for dashboard access
+  const hasMinimumAccess = session.user.roles?.some(role => 
+    ['admin', 'delegate', 'supervisor'].includes(role)
+  );
+
+  if (!hasMinimumAccess) {
+    redirect('/unauthorized');
+  }
+
+  return (
+    <PermissionProvider session={session}>
+      <div className="flex h-screen bg-gray-50">
+        <Sidebar />
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <Navigation />
+          <main className="flex-1 overflow-auto p-6">
+            {children}
+          </main>
+        </div>
+      </div>
+    </PermissionProvider>
+  );
+}
+
+// Page-level permission component
+// components/auth/ProtectedPage.tsx
+'use client';
+
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+
+interface ProtectedPageProps {
+  children: React.ReactNode;
+  requiredRoles?: string[];
+  requiredPermissions?: string[];
+  fallbackUrl?: string;
+}
+
+export function ProtectedPage({
+  children,
+  requiredRoles = [],
+  requiredPermissions = [],
+  fallbackUrl = '/dashboard'
+}: ProtectedPageProps) {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === 'loading') return; // Still loading
+
+    if (!session) {
+      router.push('/login');
+      return;
+    }
+
+    // Check role requirements
+    if (requiredRoles.length > 0) {
+      const hasRequiredRole = requiredRoles.some(role =>
+        session.user.roles?.includes(role)
+      );
+      if (!hasRequiredRole) {
+        router.push(fallbackUrl);
+        return;
+      }
+    }
+
+    // Check permission requirements
+    if (requiredPermissions.length > 0) {
+      const hasRequiredPermission = requiredPermissions.every(permission =>
+        session.user.permissions?.includes(permission)
+      );
+      if (!hasRequiredPermission) {
+        router.push(fallbackUrl);
+        return;
+      }
+    }
+  }, [session, status, router, requiredRoles, requiredPermissions, fallbackUrl]);
+
+  if (status === 'loading') {
+    return <LoadingSpinner />;
+  }
+
+  if (!session) {
+    return null; // Will redirect
+  }
+
+  return <>{children}</>;
+}
+
+// Usage in pages that need specific permissions
+// app/(dashboard)/settings/system/page.tsx
+import { ProtectedPage } from '@/components/auth/ProtectedPage';
+import { SystemSettings } from '@/components/settings/SystemSettings';
+
+export default function SystemSettingsPage() {
+  return (
+    <ProtectedPage 
+      requiredRoles={['admin']}
+      fallbackUrl="/dashboard"
+    >
+      <SystemSettings />
+    </ProtectedPage>
+  );
+}
+
+// Dynamic route with permission checking
+// app/(dashboard)/members/[id]/edit/page.tsx
+import { notFound, redirect } from 'next/navigation';
+import { auth } from '@/lib/auth';
+import { memberService } from '@/lib/api/memberService';
+import { EditMemberForm } from '@/components/forms/EditMemberForm';
+
+interface Props {
+  params: { id: string };
+}
+
+export default async function EditMemberPage({ params }: Props) {
+  const session = await auth();
+  
+  if (!session?.user) {
+    redirect('/login');
+  }
+
+  // Check if user can edit members
+  const canEditMembers = session.user.permissions?.includes('edit_members') ||
+                         session.user.roles?.includes('admin');
+  
+  if (!canEditMembers) {
+    redirect('/members');
+  }
+
+  // Fetch member data server-side
+  try {
+    const member = await memberService.getMember(params.id);
+    
+    // Additional permission check: can user edit this specific member?
+    const canEditThisMember = session.user.roles?.includes('admin') ||
+                             member.geographicUnitId === session.user.geographicUnitId;
+    
+    if (!canEditThisMember) {
+      redirect('/members');
+    }
+
+    return <EditMemberForm member={member} />;
+  } catch (error) {
+    notFound();
+  }
+}
+```
+
+**Routing Pattern Features:**
+
+1. **Multi-Level Protection:** Middleware → Layout → Page → Component level security
+2. **Role-Based Access:** Different routes for different user roles
+3. **Permission Granularity:** Fine-grained permission checking at component level
+4. **Server-Side Validation:** Authentication and authorization on the server
+5. **Graceful Redirects:** Appropriate fallback URLs for unauthorized access
+6. **SEO Friendly:** Server-side rendering with proper meta tags and redirects
+
 ## Database Schema
 
 This section transforms our conceptual data models into concrete PostgreSQL database schemas with proper relationships, constraints, and indexes for optimal performance and data integrity.
