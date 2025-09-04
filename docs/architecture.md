@@ -731,9 +731,25 @@ This organization enables:
 
 ## API Specification
 
+### API Style Decision
+
+Based on our Tech Stack selection, we've chosen **REST** as our primary API communication standard. This decision was made because:
+- Native support in Next.js API Routes
+- Universal understanding across development teams  
+- Excellent OpenAPI documentation ecosystem
+- Simple integration with TanStack Query on the frontend
+
+**Alternative Formats Considered:**
+- **GraphQL**: Would provide flexible querying but adds complexity for our domain-specific workflows
+- **tRPC**: Would give end-to-end type safety but limits API reusability for future mobile applications
+
+For future iterations, if query flexibility becomes critical for complex relationship filtering, GraphQL could be considered as an additional endpoint alongside REST.
+
 ### REST API Specification
 
 This OpenAPI 3.0 specification defines all REST endpoints for the emmaCompanionship application, including authentication, member management, companionship workflows, and graph visualization.
+
+**Security Note:** The Member schema intentionally excludes the `passwordHash` field for security reasons. Password hashes are never returned in API responses and are only used internally for authentication validation.
 
 ```yaml
 openapi: 3.0.0
@@ -878,6 +894,10 @@ components:
         healthStatus:
           type: string
           enum: [green, yellow, red, gray]
+        healthStatusUpdatedAt:
+          type: string
+          format: date-time
+          description: "Timestamp when health status was last updated"
         startDate:
           type: string
           format: date
