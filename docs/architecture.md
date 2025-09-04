@@ -422,6 +422,311 @@ As for Supervisors, Companionship Delegates responsibility (which Members they t
 - Another Member has a Role Companionship Delegate that is scoped to that Geographical unit
 - Another Member has a Role Zone Companionship Delegate that is scoped to Zone where mentioned Province belongs
 
+### Shared TypeScript Interface Organization
+
+The above conceptual models will be implemented as shared TypeScript interfaces organized in `/packages/shared-types/` to enable type-safe communication between frontend and backend components.
+
+#### Entity Types (`/packages/shared-types/src/entities/`)
+
+Core business entity interfaces that represent our domain models:
+
+```typescript
+// Member.ts - Central community member entity
+export interface Member {
+  id: UUID;
+  firstName: string;
+  lastName: string;
+  gender: 'male' | 'female';
+  maritalStatus: 'single' | 'married' | 'widowed' | 'consecrated';
+  communityEngagementStatus: 'Looker-On' | 'In-Probation' | 'Commited' | 'In-Fraternity-Probation' | 'Fraternity';
+  accompanyingReadiness: 'Not Candidate' | 'Candidate' | 'Ready' | 'Active' | 'Overwhelmed' | 'Deactivated';
+  languages: string[];
+  geographicUnitId: UUID;
+  email?: string;
+  phone?: string;
+  dateOfBirth?: Date;
+  imageUrl?: string;
+  notes?: string;
+  consecratedStatus?: 'priest' | 'deacon' | 'seminarian' | 'sister' | 'brother';
+  coupleId?: UUID;
+  passwordHash: string;
+}
+
+// Geographic.ts - Organizational hierarchy
+export interface GeographicUnit {
+  id: UUID;
+  name: string;
+  type: 'sector' | 'province' | 'country' | 'zone' | 'community';
+  parentId?: UUID;
+}
+
+// Companionship.ts - Relationship management
+export interface Companionship {
+  id: UUID;
+  companionId: UUID;
+  companionType: 'member' | 'couple';
+  accompaniedId: UUID;
+  accompaniedType: 'member' | 'couple';
+  status: 'proposed' | 'active' | 'archived';
+  healthStatus?: 'green' | 'yellow' | 'red' | 'gray';
+  healthStatusUpdatedAt?: Date;
+  startDate: Date;
+  endDate?: Date;
+}
+
+// Additional entities: Couple, Role, RoleAssignment, ApprovalProcess, ApprovalStep
+```
+
+#### API Types (`/packages/shared-types/src/api/`)
+
+Request/response schemas for type-safe API communication:
+
+```typescript
+// requests.ts - API request schemas
+export interface CreateMemberRequest {
+  firstName: string;
+  lastName: string;
+  gender: 'male' | 'female';
+  maritalStatus: Member['maritalStatus'];
+  communityEngagementStatus: Member['communityEngagementStatus'];
+  accompanyingReadiness: Member['accompanyingReadiness'];
+  languages: string[];
+  geographicUnitId: UUID;
+  email?: string;
+  phone?: string;
+  dateOfBirth?: string; // ISO date string
+  notes?: string;
+  consecratedStatus?: Member['consecratedStatus'];
+}
+
+export interface UpdateMemberRequest extends Partial<CreateMemberRequest> {
+  id: UUID;
+}
+
+export interface CreateCompanionshipRequest {
+  companionId: UUID;
+  companionType: 'member' | 'couple';
+  accompaniedId: UUID;
+  accompaniedType: 'member' | 'couple';
+  startDate?: string; // ISO date string
+}
+
+export interface GraphFilterRequest {
+  unitId: UUID;
+  filters?: {
+    healthStatus?: Companionship['healthStatus'][];
+    memberType?: ('single' | 'couple' | 'priest' | 'consecrated')[];
+    roleType?: string[];
+    companionId?: UUID;
+    accompaniedId?: UUID;
+  };
+}
+
+// responses.ts - API response schemas
+export interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  timestamp: string;
+  requestId: string;
+}
+
+export interface ApiError {
+  error: {
+    code: string;
+    message: string;
+    details?: Record<string, any>;
+    timestamp: string;
+    correlationId: string;
+  };
+}
+
+export interface GraphResponse {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  metadata: {
+    totalMembers: number;
+    totalCompanionships: number;
+    healthStatusCounts: Record<string, number>;
+  };
+}
+
+export interface GraphNode {
+  id: string;
+  type: 'member' | 'couple';
+  data: {
+    name: string;
+    status: string;
+    roles?: string[];
+    imageUrl?: string;
+  };
+  position?: { x: number; y: number };
+}
+
+export interface GraphEdge {
+  id: string;
+  source: string;
+  target: string;
+  type: 'companionship' | 'supervision';
+  data: {
+    healthStatus?: Companionship['healthStatus'];
+    startDate?: string;
+    label?: string;
+  };
+}
+```
+
+#### UI Component Types (`/packages/shared-types/src/ui/`)
+
+Frontend-specific types for component props and state management:
+
+```typescript
+// forms.ts - Form component prop types
+export interface MemberFormProps {
+  member?: Member;
+  geographicUnits: GeographicUnit[];
+  onSubmit: (data: CreateMemberRequest | UpdateMemberRequest) => Promise<void>;
+  onCancel: () => void;
+  isLoading?: boolean;
+  errors?: Record<string, string>;
+}
+
+export interface CompanionshipFormProps {
+  companionship?: Companionship;
+  eligibleCompanions: Member[];
+  onSubmit: (data: CreateCompanionshipRequest) => Promise<void>;
+  onCancel: () => void;
+  validationErrors?: string[];
+}
+
+// graph.ts - Graph visualization types
+export interface GraphProps {
+  unitId: UUID;
+  initialFilters?: GraphFilterRequest['filters'];
+  onNodeClick?: (nodeId: string, nodeData: GraphNode['data']) => void;
+  onEdgeClick?: (edgeId: string, edgeData: GraphEdge['data']) => void;
+  onFilterChange?: (filters: GraphFilterRequest['filters']) => void;
+  isInteractive?: boolean;
+}
+
+// state.ts - State management types
+export interface AuthState {
+  user: Member | null;
+  roles: RoleAssignment[];
+  permissions: string[];
+  isAuthenticated: boolean;
+  isLoading: boolean;
+}
+
+export interface UIState {
+  theme: 'light' | 'dark';
+  sidebarCollapsed: boolean;
+  activeFilters: GraphFilterRequest['filters'];
+  toasts: ToastMessage[];
+}
+
+export interface ToastMessage {
+  id: string;
+  type: 'success' | 'error' | 'warning' | 'info';
+  title: string;
+  message?: string;
+  duration?: number;
+}
+```
+
+#### Validation Types (`/packages/shared-types/src/validation/`)
+
+Zod schemas for runtime validation shared between frontend and backend:
+
+```typescript
+// schemas.ts - Zod validation schemas
+import { z } from 'zod';
+
+export const UUIDSchema = z.string().uuid();
+
+export const MemberSchema = z.object({
+  id: UUIDSchema,
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
+  gender: z.enum(['male', 'female']),
+  maritalStatus: z.enum(['single', 'married', 'widowed', 'consecrated']),
+  communityEngagementStatus: z.enum(['Looker-On', 'In-Probation', 'Commited', 'In-Fraternity-Probation', 'Fraternity']),
+  accompanyingReadiness: z.enum(['Not Candidate', 'Candidate', 'Ready', 'Active', 'Overwhelmed', 'Deactivated']),
+  languages: z.array(z.string()),
+  geographicUnitId: UUIDSchema,
+  email: z.string().email().optional(),
+  phone: z.string().optional(),
+  dateOfBirth: z.date().optional(),
+  imageUrl: z.string().url().optional(),
+  notes: z.string().optional(),
+  consecratedStatus: z.enum(['priest', 'deacon', 'seminarian', 'sister', 'brother']).optional(),
+  coupleId: UUIDSchema.optional(),
+  passwordHash: z.string(),
+});
+
+export const CreateMemberRequestSchema = MemberSchema.omit({ id: true, passwordHash: true }).extend({
+  dateOfBirth: z.string().datetime().optional(),
+});
+
+export const CompanionshipSchema = z.object({
+  id: UUIDSchema,
+  companionId: UUIDSchema,
+  companionType: z.enum(['member', 'couple']),
+  accompaniedId: UUIDSchema,
+  accompaniedType: z.enum(['member', 'couple']),
+  status: z.enum(['proposed', 'active', 'archived']),
+  healthStatus: z.enum(['green', 'yellow', 'red', 'gray']).optional(),
+  healthStatusUpdatedAt: z.date().optional(),
+  startDate: z.date(),
+  endDate: z.date().optional(),
+});
+
+// Export inferred types for TypeScript usage
+export type MemberValidation = z.infer<typeof MemberSchema>;
+export type CreateMemberRequestValidation = z.infer<typeof CreateMemberRequestSchema>;
+export type CompanionshipValidation = z.infer<typeof CompanionshipSchema>;
+```
+
+#### Type Export Strategy (`/packages/shared-types/src/index.ts`)
+
+Centralized exports for easy importing across the application:
+
+```typescript
+// Entity exports
+export * from './entities/Member';
+export * from './entities/Geographic';
+export * from './entities/Companionship';
+export * from './entities/Role';
+export * from './entities/Couple';
+export * from './entities/ApprovalProcess';
+
+// API exports
+export * from './api/requests';
+export * from './api/responses';
+
+// UI exports
+export * from './ui/forms';
+export * from './ui/graph';
+export * from './ui/state';
+
+// Validation exports
+export * from './validation/schemas';
+
+// Utility types
+export type UUID = string & { readonly __brand: 'UUID' };
+export type Timestamp = string & { readonly __brand: 'Timestamp' };
+
+// Re-export common utility types
+export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
+export type RequiredNonNull<T> = { [P in keyof T]-?: NonNullable<T[P]> };
+```
+
+This organization enables:
+- **Type Safety**: Shared interfaces prevent frontend-backend type mismatches
+- **Code Reuse**: Validation schemas work on both client and server
+- **Developer Experience**: Auto-completion and IntelliSense across the entire stack
+- **Maintainability**: Single source of truth for all type definitions
+- **Scalability**: Clear package boundaries for future microservice extraction
+
 -----
 
 ## Components
