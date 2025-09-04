@@ -1818,84 +1818,153 @@ For the MVP, there are no required integrations with external third-party APIs f
 
 ## Core Workflows
 
-This section illustrates key system workflows using sequence diagrams, showing component interactions, error handling paths, and async operations for critical user journeys identified in the PRD.
+This section illustrates key fullstack system workflows using sequence diagrams, showing both frontend and backend component interactions, error handling paths, async operations, and modern React patterns for critical user journeys identified in the PRD.
+
+**Frontend Patterns Included:**
+- React Server/Client Component interactions
+- TanStack Query state management and cache invalidation
+- Form validation and UI state management
+- Optimistic updates and real-time synchronization
+- Frontend service layer and error handling
+
+**Backend Patterns Included:**
+- Next.js API routes and middleware
+- Module boundaries and business logic
+- Database transactions and error handling
+- Permission validation and security
 
 ### User Authentication and Authorization Workflow
 **PRD Reference:** Story 1.2 - User Authentication & Role Management
 
-This workflow shows how Delegates securely access the system and obtain proper permissions.
+This fullstack workflow shows how Delegates securely access the system with React state management, Auth.js integration, and proper frontend-backend coordination.
 
 ```mermaid
 sequenceDiagram
     actor User as Delegate
-    participant FE as "Frontend (Next.js)"
-    participant API as "Backend API (Next.js)"
-    participant Auth as "Auth Module"
-    participant Member as "Member Module"
-    participant DB as "PostgreSQL Database"
+    participant LoginPage as "Login Page<br/>(Client Component)"
+    participant AuthHook as "useAuth Hook<br/>(TanStack Query)"
+    participant AuthService as "authService.ts<br/>(Frontend API Client)"
+    participant AuthRoute as "/api/auth/[...nextauth]<br/>(Auth.js)"
+    participant AuthModule as "Auth Module"
+    participant MemberModule as "Member Module"
+    participant DB as "PostgreSQL"
 
-    User->>FE: "1. Enters credentials and submits login"
-    FE->>API: "2. POST /api/auth/login (credentials)"
-    API->>Auth: "3. loginUser(credentials)"
+    User->>LoginPage: "1. Enters credentials and submits"
+    LoginPage->>LoginPage: "2. Client-side validation (Zod schema)"
+    LoginPage->>AuthHook: "3. signIn mutation trigger"
     
-    Auth->>DB: "4. Query user credentials"
-    DB-->>Auth: "User record or null"
+    AuthHook->>AuthService: "4. signIn(credentials)"
+    AuthService->>AuthRoute: "5. POST /api/auth/signin (Auth.js)"
+    AuthRoute->>AuthModule: "6. loginUser(credentials)"
+    
+    AuthModule->>DB: "7. Query user by email"
+    DB-->>AuthModule: "User record or null"
     
     alt Valid credentials
-        Auth->>Auth: "5. Generate JWT token"
-        Auth-->>API: "Token with user ID"
-        API->>Member: "6. getMemberRoles(userId)"
-        Member->>DB: "7. Query role assignments"
-        DB-->>Member: "Role data"
-        Member-->>API: "User roles and permissions"
-        API-->>FE: "200 OK with token and roles"
-        FE-->>User: "Redirect to dashboard"
+        AuthModule->>AuthModule: "8. Verify password hash (Argon2)"
+        AuthModule-->>AuthRoute: "User authenticated"
+        AuthRoute->>MemberModule: "9. getMemberRoles(userId)"
+        MemberModule->>DB: "10. Query role assignments"
+        DB-->>MemberModule: "Role data"
+        MemberModule-->>AuthRoute: "User roles and permissions"
+        
+        AuthRoute-->>AuthService: "200 OK with session"
+        AuthService-->>AuthHook: "Authentication success"
+        
+        Note over AuthHook: "TanStack Query:<br/>- Cache user session<br/>- Invalidate auth queries<br/>- Trigger refetch of protected data"
+        
+        AuthHook->>LoginPage: "Success state"
+        LoginPage->>LoginPage: "11. Router.push('/dashboard')"
+        LoginPage-->>User: "Redirect to dashboard"
+        
     else Invalid credentials
-        Auth-->>API: "Authentication failed"
-        API-->>FE: "401 Unauthorized"
-        FE-->>User: "Display error message"
+        AuthModule-->>AuthRoute: "Invalid credentials"
+        AuthRoute-->>AuthService: "401 Unauthorized"
+        AuthService-->>AuthHook: "Authentication error"
+        AuthHook->>LoginPage: "Error state"
+        LoginPage->>LoginPage: "12. Show error message (toast)"
+        LoginPage-->>User: "Display validation error"
     end
+    
+    Note over User, DB: "Frontend State Management:<br/>- Loading states during async operations<br/>- Form validation feedback<br/>- Error handling with user-friendly messages<br/>- Automatic retry on network failures"
 ```
 
 ### Member Creation and Management Workflow
 **PRD Reference:** Stories 1.3, 1.4 - Create and Edit Community Members
 
-This workflow demonstrates member lifecycle management with validation and geographic assignment.
+This fullstack workflow demonstrates member lifecycle management with React Hook Form, Zod validation, optimistic updates, and comprehensive error handling.
 
 ```mermaid
 sequenceDiagram
     actor User as Delegate
-    participant FE as "Frontend (Next.js)"
-    participant API as "Backend API (Next.js)"
-    participant Auth as "Auth Module"
-    participant Member as "Member Module"
-    participant Geo as "Geographic Module"
-    participant DB as "PostgreSQL Database"
+    participant MemberPage as "members/page.tsx<br/>(Server Component)"
+    participant MemberForm as "MemberForm<br/>(Client Component)"
+    participant UseMembers as "useMembers Hook<br/>(TanStack Query)"
+    participant MemberService as "memberService.ts<br/>(API Client)"
+    participant APIRoute as "/api/members<br/>(API Route)"
+    participant AuthModule as "Auth Module"
+    participant MemberModule as "Member Module"
+    participant GeoModule as "Geographic Module"
+    participant DB as "PostgreSQL"
 
-    User->>FE: "1. Fills member form and submits"
-    FE->>API: "2. POST /api/members (member data)"
-    API->>Auth: "3. hasPermission(userId, 'create_member', scopeId)"
-    Auth-->>API: "Permission granted"
+    User->>MemberPage: "1. Navigate to member creation"
+    MemberPage->>MemberForm: "2. Render form (initial data from Server Component)"
     
-    API->>Member: "4. validateMemberConstraints(memberData)"
-    Member->>Geo: "5. validateUnitScope(memberData.geographicUnitId)"
-    Geo-->>Member: "Valid geographic unit"
-    Member-->>API: "Validation passed"
+    User->>MemberForm: "3. Fills form fields"
+    MemberForm->>MemberForm: "4. Real-time validation (Zod + React Hook Form)"
+    MemberForm-->>User: "Live validation feedback"
     
-    API->>Member: "6. createMember(memberData)"
-    Member->>DB: "7. INSERT member record"
+    User->>MemberForm: "5. Submits form"
+    MemberForm->>MemberForm: "6. Final client validation"
+    MemberForm->>UseMembers: "7. createMember mutation"
+    
+    Note over UseMembers: "Optimistic Update:<br/>- Add temporary member to cache<br/>- Show loading state<br/>- Update UI immediately"
+    
+    UseMembers->>MemberService: "8. createMember(memberData)"
+    MemberService->>APIRoute: "9. POST /api/members (validated data)"
+    
+    APIRoute->>APIRoute: "10. Auth middleware (session validation)"
+    APIRoute->>AuthModule: "11. hasPermission(userId, 'create_member', scopeId)"
+    AuthModule-->>APIRoute: "Permission granted"
+    
+    APIRoute->>APIRoute: "12. Zod schema validation (server-side)"
+    APIRoute->>MemberModule: "13. validateMemberConstraints(memberData)"
+    MemberModule->>GeoModule: "14. validateUnitScope(memberData.geographicUnitId)"
+    GeoModule-->>MemberModule: "Valid geographic unit"
+    MemberModule-->>APIRoute: "Validation passed"
+    
+    APIRoute->>MemberModule: "15. createMember(memberData)"
+    MemberModule->>DB: "16. BEGIN TRANSACTION"
+    MemberModule->>DB: "17. INSERT member record"
     
     alt Success
-        DB-->>Member: "Member created with ID"
-        Member-->>API: "Member object"
-        API-->>FE: "201 Created"
-        FE-->>User: "Success notification"
+        DB-->>MemberModule: "Member created with ID"
+        MemberModule->>DB: "18. COMMIT"
+        MemberModule-->>APIRoute: "Created member object"
+        APIRoute-->>MemberService: "201 Created with member data"
+        MemberService-->>UseMembers: "Success response"
+        
+        Note over UseMembers: "TanStack Query Success:<br/>- Replace optimistic update with real data<br/>- Invalidate member list queries<br/>- Update related caches"
+        
+        UseMembers->>MemberForm: "Success state"
+        MemberForm->>MemberForm: "19. Reset form, show success toast"
+        MemberForm-->>User: "Member created successfully"
+        
     else Validation error
-        DB-->>Member: "Constraint violation"
-        Member-->>API: "Validation error details"
-        API-->>FE: "400 Bad Request"
-        FE-->>User: "Display validation errors"
+        MemberModule->>DB: "18. ROLLBACK"
+        DB-->>MemberModule: "Constraint violation"
+        MemberModule-->>APIRoute: "Validation error details"
+        APIRoute-->>MemberService: "400 Bad Request with field errors"
+        MemberService-->>UseMembers: "Validation error"
+        
+        Note over UseMembers: "TanStack Query Error:<br/>- Remove optimistic update<br/>- Restore previous cache state<br/>- Trigger error handler"
+        
+        UseMembers->>MemberForm: "Error state with field-specific errors"
+        MemberForm->>MemberForm: "20. Display field errors, focus first error"
+        MemberForm-->>User: "Show validation errors inline"
     end
+    
+    Note over User, DB: "Frontend Enhancement Patterns:<br/>- Form autosave to localStorage<br/>- Keyboard shortcuts (Ctrl+S to save)<br/>- Accessibility (ARIA labels, focus management)<br/>- Progressive enhancement (works without JS)"
 ```
 
 ### Data Import Workflow
@@ -2199,57 +2268,94 @@ sequenceDiagram
 ### Graph Filtering and Visualization Workflow
 **PRD Reference:** Story 4.3 - Graph Filtering Capabilities
 
-This workflow demonstrates the dynamic graph filtering system for focused relationship viewing.
+This advanced fullstack workflow demonstrates dynamic graph filtering with React Flow, real-time updates, debounced filtering, and sophisticated caching strategies.
 
 ```mermaid
 sequenceDiagram
     actor User as Delegate
-    participant FE as "Frontend (Next.js)"
-    participant API as "Backend API (Next.js)"
-    participant Relationship as "Relationship Module"
-    participant Member as "Member Module"
-    participant Geo as "Geographic Module"
-    participant DB as "PostgreSQL Database"
+    participant GraphPage as "graph/page.tsx<br/>(Client Component)"
+    participant GraphContainer as "GraphContainer<br/>(Client Component)"
+    participant FilterPanel as "FilterPanel<br/>(Client Component)"
+    participant UseGraphData as "useGraphData Hook<br/>(TanStack Query)"
+    participant GraphService as "graphService.ts<br/>(API Client)"
+    participant GraphAPI as "/api/graph/[unitId]<br/>(API Route)"
+    participant RelModule as "Relationship Module"
+    participant MemberModule as "Member Module"
+    participant GeoModule as "Geographic Module"
+    participant DB as "PostgreSQL"
 
-    User->>FE: "1. Opens graph view and applies filters"
-    FE->>API: "2. GET /api/graph/{unitId}?filters=healthStatus,memberType,roleType"
-    API->>Relationship: "3. getGraphDataForUnit(unitId, filterCriteria)"
+    User->>GraphPage: "1. Navigate to graph view (/graph?unitId=123)"
+    GraphPage->>GraphContainer: "2. Mount with initial unitId from URL"
+    GraphContainer->>UseGraphData: "3. Trigger initial data fetch"
     
-    par Fetch relationship data
-        Relationship->>DB: "4a. Query companionships with health filters"
-        DB-->>Relationship: "Filtered companionships"
-    and Fetch member data
-        Relationship->>Member: "4b. listMembersByUnit(unitId, memberFilters)"
-        Member->>DB: "5b. Query members with type/role filters"
-        DB-->>Member: "Filtered members"
-        Member-->>Relationship: "Member subset"
-    and Fetch geographic scope
-        Relationship->>Geo: "4c. getDescendantUnits(unitId)"
-        Geo->>DB: "5c. Query geographic hierarchy"
-        DB-->>Geo: "Unit tree"
-        Geo-->>Relationship: "Scope boundaries"
+    UseGraphData->>GraphService: "4. getGraphData(unitId, defaultFilters)"
+    GraphService->>GraphAPI: "5. GET /api/graph/{unitId}?filters=default"
+    
+    GraphAPI->>GraphAPI: "6. Auth middleware & permission check"
+    GraphAPI->>RelModule: "7. getGraphDataForUnit(unitId, filterCriteria)"
+    
+    par Parallel data fetching
+        RelModule->>DB: "8a. Query companionships with health filters"
+        DB-->>RelModule: "Filtered companionships"
+    and 
+        RelModule->>MemberModule: "8b. listMembersByUnit(unitId, memberFilters)"
+        MemberModule->>DB: "9b. Query members with type/role filters"
+        DB-->>MemberModule: "Filtered members"
+        MemberModule-->>RelModule: "Member subset"
+    and 
+        RelModule->>GeoModule: "8c. getDescendantUnits(unitId)"
+        GeoModule->>DB: "9c. Query geographic hierarchy"
+        DB-->>GeoModule: "Unit tree"
+        GeoModule-->>RelModule: "Scope boundaries"
     end
     
-    Note over Relationship: "Async aggregation:<br/>Build graph JSON with nodes,<br/>edges, positions, and metadata"
+    Note over RelModule: "Server-side aggregation:<br/>- Build graph nodes and edges<br/>- Calculate layout positions<br/>- Apply health status colors<br/>- Generate metadata"
     
-    Relationship-->>API: "Graph data with applied filters"
-    API-->>FE: "200 OK with graph JSON"
-    FE->>FE: "6. Render filtered graph visualization"
-    FE-->>User: "Updated graph view"
+    RelModule-->>GraphAPI: "Complete graph data structure"
+    GraphAPI-->>GraphService: "200 OK with graph JSON"
+    GraphService-->>UseGraphData: "Graph data received"
     
-    User->>FE: "7. Changes filter criteria"
-    FE->>FE: "8. Debounced filter update"
-    Note over FE: "Client-side optimization:<br/>Cache full dataset,<br/>apply filters locally for<br/>immediate visual feedback"
+    Note over UseGraphData: "TanStack Query Caching:<br/>- Cache graph data by unitId + filters<br/>- Set stale time to 5 minutes<br/>- Background refetch on window focus"
     
-    alt Significant filter change
-        FE->>API: "9. New API request with updated filters"
-        Note over API, DB: "Repeat data fetch process"
-        API-->>FE: "Fresh filtered data"
-        FE-->>User: "Re-rendered graph"
-    else Minor filter change
-        FE->>FE: "9. Apply filters to cached data"
-        FE-->>User: "Instantly updated view"
+    UseGraphData->>GraphContainer: "Graph data available"
+    GraphContainer->>GraphContainer: "10. Initialize React Flow"
+    GraphContainer-->>User: "Render interactive graph"
+    
+    User->>FilterPanel: "11. Changes health status filter"
+    FilterPanel->>FilterPanel: "12. Debounced filter update (300ms)"
+    
+    Note over FilterPanel: "Client-side optimization:<br/>- Immediate UI feedback<br/>- Debounce API calls<br/>- Smart cache utilization"
+    
+    alt Minor filter change (cached data available)
+        FilterPanel->>GraphContainer: "13a. Apply client-side filtering"
+        GraphContainer->>GraphContainer: "Filter nodes/edges locally"
+        GraphContainer-->>User: "Instant visual update"
+        
+    else Major filter change (requires server data)
+        FilterPanel->>UseGraphData: "13b. Trigger new query with filters"
+        UseGraphData->>GraphService: "14b. getGraphData(unitId, newFilters)"
+        
+        Note over UseGraphData: "Background fetch:<br/>- Keep showing current data<br/>- Display loading indicator<br/>- Optimistic updates where possible"
+        
+        GraphService->>GraphAPI: "15b. GET with updated filters"
+        Note over GraphAPI, DB: "Repeat parallel data fetch"
+        GraphAPI-->>GraphService: "Fresh filtered data"
+        GraphService-->>UseGraphData: "Updated graph data"
+        UseGraphData->>GraphContainer: "New data available"
+        GraphContainer->>GraphContainer: "16b. Smooth transition to new layout"
+        GraphContainer-->>User: "Updated graph visualization"
     end
+    
+    User->>GraphContainer: "17. Drags node to new position"
+    GraphContainer->>GraphContainer: "18. Update local state (optimistic)"
+    GraphContainer->>GraphService: "19. saveGraphLayout(nodePositions)"
+    
+    Note over GraphService: "Background sync:<br/>- Save layout to localStorage<br/>- Debounced API call for persistence<br/>- No UI blocking"
+    
+    GraphService->>GraphAPI: "20. PATCH /api/graph/{unitId}/layout"
+    GraphAPI-->>GraphService: "Layout saved"
+    
+    Note over User, DB: "Advanced Frontend Features:<br/>- Real-time collaboration (WebSockets)<br/>- Keyboard navigation (accessibility)<br/>- Export functionality (PNG, SVG)<br/>- Minimap for large graphs<br/>- Search and highlight nodes"
 ```
 
 -----
