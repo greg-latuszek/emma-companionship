@@ -132,7 +132,7 @@ graph TD
     style B fill:#405E61
     style D fill:#405E61
     style E fill:#395E39
-    style C fill:#E8F4FD
+    style C fill:#395EFF
 ```
 
 ### Architectural and Design Patterns
@@ -1684,7 +1684,6 @@ graph TD
     
     style A fill:#405E61
     style E fill:#405E61
-    style J fill:#E8F4FD
 ```
 
 #### Frontend Component Data Flow
@@ -1737,7 +1736,6 @@ graph TD
     
     style A1 fill:#405E61
     style B1 fill:#395E39
-    style C1 fill:#E8F4FD
 ```
 
 #### Backend Module Interaction (Hexagonal Architecture)
