@@ -2592,7 +2592,232 @@ MemberForm.displayName = 'MemberForm';
 5. **Accessibility:** ARIA labels, screen reader support, keyboard navigation
 6. **Performance:** Proper re-render optimization and loading states
 
------
+### State Management Architecture
+
+Our state management architecture follows a clear separation of concerns between server state and UI state, leveraging modern React patterns for optimal performance and developer experience.
+
+#### State Structure
+
+```typescript
+// ===============================
+// Server State (TanStack Query)
+// ===============================
+
+// Query key factory for consistent caching
+export const queryKeys = {
+  // Member queries
+  members: {
+    all: ['members'] as const,
+    lists: () => [...queryKeys.members.all, 'list'] as const,
+    list: (filters: MemberFilters) => [...queryKeys.members.lists(), filters] as const,
+    details: () => [...queryKeys.members.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.members.details(), id] as const,
+    roles: (id: string) => [...queryKeys.members.detail(id), 'roles'] as const,
+  },
+  
+  // Companionship queries
+  companionships: {
+    all: ['companionships'] as const,
+    lists: () => [...queryKeys.companionships.all, 'list'] as const,
+    list: (unitId: string) => [...queryKeys.companionships.lists(), unitId] as const,
+    details: () => [...queryKeys.companionships.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.companionships.details(), id] as const,
+    health: (id: string) => [...queryKeys.companionships.detail(id), 'health'] as const,
+  },
+  
+  // Graph queries
+  graph: {
+    all: ['graph'] as const,
+    data: (unitId: string, filters: GraphFilters) => 
+      [...queryKeys.graph.all, 'data', unitId, filters] as const,
+    layout: (unitId: string) => [...queryKeys.graph.all, 'layout', unitId] as const,
+  },
+  
+  // Geographic queries
+  geographic: {
+    all: ['geographic'] as const,
+    units: () => [...queryKeys.geographic.all, 'units'] as const,
+    tree: () => [...queryKeys.geographic.units(), 'tree'] as const,
+    descendants: (unitId: string) => [...queryKeys.geographic.units(), 'descendants', unitId] as const,
+  },
+  
+  // Auth queries
+  auth: {
+    all: ['auth'] as const,
+    session: () => [...queryKeys.auth.all, 'session'] as const,
+    permissions: (userId: string) => [...queryKeys.auth.all, 'permissions', userId] as const,
+  },
+} as const;
+
+// ===============================
+// UI State (Zustand Stores)
+// ===============================
+
+// Theme and UI preferences
+interface UIState {
+  // Theme management
+  theme: 'light' | 'dark' | 'system';
+  setTheme: (theme: 'light' | 'dark' | 'system') => void;
+  
+  // Layout state
+  sidebarCollapsed: boolean;
+  setSidebarCollapsed: (collapsed: boolean) => void;
+  
+  // Modal/dialog state
+  modals: {
+    memberForm: { open: boolean; mode: 'create' | 'edit'; memberId?: string };
+    companionshipWizard: { open: boolean; accompaniedId?: string };
+    roleAssignment: { open: boolean; memberId?: string };
+    dataImport: { open: boolean; step: 'upload' | 'mapping' | 'preview' | 'results' };
+  };
+  openModal: (modal: keyof UIState['modals'], data?: any) => void;
+  closeModal: (modal: keyof UIState['modals']) => void;
+  
+  // Toast notifications
+  toasts: Array<{
+    id: string;
+    type: 'success' | 'error' | 'warning' | 'info';
+    title: string;
+    description?: string;
+    duration?: number;
+  }>;
+  addToast: (toast: Omit<UIState['toasts'][0], 'id'>) => void;
+  removeToast: (id: string) => void;
+}
+
+// Graph-specific UI state
+interface GraphState {
+  // View state
+  selectedNodes: string[];
+  selectedEdges: string[];
+  hoveredNode: string | null;
+  
+  // Filter state
+  filters: {
+    healthStatus: HealthStatus[];
+    memberTypes: MemberType[];
+    roleTypes: RoleType[];
+    showSupervision: boolean;
+    showCompanionships: boolean;
+  };
+  
+  // Layout state
+  layout: {
+    algorithm: 'force' | 'hierarchical' | 'circular';
+    nodeSpacing: number;
+    edgeLength: number;
+  };
+  
+  // Interaction state
+  isSelecting: boolean;
+  isDragging: boolean;
+  panPosition: { x: number; y: number };
+  zoomLevel: number;
+  
+  // Actions
+  setSelectedNodes: (nodeIds: string[]) => void;
+  setFilters: (filters: Partial<GraphState['filters']>) => void;
+  setLayout: (layout: Partial<GraphState['layout']>) => void;
+  resetView: () => void;
+}
+
+// Form state for complex multi-step workflows
+interface FormState {
+  // Data import wizard state
+  importWizard: {
+    currentStep: number;
+    uploadedFile: File | null;
+    detectedColumns: string[];
+    fieldMappings: Record<string, string>;
+    validationResults: {
+      validRows: number;
+      invalidRows: number;
+      errors: Array<{ row: number; field: string; message: string }>;
+    };
+    importProgress: {
+      isImporting: boolean;
+      progress: number;
+      processedRows: number;
+      totalRows: number;
+    };
+  };
+  
+  // Companionship wizard state
+  companionshipWizard: {
+    step: 'select-accompanied' | 'find-companions' | 'review-proposal';
+    accompaniedMember: Member | null;
+    eligibleCompanions: {
+      perfectMatches: Member[];
+      softViolations: Array<{ member: Member; violations: string[] }>;
+    };
+    selectedCompanion: Member | null;
+    justification: string;
+  };
+  
+  // Actions for form workflows
+  setImportWizardStep: (step: number) => void;
+  setFieldMappings: (mappings: Record<string, string>) => void;
+  setCompanionshipWizardStep: (step: FormState['companionshipWizard']['step']) => void;
+  resetFormState: () => void;
+}
+
+// ===============================
+// Authentication State (Context + Query)
+// ===============================
+
+interface AuthContextType {
+  // Session data (from TanStack Query)
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  
+  // Permissions (cached via TanStack Query)
+  permissions: UserPermissions | null;
+  hasPermission: (action: string, scope?: string) => boolean;
+  
+  // Auth actions
+  signIn: (credentials: LoginCredentials) => Promise<void>;
+  signOut: () => Promise<void>;
+  refreshSession: () => Promise<void>;
+}
+```
+
+#### State Management Patterns
+
+**Server State Management (TanStack Query):**
+
+- **Centralized Query Keys:** Hierarchical key structure for precise cache invalidation
+- **Optimistic Updates:** Immediate UI updates with rollback on failure
+- **Background Refetching:** Automatic data freshness with configurable stale times
+- **Infinite Queries:** Pagination support for large member lists
+- **Parallel Queries:** Simultaneous data fetching for dashboard views
+- **Dependent Queries:** Conditional queries based on user permissions
+- **Cache Persistence:** LocalStorage persistence for offline functionality
+
+**UI State Management (Zustand):**
+
+- **Slice Pattern:** Separate stores for different UI concerns
+- **Immer Integration:** Immutable updates with simple mutation syntax
+- **DevTools Support:** Redux DevTools integration for debugging
+- **Persistence Middleware:** LocalStorage sync for user preferences
+- **Computed Values:** Derived state with automatic dependency tracking
+- **Action Creators:** Consistent action patterns across stores
+
+**State Synchronization Patterns:**
+
+- **Server-UI Bridge:** TanStack Query mutations trigger UI state updates
+- **Optimistic UI:** Immediate feedback with server state reconciliation
+- **Error Recovery:** Automatic rollback of optimistic updates on failure
+- **Cache Invalidation:** Smart invalidation based on data relationships
+- **Background Sync:** Periodic data synchronization for long-running sessions
+
+**Performance Optimization Patterns:**
+
+- **Selective Subscriptions:** Components subscribe only to needed state slices
+- **Memoization:** React.memo and useMemo for expensive computations
+- **Virtual Scrolling:** Efficient rendering of large member lists
+- **Debounced Updates:** Prevent excessive API calls from user interactions
+- **Code Splitting:** Lazy loading of heavy state management code
 
 ## Database Schema
 
