@@ -5521,7 +5521,7 @@ NEXTAUTH_URL="http://localhost:3000"
 
 -----
 
-## Infrastructure and Deployment
+## Deployment Architecture
 
 This section defines our deployment architecture and practices using Infrastructure as Code principles with Vercel and GitHub Actions for optimal CI/CD automation.
 
