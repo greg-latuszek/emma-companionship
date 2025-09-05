@@ -3193,6 +3193,554 @@ export default async function EditMemberPage({ params }: Props) {
 5. **Graceful Redirects:** Appropriate fallback URLs for unauthorized access
 6. **SEO Friendly:** Server-side rendering with proper meta tags and redirects
 
+### Frontend Services Layer
+
+Our frontend services layer provides a clean abstraction between React components and backend APIs, implementing type-safe communication, error handling, caching strategies, and optimistic updates.
+
+#### API Client Setup
+
+```typescript
+// lib/api/client.ts - Base API client configuration
+import { QueryClient } from '@tanstack/react-query';
+import { ApiError, ApiResponse } from '@/packages/shared-types';
+
+// Global query client configuration
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 10 * 60 * 1000, // 10 minutes
+      retry: (failureCount, error) => {
+        // Don't retry on authentication errors
+        if (error instanceof ApiError && error.status === 401) {
+          return false;
+        }
+        // Retry up to 3 times for other errors
+        return failureCount < 3;
+      },
+      refetchOnWindowFocus: true,
+      refetchOnReconnect: true,
+    },
+    mutations: {
+      retry: false, // Don't retry mutations by default
+    },
+  },
+});
+
+// Base API client with interceptors
+class ApiClient {
+  private baseURL: string;
+
+  constructor(baseURL: string = '/api') {
+    this.baseURL = baseURL;
+  }
+
+  private async request<T>(
+    endpoint: string,
+    options: RequestInit = {}
+  ): Promise<T> {
+    const url = `${this.baseURL}${endpoint}`;
+    
+    // Default headers
+    const defaultHeaders: HeadersInit = {
+      'Content-Type': 'application/json',
+    };
+
+    // Merge headers
+    const headers = {
+      ...defaultHeaders,
+      ...options.headers,
+    };
+
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers,
+        credentials: 'include', // Include cookies for auth
+      });
+
+      // Handle non-JSON responses (like file downloads)
+      const contentType = response.headers.get('content-type');
+      
+      if (!response.ok) {
+        // Try to parse error response
+        let errorData: ApiError;
+        if (contentType?.includes('application/json')) {
+          errorData = await response.json();
+        } else {
+          errorData = {
+            status: response.status,
+            message: response.statusText,
+            code: 'HTTP_ERROR',
+          };
+        }
+        throw new ApiError(errorData.message, errorData.status, errorData.code);
+      }
+
+      // Handle empty responses
+      if (response.status === 204) {
+        return {} as T;
+      }
+
+      // Parse JSON response
+      if (contentType?.includes('application/json')) {
+        const data: ApiResponse<T> = await response.json();
+        return data.data || data as T;
+      }
+
+      // Return response as-is for non-JSON content
+      return response as unknown as T;
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      
+      // Network or other errors
+      throw new ApiError(
+        'Network error or server unavailable',
+        0,
+        'NETWORK_ERROR'
+      );
+    }
+  }
+
+  async get<T>(endpoint: string, params?: Record<string, any>): Promise<T> {
+    const searchParams = params ? new URLSearchParams(params).toString() : '';
+    const url = searchParams ? `${endpoint}?${searchParams}` : endpoint;
+    
+    return this.request<T>(url, {
+      method: 'GET',
+    });
+  }
+
+  async post<T>(endpoint: string, data?: any): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: 'POST',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
+  async put<T>(endpoint: string, data?: any): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: 'PUT',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
+  async patch<T>(endpoint: string, data?: any): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: 'PATCH',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
+  async delete<T>(endpoint: string): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: 'DELETE',
+    });
+  }
+
+  // File upload with progress tracking
+  async uploadFile<T>(
+    endpoint: string,
+    file: File,
+    additionalData?: Record<string, any>,
+    onProgress?: (progress: number) => void
+  ): Promise<T> {
+    return new Promise((resolve, reject) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      if (additionalData) {
+        Object.entries(additionalData).forEach(([key, value]) => {
+          formData.append(key, value);
+        });
+      }
+
+      const xhr = new XMLHttpRequest();
+
+      xhr.upload.addEventListener('progress', (event) => {
+        if (event.lengthComputable && onProgress) {
+          const progress = (event.loaded / event.total) * 100;
+          onProgress(progress);
+        }
+      });
+
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const response = JSON.parse(xhr.responseText);
+            resolve(response.data || response);
+          } catch {
+            resolve(xhr.responseText as T);
+          }
+        } else {
+          reject(new ApiError(xhr.statusText, xhr.status, 'UPLOAD_ERROR'));
+        }
+      });
+
+      xhr.addEventListener('error', () => {
+        reject(new ApiError('Upload failed', 0, 'NETWORK_ERROR'));
+      });
+
+      xhr.open('POST', `${this.baseURL}${endpoint}`);
+      xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+      xhr.withCredentials = true;
+      xhr.send(formData);
+    });
+  }
+}
+
+export const apiClient = new ApiClient();
+
+// Custom error class
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+    public code: string
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+```
+
+#### Service Example
+
+```typescript
+// lib/api/memberService.ts - Complete member service implementation
+import { apiClient } from './client';
+import { queryKeys } from './queryKeys';
+import {
+  Member,
+  CreateMemberRequest,
+  UpdateMemberRequest,
+  MemberFilters,
+  PaginatedResponse,
+  Role,
+  RoleAssignment,
+} from '@/packages/shared-types';
+
+export const memberService = {
+  // ===============================
+  // Query Functions (for TanStack Query)
+  // ===============================
+
+  // Get paginated member list with filters
+  getMembers: async (
+    unitId: string,
+    filters: MemberFilters = {},
+    page = 1,
+    limit = 50
+  ): Promise<PaginatedResponse<Member>> => {
+    return apiClient.get<PaginatedResponse<Member>>('/members', {
+      unitId,
+      page,
+      limit,
+      ...filters,
+    });
+  },
+
+  // Get single member by ID
+  getMember: async (id: string): Promise<Member> => {
+    return apiClient.get<Member>(`/members/${id}`);
+  },
+
+  // Get member roles and permissions
+  getMemberRoles: async (memberId: string): Promise<RoleAssignment[]> => {
+    return apiClient.get<RoleAssignment[]>(`/members/${memberId}/roles`);
+  },
+
+  // Get eligible companions for a member
+  getEligibleCompanions: async (memberId: string): Promise<{
+    perfectMatches: Member[];
+    softViolations: Array<{ member: Member; violations: string[] }>;
+  }> => {
+    return apiClient.get(`/members/${memberId}/eligible-companions`);
+  },
+
+  // Search members with full-text search
+  searchMembers: async (
+    query: string,
+    unitId?: string,
+    limit = 20
+  ): Promise<Member[]> => {
+    return apiClient.get<Member[]>('/members/search', {
+      q: query,
+      unitId,
+      limit,
+    });
+  },
+
+  // ===============================
+  // Mutation Functions
+  // ===============================
+
+  // Create new member
+  createMember: async (data: CreateMemberRequest): Promise<Member> => {
+    return apiClient.post<Member>('/members', data);
+  },
+
+  // Update existing member
+  updateMember: async (
+    id: string,
+    data: UpdateMemberRequest
+  ): Promise<Member> => {
+    return apiClient.put<Member>(`/members/${id}`, data);
+  },
+
+  // Delete member (soft delete)
+  deleteMember: async (id: string): Promise<void> => {
+    return apiClient.delete<void>(`/members/${id}`);
+  },
+
+  // Assign role to member
+  assignRole: async (
+    memberId: string,
+    roleId: string,
+    scopeId: string
+  ): Promise<RoleAssignment> => {
+    return apiClient.post<RoleAssignment>(`/members/${memberId}/roles`, {
+      roleId,
+      scopeId,
+    });
+  },
+
+  // Remove role from member
+  removeRole: async (
+    memberId: string,
+    roleAssignmentId: string
+  ): Promise<void> => {
+    return apiClient.delete<void>(
+      `/members/${memberId}/roles/${roleAssignmentId}`
+    );
+  },
+
+  // Bulk import members from file
+  importMembers: async (
+    file: File,
+    mappings: Record<string, string>,
+    onProgress?: (progress: number) => void
+  ): Promise<{
+    successCount: number;
+    errorCount: number;
+    errors: Array<{ row: number; message: string }>;
+  }> => {
+    return apiClient.uploadFile(
+      '/members/import',
+      file,
+      { mappings: JSON.stringify(mappings) },
+      onProgress
+    );
+  },
+
+  // Export members to CSV
+  exportMembers: async (
+    unitId: string,
+    filters: MemberFilters = {}
+  ): Promise<Blob> => {
+    const response = await fetch('/api/members/export', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ unitId, filters }),
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error('Export failed');
+    }
+
+    return response.blob();
+  },
+};
+
+// ===============================
+// React Hook Wrappers
+// ===============================
+
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from '@/components/ui/toast';
+
+// Hook for fetching members with automatic caching
+export function useMembers(
+  unitId: string,
+  filters: MemberFilters = {},
+  options?: {
+    page?: number;
+    limit?: number;
+    enabled?: boolean;
+  }
+) {
+  return useQuery({
+    queryKey: queryKeys.members.list({ unitId, ...filters }),
+    queryFn: () =>
+      memberService.getMembers(
+        unitId,
+        filters,
+        options?.page,
+        options?.limit
+      ),
+    enabled: options?.enabled !== false,
+    keepPreviousData: true, // For pagination
+  });
+}
+
+// Hook for fetching single member
+export function useMember(id: string, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.members.detail(id),
+    queryFn: () => memberService.getMember(id),
+    enabled: enabled && !!id,
+  });
+}
+
+// Hook for member creation with optimistic updates
+export function useCreateMember() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: memberService.createMember,
+    onMutate: async (newMember) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: queryKeys.members.lists() });
+
+      // Snapshot the previous value
+      const previousMembers = queryClient.getQueriesData({
+        queryKey: queryKeys.members.lists(),
+      });
+
+      // Optimistically update member lists
+      queryClient.setQueriesData<PaginatedResponse<Member>>(
+        { queryKey: queryKeys.members.lists() },
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            data: [{ ...newMember, id: `temp-${Date.now()}` } as Member, ...old.data],
+            total: old.total + 1,
+          };
+        }
+      );
+
+      return { previousMembers };
+    },
+    onError: (err, newMember, context) => {
+      // Rollback optimistic updates
+      if (context?.previousMembers) {
+        context.previousMembers.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+      toast.error(`Failed to create member: ${err.message}`);
+    },
+    onSuccess: (member) => {
+      // Invalidate and refetch member queries
+      queryClient.invalidateQueries({ queryKey: queryKeys.members.all });
+      toast.success('Member created successfully');
+    },
+  });
+}
+
+// Hook for member updates
+export function useUpdateMember() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateMemberRequest }) =>
+      memberService.updateMember(id, data),
+    onMutate: async ({ id, data }) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.members.detail(id) });
+
+      const previousMember = queryClient.getQueryData(queryKeys.members.detail(id));
+
+      // Optimistically update member
+      queryClient.setQueryData(queryKeys.members.detail(id), (old: Member) => ({
+        ...old,
+        ...data,
+      }));
+
+      return { previousMember };
+    },
+    onError: (err, { id }, context) => {
+      if (context?.previousMember) {
+        queryClient.setQueryData(queryKeys.members.detail(id), context.previousMember);
+      }
+      toast.error(`Failed to update member: ${err.message}`);
+    },
+    onSuccess: (updatedMember, { id }) => {
+      // Update the specific member in cache
+      queryClient.setQueryData(queryKeys.members.detail(id), updatedMember);
+      // Invalidate member lists to reflect changes
+      queryClient.invalidateQueries({ queryKey: queryKeys.members.lists() });
+      toast.success('Member updated successfully');
+    },
+  });
+}
+
+// Hook for role assignment
+export function useAssignRole() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      memberId,
+      roleId,
+      scopeId,
+    }: {
+      memberId: string;
+      roleId: string;
+      scopeId: string;
+    }) => memberService.assignRole(memberId, roleId, scopeId),
+    onSuccess: (roleAssignment, { memberId }) => {
+      // Invalidate member roles
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.members.roles(memberId),
+      });
+      // Invalidate member details to refresh permissions
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.members.detail(memberId),
+      });
+      toast.success('Role assigned successfully');
+    },
+    onError: (err) => {
+      toast.error(`Failed to assign role: ${err.message}`);
+    },
+  });
+}
+
+// Hook for member search with debouncing
+export function useMemberSearch(query: string, unitId?: string) {
+  return useQuery({
+    queryKey: queryKeys.members.search(query, unitId),
+    queryFn: () => memberService.searchMembers(query, unitId),
+    enabled: query.length >= 2, // Only search with 2+ characters
+    staleTime: 30 * 1000, // 30 seconds for search results
+  });
+}
+```
+
+**Service Layer Features:**
+
+1. **Type-Safe Communication:** Full TypeScript integration with shared interfaces
+2. **Error Handling:** Comprehensive error handling with user-friendly messages
+3. **Optimistic Updates:** Immediate UI feedback with automatic rollback on failure
+4. **File Upload Support:** Progress tracking and error handling for large files
+5. **Caching Strategy:** Intelligent cache invalidation and background refetching
+6. **Request Deduplication:** Automatic deduplication of identical requests
+7. **Offline Support:** Cache persistence and retry mechanisms
+8. **Performance Optimization:** Pagination, search debouncing, and selective updates
+
+**Integration Patterns:**
+
+- **React Hook Wrappers:** Custom hooks that encapsulate common query and mutation patterns
+- **Cache Management:** Sophisticated cache invalidation strategies based on data relationships
+- **State Synchronization:** Automatic UI updates when server state changes
+- **Error Recovery:** Graceful handling of network failures and server errors
+- **Background Sync:** Automatic data refetching and cache updates
+
 ## Database Schema
 
 This section transforms our conceptual data models into concrete PostgreSQL database schemas with proper relationships, constraints, and indexes for optimal performance and data integrity.
