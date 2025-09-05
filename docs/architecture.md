@@ -6066,42 +6066,6 @@ For the POC, we rely on Vercel's built-in analytics and monitoring capabilities.
 
 -----
 
-## Coding Standards
-
-This section establishes a minimal set of high-impact rules that are mandatory for all developers, including AI agents, to enforce our architectural decisions.
-
-### Core Standards
-
-- **Languages & Runtimes:** TypeScript (~5.x) with `strict` flag enabled. The `any` type is forbidden. Node.js (~20.x LTS).
-- **Style & Linting:** Prettier for code formatting enforced by pre-commit hooks. ESLint with architectural rules enforcement.
-- **Test Organization:** Test files use `.test.ts/.test.tsx` suffix, co-located with source files. Fixtures in `__tests__/fixtures/` directories.
-
-### Naming Conventions
-
-| Element | Convention | Example |
-| :--- | :--- | :--- |
-| Component Files | PascalCase.tsx | `UserProfile.tsx` |
-| Hook Files | useCamelCase.ts | `useAuth.ts` |
-| API Route Files | kebab-case/route.ts | `app/api/user-profile/route.ts`|
-| Prisma Models | PascalCase | `model Member { ... }` |
-
-### Critical Rules
-
-- **Enforced Module Boundaries:** Direct cross-module imports of internal, non-public components are strictly forbidden. Modules may only interact through their public API interfaces. An automated linting script will enforce this.
-- **State Management Discipline:** State management must be strictly separated. Use Zustand only for pure UI state. Use TanStack Query for all server state.
-- **Type-Safe Environment Variables:** Never access `process.env` directly in application code. All environment variables must be exposed through a dedicated, type-safe configuration module.
-- **Centralized API Error Handling:** All backend API handlers must use a centralized error handling middleware.
-
-### Language-Specific Guidelines
-
-#### TypeScript Specifics
-
-- **Strict Type Safety:** All function parameters and return types must be explicitly typed. No implicit `any` allowed.
-- **Module Declaration:** Use `export type` for type-only exports to enable proper tree-shaking.
-- **Utility Types:** Prefer built-in utility types (`Pick`, `Omit`, `Partial`) over manual type construction where applicable.
-
------
-
 ## Testing Strategy
 
 This section defines a comprehensive testing approach for the fullstack application, providing detailed guidance for AI agents and development teams. All testing practices align with Test-Driven Development (TDD) methodology and architectural decisions.
@@ -6510,6 +6474,42 @@ test.describe('Member Creation Workflow', () => {
 - Mock external dependencies (database, APIs, file system)
 - Test companionship constraint validation exhaustively
 - Generate property-based tests for complex business rules
+
+-----
+
+## Coding Standards
+
+This section establishes a minimal set of high-impact rules that are mandatory for all developers, including AI agents, to enforce our architectural decisions.
+
+### Core Standards
+
+- **Languages & Runtimes:** TypeScript (~5.x) with `strict` flag enabled. The `any` type is forbidden. Node.js (~20.x LTS).
+- **Style & Linting:** Prettier for code formatting enforced by pre-commit hooks. ESLint with architectural rules enforcement.
+- **Test Organization:** Test files use `.test.ts/.test.tsx` suffix, co-located with source files. Fixtures in `__tests__/fixtures/` directories.
+
+### Naming Conventions
+
+| Element | Convention | Example |
+| :--- | :--- | :--- |
+| Component Files | PascalCase.tsx | `UserProfile.tsx` |
+| Hook Files | useCamelCase.ts | `useAuth.ts` |
+| API Route Files | kebab-case/route.ts | `app/api/user-profile/route.ts`|
+| Prisma Models | PascalCase | `model Member { ... }` |
+
+### Critical Rules
+
+- **Enforced Module Boundaries:** Direct cross-module imports of internal, non-public components are strictly forbidden. Modules may only interact through their public API interfaces. An automated linting script will enforce this.
+- **State Management Discipline:** State management must be strictly separated. Use Zustand only for pure UI state. Use TanStack Query for all server state.
+- **Type-Safe Environment Variables:** Never access `process.env` directly in application code. All environment variables must be exposed through a dedicated, type-safe configuration module.
+- **Centralized API Error Handling:** All backend API handlers must use a centralized error handling middleware.
+
+### Language-Specific Guidelines
+
+#### TypeScript Specifics
+
+- **Strict Type Safety:** All function parameters and return types must be explicitly typed. No implicit `any` allowed.
+- **Module Declaration:** Use `export type` for type-only exports to enable proper tree-shaking.
+- **Utility Types:** Prefer built-in utility types (`Pick`, `Omit`, `Partial`) over manual type construction where applicable.
 
 -----
 
