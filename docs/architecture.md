@@ -5867,6 +5867,51 @@ Our application is deployed across three distinct environments with clear separa
 - **Preview:** Shared staging database with realistic but anonymized test data
 - **Production:** Vercel Postgres with production data and automated backups
 
+### Infrastructure as Code
+
+- **Tool:** Vercel CLI v33.0+ and GitHub Actions
+- **Location:** `.github/workflows/ci-cd.yml` (GitHub Actions configuration) and `vercel.json` (Vercel platform configuration)
+- **Approach:** Declarative configuration using Vercel's platform-as-a-service model with GitHub Actions for CI/CD orchestration
+
+The `vercel.json` file provides platform-specific configuration for deployment settings, routing rules, and environment variables, while the GitHub Actions workflow (shown above) handles the complete CI/CD pipeline automation.
+
+### Environment Promotion Flow
+
+```text
+Development (Local)
+        ↓
+   Feature Branch
+        ↓
+   Pull Request → Preview Environment (Staging DB)
+        ↓
+   Code Review & Automated Testing
+        ↓
+   Merge to Main → Production Deployment
+        ↓
+   Database Migration (if required)
+        ↓
+   Production Verification
+```
+
+The promotion flow ensures that:
+1. All code changes are tested in isolation via Preview environments
+2. Database migrations are applied safely after application deployment
+3. Production deployments are atomic and can be rolled back if necessary
+4. Each environment uses appropriate data sources (local → staging → production)
+
+### Rollback Strategy
+
+- **Primary Method:** Git-based rollback using Vercel's deployment history and database migration reversals
+- **Trigger Conditions:** Failed health checks, critical errors in production, or manual intervention due to business requirements
+- **Recovery Time Objective:** Under 5 minutes for application rollback, under 15 minutes for database rollback including migration reversals
+
+#### Rollback Procedures
+
+1. **Application Rollback**: Use Vercel dashboard or CLI to revert to previous successful deployment
+2. **Database Rollback**: Execute pre-prepared rollback migration scripts for schema changes
+3. **Verification**: Automated health checks confirm system stability post-rollback
+4. **Communication**: Automated notifications to development team and stakeholders
+
 -----
 
 ## Error Handling Strategy
