@@ -5452,72 +5452,207 @@ emma-companionship/
 
 ## Development Workflow
 
-This section outlines the specific commands and steps for a developer to set up and run the project locally. By using pnpm for package management and Docker for the database, we create a consistent and isolated development environment that works on any machine.
+This section defines the development setup and workflow for our fullstack Next.js application, providing comprehensive guidance for setting up local development environment and daily development commands.
 
 ### Local Development Setup
 
 #### Prerequisites
 
-Before starting, a developer must have the following tools installed:
+Before starting development, ensure you have the following tools installed:
 
-  * **Node.js** (\~20.x LTS)
-  * **pnpm** (for package management in the monorepo)
-  * **Docker** and **Docker Compose** (to run the local PostgreSQL database)
-  * **Git**
+```bash
+# Install Node.js (v20.x LTS recommended)
+# Download from https://nodejs.org or use nvm:
+nvm install 20
+nvm use 20
 
-#### Initial One-Time Setup
+# Install pnpm globally for monorepo package management
+npm install -g pnpm
 
-To set up the project for the first time, a developer will run these commands:
+# Install Docker and Docker Compose for local database
+# Download from https://docker.com/get-started
+
+# Verify installations
+node --version  # Should be v20.x
+pnpm --version  # Should be v8.x+
+docker --version
+docker-compose --version
+git --version
+```
+
+#### Initial Setup
+
+First-time setup commands to get the fullstack application running locally:
 
 ```bash
 # 1. Clone the repository
 git clone <repository_url> emma-companionship
 cd emma-companionship
 
-# 2. Install all dependencies for the monorepo
+# 2. Install all dependencies across the monorepo
 pnpm install
 
-# 3. Create a local environment file from the template
-cp .env.example .env
+# 3. Set up environment configuration
+cp .env.example .env.local
+cp apps/web/.env.example apps/web/.env.local
 
-# 4. Start the local PostgreSQL database in a Docker container
+# 4. Start local PostgreSQL database container
 pnpm db:start
 
-# 5. Apply the database schema
+# 5. Generate Prisma client and apply database schema
+pnpm db:generate
 pnpm db:migrate
+
+# 6. Seed the database with initial data
+pnpm db:seed
+
+# 7. Build shared packages
+pnpm build:packages
 ```
 
-#### Daily Development Commands
+#### Development Commands
+
+Common commands for daily development workflow:
 
 ```bash
-# Start the Next.js development server (with Turborepo)
+# Start all services (recommended for fullstack development)
 pnpm dev
 
-# Run all tests across the monorepo
-pnpm test
+# Start frontend only (Next.js with API routes)
+pnpm dev:web
 
-# Run the linter to check for code quality and style
-pnpm lint
+# Start database only (if you need to restart DB)
+pnpm db:start
+
+# Run tests
+pnpm test              # Run all tests across monorepo
+pnpm test:watch        # Run tests in watch mode
+pnpm test:web          # Run only frontend tests
+pnpm test:integration  # Run integration tests
+pnpm test:e2e          # Run end-to-end tests
+
+# Code quality and linting
+pnpm lint              # Check code style across monorepo
+pnpm lint:fix          # Auto-fix linting issues
+pnpm format            # Format code with Prettier
+pnpm type-check        # TypeScript type checking
+
+# Database operations
+pnpm db:studio         # Open Prisma Studio (database GUI)
+pnpm db:reset          # Reset database and re-seed
+pnpm db:migrate:dev    # Create and apply new migration
+pnpm db:migrate:reset  # Reset migrations
+
+# Build commands
+pnpm build             # Build entire monorepo for production
+pnpm build:web         # Build Next.js application only
+pnpm build:packages    # Build shared packages only
+
+# Deployment and production
+pnpm start             # Start production build locally
+pnpm preview           # Preview production build
 ```
 
-#### Git Hooks & Code Quality Automation
+**Git Hooks & Code Quality Automation:**
 
-To automate code quality, we will use **Husky** to manage a `pre-commit` Git hook. This hook will trigger **lint-staged**, which will automatically run **Prettier** (for code formatting) and **ESLint** (for code analysis) on all staged files. This ensures that no code that violates our formatting or quality rules can be committed to the repository.
+The project uses **Husky** and **lint-staged** for automated code quality checks:
+
+```bash
+# Git hooks are automatically installed after pnpm install
+# The following checks run on every commit:
+
+# Pre-commit hook runs:
+# - Prettier formatting on staged files
+# - ESLint checking on staged files  
+# - TypeScript type checking
+# - Unit tests for changed files
+
+# Pre-push hook runs:
+# - Full test suite
+# - Build verification
+# - Integration tests
+```
 
 ### Environment Configuration
 
-The `.env` file will contain the following required variables for the application to run locally.
+#### Required Environment Variables
+
+The application requires different environment variables for development, organized by scope:
 
 ```bash
-# .env - Local Environment Variables
+# Frontend Environment Variables (.env.local)
+# Next.js application configuration
 
-# PostgreSQL connection string for Prisma
-DATABASE_URL="postgresql://user:password@localhost:5432/emma_db?schema=public"
-
-# Auth.js secret and URL
-NEXTAUTH_SECRET="a_secure_random_string_for_development"
+# Application URLs
 NEXTAUTH_URL="http://localhost:3000"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+
+# API Configuration  
+NEXT_PUBLIC_API_URL="http://localhost:3000/api"
+
+# Feature Flags
+NEXT_PUBLIC_ENABLE_GRAPH_VIEW="true"
+NEXT_PUBLIC_ENABLE_DATA_IMPORT="true"
+
+# Backend Environment Variables (.env)
+# Database and server configuration
+
+# PostgreSQL connection for Prisma
+DATABASE_URL="postgresql://emma_user:emma_password@localhost:5432/emma_companionship_dev?schema=public"
+
+# Direct database URL for migrations
+DIRECT_URL="postgresql://emma_user:emma_password@localhost:5432/emma_companionship_dev?schema=public"
+
+# Shadow database for migrations (development)
+SHADOW_DATABASE_URL="postgresql://emma_user:emma_password@localhost:5432/emma_companionship_shadow?schema=public"
+
+# Shared Environment Variables
+# Configuration used by both frontend and backend
+
+# Authentication secrets
+NEXTAUTH_SECRET="your-super-secret-jwt-key-min-32-characters-long"
+AUTH_SECRET="your-super-secret-jwt-key-min-32-characters-long"
+
+# Session configuration
+SESSION_MAX_AGE="2592000"  # 30 days in seconds
+
+# Security headers
+CSRF_SECRET="your-csrf-secret-key"
+
+# Email configuration (for notifications)
+SMTP_HOST="localhost"
+SMTP_PORT="1025"
+SMTP_USER=""
+SMTP_PASSWORD=""
+SMTP_FROM="noreply@emma-companionship.local"
+
+# File upload limits
+MAX_FILE_SIZE="10485760"  # 10MB in bytes
+UPLOAD_DIR="./uploads"
+
+# Logging configuration
+LOG_LEVEL="info"
+LOG_FILE="./logs/app.log"
+
+# Development-specific overrides
+NODE_ENV="development"
+NEXT_PUBLIC_NODE_ENV="development"
+VERCEL_ENV="development"
 ```
+
+**Environment Setup Scripts:**
+
+```bash
+# Quick environment setup for new developers
+pnpm setup:env         # Interactive environment setup wizard
+pnpm setup:dev         # Complete development environment setup
+pnpm setup:test        # Setup test environment configuration
+pnpm setup:clean       # Clean and reset all environments
+```
+
+**Environment Validation:**
+
+The application automatically validates required environment variables on startup and provides helpful error messages for missing or invalid configuration.
 
 -----
 
