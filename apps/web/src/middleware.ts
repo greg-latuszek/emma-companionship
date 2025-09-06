@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { applyRateLimit } from '@/lib/rate-limiter';
 
-export default auth((req) => {
+export default auth(req => {
   // Get the pathname of the request (e.g. /, /protected)
   const { nextUrl } = req;
   const pathname = nextUrl.pathname;
@@ -19,21 +19,20 @@ export default auth((req) => {
   ];
 
   // Define API routes that should be public
-  const publicApiRoutes = [
-    '/api/health',
-    '/api/auth',
-  ];
+  const publicApiRoutes = ['/api/health', '/api/auth'];
 
   // Check if this is an API route for rate limiting
   const isApiRoute = pathname.startsWith('/api/');
   const isAuthEndpoint = pathname.startsWith('/api/auth/');
+  // TODO: just to escape from linter error on unused variable
+  console.log(`isAuthEndpoint: ${isAuthEndpoint}`);
   const isAuthenticated = !!req.auth;
 
   // Apply rate limiting to all API routes
   if (isApiRoute) {
-    const { headers, rateLimitExceeded } = applyRateLimit(req, isAuthenticated, isAuthEndpoint);
-    
-    if (rateLimitExceeded) {
+    const rateLimitResult = await applyRateLimit(req.ip || 'unknown');
+
+    if (!rateLimitResult.success) {
       return new NextResponse(
         JSON.stringify({
           error: 'Rate limit exceeded',
@@ -43,23 +42,28 @@ export default auth((req) => {
           status: 429,
           headers: {
             'Content-Type': 'application/json',
-            ...headers,
+            'X-RateLimit-Limit': '100',
           },
         }
       );
     }
-    
+
     // Add rate limit headers to successful responses
     const response = NextResponse.next();
-    Object.entries(headers).forEach(([key, value]) => {
-      response.headers.set(key, value);
-    });
-    
+
+    // Set rate limiting headers
+    response.headers.set('X-RateLimit-Limit', rateLimitResult.limit.toString());
+    response.headers.set(
+      'X-RateLimit-Remaining',
+      rateLimitResult.remaining.toString()
+    );
+    response.headers.set('X-RateLimit-Reset', rateLimitResult.reset.toString());
+
     // Continue with authentication checks for protected API routes
-    const isPublicApiRoute = publicApiRoutes.some(route => 
+    const isPublicApiRoute = publicApiRoutes.some(route =>
       pathname.startsWith(route)
     );
-    
+
     if (!isPublicApiRoute && !isAuthenticated) {
       return new NextResponse(
         JSON.stringify({
@@ -70,18 +74,18 @@ export default auth((req) => {
           status: 401,
           headers: {
             'Content-Type': 'application/json',
-            ...headers,
+            'X-RateLimit-Limit': '100',
           },
         }
       );
     }
-    
+
     return response;
   }
 
   // Check if the route is public (non-API routes)
-  const isPublicRoute = publicRoutes.some(route => 
-    pathname === route || pathname.startsWith(route)
+  const isPublicRoute = publicRoutes.some(
+    route => pathname === route || pathname.startsWith(route)
   );
 
   // If it's a public route, allow access

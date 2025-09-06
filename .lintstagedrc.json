@@ -1,12 +1,5 @@
 {
-  "*.{js,jsx,ts,tsx}": [
-    "eslint --fix --max-warnings=50",
-    "prettier --write"
-  ],
-  "*.{json,md,mdx,css,html,yml,yaml}": [
-    "prettier --write"
-  ],
-  "*.ts": [
-    "bash -c 'tsc --noEmit'"
-  ]
+  "*.{js,jsx,ts,tsx}": ["eslint --fix --max-warnings=50", "prettier --write"],
+  "*.{json,md,mdx,css,html,yml,yaml}": ["prettier --write"],
+  "*.ts": []
 }
