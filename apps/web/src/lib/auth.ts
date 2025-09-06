@@ -32,32 +32,38 @@ const credentialsSchema = z.object({
  * In production, this should be replaced with bcrypt or argon2
  */
 function hashPassword(password: string, salt: string): string {
-  return createHash('sha256').update(password + salt).digest('hex');
+  return createHash('sha256')
+    .update(password + salt)
+    .digest('hex');
 }
 
 /**
  * Timing-safe password comparison to prevent timing attacks
  */
-function verifyPassword(plainPassword: string, hashedPassword: string, salt: string): boolean {
+function verifyPassword(
+  plainPassword: string,
+  hashedPassword: string,
+  salt: string
+): boolean {
   const inputHash = Buffer.from(hashPassword(plainPassword, salt));
   const storedHash = Buffer.from(hashedPassword);
-  
+
   if (inputHash.length !== storedHash.length) {
     return false;
   }
-  
+
   return timingSafeEqual(inputHash, storedHash);
 }
 
 // NextAuth configuration
 export const config = {
   adapter: PrismaAdapter(prisma),
-  
+
   // Configure session strategy
   session: {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days
-    updateAge: 24 * 60 * 60,   // 24 hours
+    updateAge: 24 * 60 * 60, // 24 hours
   },
 
   // Configure JWT
@@ -71,15 +77,15 @@ export const config = {
       id: 'credentials',
       name: 'credentials',
       credentials: {
-        email: { 
-          label: 'Email', 
+        email: {
+          label: 'Email',
           type: 'email',
-          placeholder: 'user@example.com'
+          placeholder: 'user@example.com',
         },
-        password: { 
-          label: 'Password', 
+        password: {
+          label: 'Password',
           type: 'password',
-          placeholder: 'Your password'
+          placeholder: 'Your password',
         },
       },
       async authorize(credentials) {
@@ -90,12 +96,12 @@ export const config = {
           const config = getConfig();
           // TODO: just to escape from linter error on unused variable
           console.log(`config ${config ? 'exists' : 'not exists'}`);
-          
+
           // Check if this is the admin user from environment variables
           const adminEmail = process.env.ADMIN_EMAIL || 'admin@example.com';
           const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH;
           const adminSalt = process.env.ADMIN_SALT || 'emma-companionship-salt';
-          
+
           if (email === adminEmail && adminPasswordHash) {
             // Verify admin password using secure hash comparison
             if (verifyPassword(password, adminPasswordHash, adminSalt)) {
@@ -103,7 +109,7 @@ export const config = {
               let user = await prisma.user.findUnique({
                 where: { email: adminEmail },
               });
-              
+
               if (!user) {
                 user = await prisma.user.create({
                   data: {
@@ -113,7 +119,7 @@ export const config = {
                   },
                 });
               }
-              
+
               return {
                 id: user.id,
                 email: user.email,
@@ -122,19 +128,19 @@ export const config = {
               };
             }
           }
-          
+
           // For regular users, check database with hashed passwords
           // This would be implemented when user registration is added
           const user = await prisma.user.findUnique({
             where: { email },
           });
-          
+
           if (user) {
             // TODO: Implement password verification for regular users
             // This requires adding password and salt fields to the User model
             console.warn('Regular user authentication not yet implemented');
           }
-          
+
           return null;
         } catch (error) {
           console.error('Authentication error:', error);
@@ -164,7 +170,7 @@ export const config = {
       }
       return token;
     },
-    
+
     async session({ session, token }) {
       // Send properties to the client
       if (token?.id) {
@@ -172,7 +178,7 @@ export const config = {
       }
       return session;
     },
-    
+
     async redirect({ url, baseUrl }) {
       // Allows relative callback URLs
       if (url.startsWith('/')) return `${baseUrl}${url}`;
@@ -195,8 +201,8 @@ export const config = {
       // Handle both session-based and token-based signOut
       const session = 'session' in params ? params.session : null;
       const token = 'token' in params ? params.token : null;
-      
-      console.log(`User ${(session as any)?.user?.email || 'unknown'} signed out`);
+
+      console.log(`User ${session?.user?.email || 'unknown'} signed out`);
       // TODO: just to escape from linter error on unused variable
       console.log(`token: ${token ? 'exists' : 'not exists'}`);
     },
@@ -208,10 +214,9 @@ export const config = {
   // Security settings
   secret: getConfig().NEXTAUTH_SECRET,
   trustHost: true,
-  
+
   // Enable debug in development
   debug: process.env.NODE_ENV === 'development',
-  
 } satisfies NextAuthConfig;
 
 // Create the auth handlers
