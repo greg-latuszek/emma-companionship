@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { applyRateLimit } from '@/lib/rate-limiter';
 
-export default auth(req => {
+export default auth(async req => {
   // Get the pathname of the request (e.g. /, /protected)
   const { nextUrl } = req;
   const pathname = nextUrl.pathname;
