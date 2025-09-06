@@ -1,10 +1,13 @@
+import { createHash, timingSafeEqual } from 'crypto';
+
 import NextAuth, { DefaultSession, NextAuthConfig } from 'next-auth';
 import { PrismaAdapter } from '@auth/prisma-adapter';
-import { prisma } from './prisma';
-import { getConfig } from '@emma/config';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { z } from 'zod';
-import { createHash, timingSafeEqual } from 'crypto';
+
+import { getConfig } from '@emma/config';
+
+import { prisma } from './prisma';
 
 // Extend the default session type to include additional fields
 declare module 'next-auth' {

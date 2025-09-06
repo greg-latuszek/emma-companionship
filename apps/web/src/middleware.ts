@@ -1,5 +1,6 @@
-import { auth } from '@/lib/auth';
 import { NextResponse } from 'next/server';
+
+import { auth } from '@/lib/auth';
 import { applyRateLimit } from '@/lib/rate-limiter';
 
 export default auth((req) => {

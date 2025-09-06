@@ -1,5 +1,6 @@
-import { GET } from './route';
 import { NextRequest } from 'next/server';
+
+import { GET } from './route';
 
 // Mock the @emma/config module
 jest.mock('@emma/config', () => ({

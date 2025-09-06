@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import { getConfig } from '@emma/config';
 import { checkDatabaseConnection, getDatabaseStats } from '@/lib/prisma';
 

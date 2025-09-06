@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+
 import { getConfig } from '@emma/config';
 
 // Global variable to store Prisma instance in development
