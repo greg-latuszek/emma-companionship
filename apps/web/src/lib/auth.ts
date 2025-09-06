@@ -4,6 +4,7 @@ import { prisma } from './prisma';
 import { getConfig } from '@emma/config';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { z } from 'zod';
+import { createHash, timingSafeEqual } from 'crypto';
 
 // Extend the default session type to include additional fields
 declare module 'next-auth' {
@@ -22,6 +23,28 @@ const credentialsSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
+
+/**
+ * Secure password hashing using SHA-256 with salt
+ * In production, this should be replaced with bcrypt or argon2
+ */
+function hashPassword(password: string, salt: string): string {
+  return createHash('sha256').update(password + salt).digest('hex');
+}
+
+/**
+ * Timing-safe password comparison to prevent timing attacks
+ */
+function verifyPassword(plainPassword: string, hashedPassword: string, salt: string): boolean {
+  const inputHash = Buffer.from(hashPassword(plainPassword, salt));
+  const storedHash = Buffer.from(hashedPassword);
+  
+  if (inputHash.length !== storedHash.length) {
+    return false;
+  }
+  
+  return timingSafeEqual(inputHash, storedHash);
+}
 
 // NextAuth configuration
 export const config = {
@@ -60,34 +83,51 @@ export const config = {
         try {
           // Validate input
           const validatedCredentials = credentialsSchema.parse(credentials);
-          
-          // For initial setup, we'll create a simple authentication
-          // In production, this should validate against hashed passwords
           const { email, password } = validatedCredentials;
+          const config = getConfig();
           
-          // Find or create user (simplified for initial setup)
-          let user = await prisma.user.findUnique({
+          // Check if this is the admin user from environment variables
+          const adminEmail = process.env.ADMIN_EMAIL || 'admin@example.com';
+          const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH;
+          const adminSalt = process.env.ADMIN_SALT || 'emma-companionship-salt';
+          
+          if (email === adminEmail && adminPasswordHash) {
+            // Verify admin password using secure hash comparison
+            if (verifyPassword(password, adminPasswordHash, adminSalt)) {
+              // Find or create admin user
+              let user = await prisma.user.findUnique({
+                where: { email: adminEmail },
+              });
+              
+              if (!user) {
+                user = await prisma.user.create({
+                  data: {
+                    email: adminEmail,
+                    name: 'Administrator',
+                    emailVerified: new Date(),
+                  },
+                });
+              }
+              
+              return {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                image: user.image,
+              };
+            }
+          }
+          
+          // For regular users, check database with hashed passwords
+          // This would be implemented when user registration is added
+          const user = await prisma.user.findUnique({
             where: { email },
           });
-
-          // For initial setup, create admin user if doesn't exist
-          if (!user && email === 'admin@example.com' && password === 'admin123') {
-            user = await prisma.user.create({
-              data: {
-                email,
-                name: 'Administrator',
-                emailVerified: new Date(),
-              },
-            });
-          }
-
+          
           if (user) {
-            return {
-              id: user.id,
-              email: user.email,
-              name: user.name,
-              image: user.image,
-            };
+            // TODO: Implement password verification for regular users
+            // This requires adding password and salt fields to the User model
+            console.warn('Regular user authentication not yet implemented');
           }
           
           return null;
