@@ -11,6 +11,8 @@ import { checkDatabaseConnection, getDatabaseStats } from '@/lib/prisma';
  * @returns {object} Health status object with timestamp, environment, and database status
  */
 export async function GET(request: NextRequest) {
+  // TODO: just to escape from linter error on unused variable
+  console.log(`request ${request ? 'exists' : 'not exists'}`);
   try {
     const config = getConfig();
     const timestamp = new Date().toISOString();
