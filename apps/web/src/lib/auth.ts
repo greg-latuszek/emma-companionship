@@ -202,8 +202,11 @@ export const config = {
       const session = 'session' in params ? params.session : null;
       const token = 'token' in params ? params.token : null;
 
-      console.log(`User ${session?.user?.email || 'unknown'} signed out`);
+      // TODO: error TS2339: Property 'user' does not exist on type 'AdapterSession
+      //       temporary comment out
+      // console.log(`User ${session?.user.id || 'unknown'} signed out`);
       // TODO: just to escape from linter error on unused variable
+      console.log(`session: ${session ? 'exists' : 'not exists'}`);
       console.log(`token: ${token ? 'exists' : 'not exists'}`);
     },
     async createUser({ user }) {
