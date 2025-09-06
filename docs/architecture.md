@@ -5463,10 +5463,10 @@ This section defines the development setup and workflow for our fullstack Next.j
 Before starting development, ensure you have the following tools installed:
 
 ```bash
-# Install Node.js (v20.x LTS recommended)
+# Install Node.js (v22.x LTS recommended)
 # Download from https://nodejs.org or use nvm:
-nvm install 20
-nvm use 20
+nvm install 22
+nvm use 22
 
 # Install pnpm globally for monorepo package management
 npm install -g pnpm
@@ -5475,7 +5475,7 @@ npm install -g pnpm
 # Download from https://docker.com/get-started
 
 # Verify installations
-node --version  # Should be v20.x
+node --version  # Should be v22.x
 pnpm --version  # Should be v8.x+
 docker --version
 docker-compose --version
@@ -5718,7 +5718,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'pnpm'
 
       - name: Install pnpm
@@ -6449,7 +6449,7 @@ This section establishes a minimal set of high-impact rules that are mandatory f
 - **Generic Constraints:** Always provide meaningful constraints for generic types (e.g., `<T extends Record<string, unknown>>`)
 
 #### Code Quality Enforcement
-- **Languages & Runtimes:** TypeScript (~5.x) with `strict` flag enabled, Node.js (~20.x LTS)
+- **Languages & Runtimes:** TypeScript (~5.x) with `strict` flag enabled, Node.js (~22.x LTS)
 - **Style & Linting:** Prettier for code formatting enforced by pre-commit hooks, ESLint with architectural rules and import/export restrictions
 - **Test Organization:** Test files use `.test.ts/.test.tsx` suffix, co-located with source files, fixtures in `__tests__/fixtures/` directories
 

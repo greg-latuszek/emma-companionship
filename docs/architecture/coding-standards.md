@@ -40,7 +40,7 @@ This section establishes a minimal set of high-impact rules that are mandatory f
 - **Generic Constraints:** Always provide meaningful constraints for generic types (e.g., `<T extends Record<string, unknown>>`)
 
 ### Code Quality Enforcement
-- **Languages & Runtimes:** TypeScript (~5.x) with `strict` flag enabled, Node.js (~20.x LTS)
+- **Languages & Runtimes:** TypeScript (~5.x) with `strict` flag enabled, Node.js (~22.x LTS)
 - **Style & Linting:** Prettier for code formatting enforced by pre-commit hooks, ESLint with architectural rules and import/export restrictions
 - **Test Organization:** Test files use `.test.ts/.test.tsx` suffix, co-located with source files, fixtures in `__tests__/fixtures/` directories
 

@@ -1,8 +1,8 @@
-# Install Node.js (v20.x LTS recommended)
+# Install Node.js (v22.x LTS recommended)
 
 ## Table of Contents
 
-- [Install Node.js (v20.x LTS recommended)](#table-of-contents)
+- [Install Node.js (v22.x LTS recommended)](#table-of-contents)
   - [Introduction](./introduction.md)
   - [High Level Architecture](./high-level-architecture.md)
   - [Tech Stack](./tech-stack.md)

@@ -9,10 +9,10 @@ This section defines the development setup and workflow for our fullstack Next.j
 Before starting development, ensure you have the following tools installed:
 
 ```bash
-# Install Node.js (v20.x LTS recommended)
+# Install Node.js (v22.x LTS recommended)
 # Download from https://nodejs.org or use nvm:
-nvm install 20
-nvm use 20
+nvm install 22
+nvm use 22
 
 # Install pnpm globally for monorepo package management
 npm install -g pnpm
@@ -21,7 +21,7 @@ npm install -g pnpm
 # Download from https://docker.com/get-started
 
 # Verify installations
-node --version  # Should be v20.x
+node --version  # Should be v22.x
 pnpm --version  # Should be v8.x+
 docker --version
 docker-compose --version
