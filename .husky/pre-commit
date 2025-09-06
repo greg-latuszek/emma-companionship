@@ -5,4 +5,4 @@
 npx lint-staged
 
 # Type check the entire project (temporarily disabled during migration)
-# pnpm type-check
+pnpm type-check
