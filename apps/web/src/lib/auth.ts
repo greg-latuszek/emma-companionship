@@ -191,8 +191,12 @@ export const config = {
       console.log(`profile: ${profile ? 'exists' : 'not exists'}`);
       console.log(`isNewUser: ${isNewUser ? 'exists' : 'not exists'}`);
     },
-    async signOut({ session, token }) {
-      console.log(`User ${session?.user?.email} signed out`);
+    async signOut(params) {
+      // Handle both session-based and token-based signOut
+      const session = 'session' in params ? params.session : null;
+      const token = 'token' in params ? params.token : null;
+      
+      console.log(`User ${(session as any)?.user?.email || 'unknown'} signed out`);
       // TODO: just to escape from linter error on unused variable
       console.log(`token: ${token ? 'exists' : 'not exists'}`);
     },
