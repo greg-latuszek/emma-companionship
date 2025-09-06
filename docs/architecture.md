@@ -5478,7 +5478,7 @@ npm install -g pnpm
 node --version  # Should be v22.x
 pnpm --version  # Should be v8.x+
 docker --version
-docker-compose --version
+docker compose version
 git --version
 ```
 

@@ -23,10 +23,10 @@ NODE_ENV="development"
 
 ```bash
 # Start the database containers
-docker-compose up -d postgres
+docker compose up -d postgres
 
 # Check that the database is running
-docker-compose ps
+docker compose ps
 ```
 
 ### 2. Setup Prisma
@@ -62,8 +62,8 @@ The database includes the following main entities:
 - `pnpm db:generate` - Generate Prisma client
 - `pnpm db:migrate` - Apply schema migrations  
 - `pnpm db:seed` - Populate with sample data
-- `docker-compose up postgres` - Start database
-- `docker-compose down` - Stop database
+- `docker compose up postgres` - Start database
+- `docker compose down` - Stop database
 
 ## Production Notes
 

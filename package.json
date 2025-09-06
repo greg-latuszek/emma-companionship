@@ -18,9 +18,9 @@
     "format:check": "prettier --check \"**/*.{js,ts,tsx,md,json}\"",
     "prepare": "husky install",
     "postinstall": "husky install",
-    "docker:db:up": "docker-compose up -d postgres",
-    "docker:db:down": "docker-compose down",
-    "docker:db:logs": "docker-compose logs -f postgres",
+    "docker:db:up": "docker compose up -d postgres",
+    "docker:db:down": "docker compose down",
+    "docker:db:logs": "docker compose logs -f postgres",
     "setup": "pnpm install && pnpm db:generate && pnpm db:migrate && pnpm db:seed",
     "validate": "pnpm lint && pnpm type-check && pnpm test"
   },
