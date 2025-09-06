@@ -1,0 +1,50 @@
+{
+  "name": "emma-companionship",
+  "private": true,
+  "description": "Community relationship modeling and management platform for Emma Companionship",
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
+    "type-check": "turbo type-check",
+    "test": "turbo test",
+    "test:watch": "turbo test:watch",
+    "test:integration": "turbo test:integration",
+    "db:generate": "turbo db:generate",
+    "db:migrate": "turbo db:migrate",
+    "db:seed": "turbo db:seed",
+    "clean": "turbo clean",
+    "format": "prettier --write \"**/*.{js,ts,tsx,md,json}\"",
+    "format:check": "prettier --check \"**/*.{js,ts,tsx,md,json}\"",
+    "prepare": "husky install",
+    "postinstall": "husky install",
+    "docker:db:up": "docker-compose up -d postgres",
+    "docker:db:down": "docker-compose down",
+    "docker:db:logs": "docker-compose logs -f postgres",
+    "setup": "pnpm install && pnpm db:generate && pnpm db:migrate && pnpm db:seed",
+    "validate": "pnpm lint && pnpm type-check && pnpm test"
+  },
+  "devDependencies": {
+    "@turbo/gen": "^1.12.4",
+    "turbo": "^1.12.4",
+    "prettier": "^3.2.5",
+    "prettier-plugin-tailwindcss": "^0.5.11",
+    "typescript": "^5.3.3",
+    "eslint": "^8.56.0",
+    "@typescript-eslint/parser": "^6.19.1",
+    "@typescript-eslint/eslint-plugin": "^6.19.1",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-import-resolver-typescript": "^3.6.1",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.6",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}

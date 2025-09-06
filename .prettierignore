@@ -1,0 +1,53 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+.turbo/
+
+# Coverage directory
+coverage/
+
+# Environment variables
+.env*
+
+# Logs
+*.log
+
+# Database files
+*.db
+*.sqlite
+
+# Cache directories
+.cache/
+.parcel-cache/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+
+# Temporary directories
+tmp/
+temp/
+
+# Package manager files
+pnpm-lock.yaml
+yarn.lock
+package-lock.json
+
+# Specific files that shouldn't be formatted
+**/*.md
+**/*.mdx
+public/**/*.html
+public/**/*.json
+next-env.d.ts
