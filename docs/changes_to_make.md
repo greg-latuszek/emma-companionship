@@ -266,4 +266,11 @@ To address your goal of simplifying the POC, here is a clear summary of what can
 | **GitHub Actions** | ❌ | **Defer.** You can deploy manually from your machine for the POC. |
 
 # Changes to apply
-## Technology Stack
+## Technology Stack Changes
+- Switch from Turborepo to Nx for monorepo management. Use Nx-based Next.js starter template.
+- Keep shadcn/ui - it's not worth to use plain html with Tailwind CSS - that might just shift effort while shadcn/ui is already production tested.
+- Defer Zustand - use React's built-in state management for UI state.
+- Defer Playwright - focus on unit and integration tests only.
+- Defer GitHub Actions - focus on local development and manual deploys. Need recipe how to manually deploy to Vercel. Back to GitHub Actions when that is operable.
+- Keep TanStack Query, Auth.js, RTL, and Supertest as they are essential.
+- Defer React Flow till we jump into implementing PRD Epic 2 Story 2.4: V1 Graph View for All Relationships
