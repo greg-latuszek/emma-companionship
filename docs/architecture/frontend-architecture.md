@@ -288,7 +288,7 @@ export const queryKeys = {
 } as const;
 
 // ===============================
-// UI State (Zustand Stores)
+// UI State (React Context/Reducer)
 // ===============================
 
 // Theme and UI preferences
@@ -432,14 +432,14 @@ interface AuthContextType {
 - **Dependent Queries:** Conditional queries based on user permissions
 - **Cache Persistence:** LocalStorage persistence for offline functionality
 
-**UI State Management (Zustand):**
+**UI State Management (React Context/Reducer):**
 
-- **Slice Pattern:** Separate stores for different UI concerns
-- **Immer Integration:** Immutable updates with simple mutation syntax
-- **DevTools Support:** Redux DevTools integration for debugging
-- **Persistence Middleware:** LocalStorage sync for user preferences
-- **Computed Values:** Derived state with automatic dependency tracking
-- **Action Creators:** Consistent action patterns across stores
+- **Context Providers per Domain:** Separate providers for UI concerns (theme, layout, modals)
+- **Pure Reducers:** Testable reducers with explicit action types
+- **Typed Actions:** Discriminated unions for action payloads
+- **Custom Hooks as Selectors:** Memoized selectors minimize re-renders
+- **Persistence Layer:** Optional LocalStorage sync for preferences
+- **Migration Path:** Easy transition to Zustand later if UI state grows
 
 **State Synchronization Patterns:**
 

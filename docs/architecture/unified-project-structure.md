@@ -1,6 +1,6 @@
 # Unified Project Structure
 
-This comprehensive monorepo structure accommodates both frontend and backend concerns while maintaining clear separation of responsibilities. The layout is optimized for Turborepo and follows Next.js fullstack best practices, with the backend modules within `apps/web/src/lib/modules` providing a clear physical representation of our Modular Monolith and Hexagonal Architecture decisions.
+This comprehensive monorepo structure accommodates both frontend and backend concerns while maintaining clear separation of responsibilities. The layout is optimized for Nx and follows Next.js fullstack best practices, with the backend modules within `apps/web/src/lib/modules` providing a clear physical representation of our Modular Monolith and Hexagonal Architecture decisions.
 
 ```plaintext
 emma-companionship/
@@ -46,7 +46,7 @@ emma-companionship/
 │       │   │   │   ├── geo/     # Geographic module
 │       │   │   │   ├── member/  # Member management module
 │       │   │   │   └── relationship/ # Relationship module
-│       │   │   ├── stores/      # Zustand state stores
+│       │   │   ├── stores/      # UI state stores (planned later: Zustand)
 │       │   │   │   ├── authStore.ts # Authentication state
 │       │   │   │   └── uiStore.ts # UI state management
 │       │   │   ├── utils/       # Utility functions
@@ -133,7 +133,7 @@ emma-companionship/
 ├── .gitignore                   # Git ignore patterns
 ├── .cursorignore               # Cursor AI ignore patterns
 ├── package.json                 # Root package.json with workspaces
-├── turbo.json                   # Turborepo configuration
+├── nx.json                      # Nx workspace configuration
 ├── docker-compose.yml           # Local development database
 ├── README.md                    # Project overview and setup
 └── LICENSE                      # Project license
@@ -159,7 +159,7 @@ emma-companionship/
 
 **Development Infrastructure:**
 - **Testing Strategy**: Co-located component tests with dedicated integration and E2E test directories
-- **Build System**: Turborepo optimizes builds with intelligent caching and parallel execution
+- **Build System**: Nx optimizes builds with task graph execution, caching, and parallelization
 - **Environment Management**: Clear separation of local, staging, and production configurations
 
 -----

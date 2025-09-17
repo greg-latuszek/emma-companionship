@@ -17,6 +17,28 @@ This section defines our deployment strategy based on our Vercel platform choice
 
 ## CI/CD Pipeline
 
+POC Note: CI/CD with GitHub Actions is planned for a later phase. For the POC, deploy manually to Vercel (see below). The following pipeline remains as the planned approach for when CI/CD is enabled.
+
+### POC Manual Deployment (Vercel)
+
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Login and link project
+vercel login
+vercel link
+
+# Build and deploy preview
+vercel build
+vercel deploy --prebuilt
+
+# Promote to production
+vercel deploy --prebuilt --prod
+```
+
+### Planned: GitHub Actions CI/CD
+
 Our automated deployment pipeline leverages GitHub Actions for testing and Vercel for deployment:
 
 ```yaml

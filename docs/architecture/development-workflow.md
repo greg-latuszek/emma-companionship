@@ -101,6 +101,45 @@ pnpm start             # Start production build locally
 pnpm preview           # Preview production build
 ```
 
+### Nx Workspace Commands (alongside pnpm scripts)
+
+These are first-class Nx equivalents you can use directly in the workspace:
+
+```bash
+# Visualize the project graph and task dependencies
+nx graph
+
+# Serve Next.js app (dev server)
+nx serve web
+
+# Build the web app
+nx build web
+
+# Run unit tests for the web app
+nx test web
+
+# Run linter for the web app
+nx lint web
+
+# Format code
+nx format:check
+nx format:write
+
+# Run targets across many projects
+nx run-many -t build
+nx run-many -t test
+
+# Affected (useful in CI or local incremental workflows)
+nx affected -t lint,test,build
+
+# Clear the Nx cache if needed
+nx reset
+
+# Generate code with Nx generators (examples)
+nx g @nx/next:page --project=web --name=members
+nx g @nx/next:component --project=web --name=MemberCard
+```
+
 **Git Hooks & Code Quality Automation:**
 
 The project uses **Husky** and **lint-staged** for automated code quality checks:
@@ -139,7 +178,8 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 NEXT_PUBLIC_API_URL="http://localhost:3000/api"
 
 # Feature Flags
-NEXT_PUBLIC_ENABLE_GRAPH_VIEW="true"
+# POC Note: React Flow is deferred; disable graph view by default
+NEXT_PUBLIC_ENABLE_GRAPH_VIEW="false"
 NEXT_PUBLIC_ENABLE_DATA_IMPORT="true"
 
 # Backend Environment Variables (.env)

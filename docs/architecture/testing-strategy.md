@@ -2,6 +2,8 @@
 
 This section defines a comprehensive testing approach for the fullstack application, providing detailed guidance for AI agents and development teams. All testing practices align with Test-Driven Development (TDD) methodology and architectural decisions.
 
+POC Note: End-to-end (E2E) tests with Playwright are planned for a later phase. The POC focuses on unit and integration tests.
+
 ## Testing Pyramid
 
 ```text
@@ -57,7 +59,7 @@ apps/web/src/
 - **Component Tests:** React Testing Library for UI components, user interactions
 - **Hook Tests:** Custom hooks with React Testing Library's renderHook
 - **Service Tests:** API client functions with MSW for HTTP mocking
-- **Store Tests:** Zustand state management with isolated state scenarios
+- **UI State Tests:** React Context/Reducer tests with isolated state scenarios (Zustand planned later)
 - **Utility Tests:** Pure functions for validation, formatting, business logic
 
 ### Backend Tests
@@ -100,7 +102,7 @@ apps/web/src/
 - **Database Tests:** Prisma operations with transaction rollback
 - **Middleware Tests:** Authentication, authorization, error handling
 
-### E2E Tests
+### E2E Tests (Planned)
 
 ```text
 tests/e2e/

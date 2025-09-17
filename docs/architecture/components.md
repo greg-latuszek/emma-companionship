@@ -63,7 +63,7 @@ The frontend architecture follows Next.js App Router conventions with clear sepa
 
 **Technology Stack:**
 - TanStack Query for server state management and caching
-- Zustand for UI-only state management
+- React Context for UI-only state management (Zustand planned later)
 - Custom hooks for complex business logic
 - TypeScript for hook interfaces and return types
 
@@ -276,11 +276,11 @@ const createMember = async (data: CreateMemberRequest): Promise<Member> => {
 
 ### State Management Integration
 
-**Pattern:** Frontend state management separates UI state (Zustand) from server state (TanStack Query).
+**Pattern:** Frontend state management separates UI state (React Context in POC; Zustand planned later) from server state (TanStack Query).
 
 **Implementation:**
 - **TanStack Query** manages all server data with automatic caching and updates
-- **Zustand stores** handle UI-only state (theme, filters, modals)
+- **React Context providers** handle UI-only state (theme, filters, modals) in POC
 - **Custom hooks** combine both for component-level state management
 - **Server Components** handle initial data loading
 
@@ -294,7 +294,7 @@ graph TD
         A["React Components<br/>(Server & Client)"]
         B["Custom Hooks<br/>(useAuth, useMembers)"]
         C["Service Layer<br/>(API Clients)"]
-        D["State Management<br/>(Zustand + TanStack Query)"]
+        D["State Management<br/>(React Context + TanStack Query)"]
         
         A --> B
         B --> C
@@ -374,7 +374,7 @@ graph TD
     end
     
     subgraph "State Stores"
-        E1["authStore (Zustand)<br/>(UI State)"]
+        E1["Auth Context<br/>(UI State)"]
         E2["Query Cache<br/>(TanStack Query)"]
     end
     

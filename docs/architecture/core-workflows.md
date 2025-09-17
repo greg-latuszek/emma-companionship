@@ -339,6 +339,8 @@ Note: Supervision relationships are implicit through the `RoleAssignment` and `G
 3. The system can determine supervision relationships by querying roles and geographic hierarchy
 
 ## Initial Graph View Implementation Workflow
+
+POC Note: This workflow is planned for a later phase (React Flow deferred).
 **PRD Reference:** Story 2.4 - V1 Graph View for All Relationships
 
 This workflow shows how the system builds and renders the initial view-only graph visualization of both companionship and supervision relationships.
@@ -409,6 +411,8 @@ sequenceDiagram
 ```
 
 ## Drag-and-Drop Reassignment Workflow
+
+POC Note: This workflow is planned for a later phase (React Flow deferred).
 **PRD Reference:** Story 4.2 - "Quick Record" Drag-and-Drop Reassignment
 
 This workflow handles the interactive graph reassignment feature.
@@ -448,6 +452,8 @@ sequenceDiagram
 ```
 
 ## Graph Filtering and Visualization Workflow
+
+POC Note: This advanced visualization is planned for a later phase (React Flow deferred).
 **PRD Reference:** Story 4.3 - Graph Filtering Capabilities
 
 This advanced fullstack workflow demonstrates dynamic graph filtering with React Flow, real-time updates, debounced filtering, and sophisticated caching strategies.
