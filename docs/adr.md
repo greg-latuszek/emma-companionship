@@ -61,13 +61,14 @@
 ### **ADR-007: Client-Side State Management Strategy**
 
 * **Status**: Accepted
-* **Context**: Modern React applications require a clear strategy for managing state, which can be broadly categorized into "Client State" (UI state, e.g., if a modal is open) and "Server State" (cached backend data from an API). Our initial tech stack included **Zustand**, a simple client state library. A "Hindsight Reflection" revealed a future risk where developers might misuse this simple store to also manage complex server data, leading to bugs and maintenance issues as the application grows.
-* **Decision**: We will adopt a disciplined, dual-library strategy for state management:
-    1.  **Zustand** will be used exclusively for managing pure, global **Client State**.
-    2.  **TanStack Query** will be added to the tech stack and used exclusively for managing all **Server State**. This includes fetching, caching, synchronizing, and updating data from our backend API.
+* **Context**: Modern React applications require a clear strategy for managing state, which can be broadly categorized into "Client State" (UI state, e.g., if a modal is open) and "Server State" (cached backend data from an API). Our initial tech stack included **Zustand** for client state. A "Hindsight Reflection" revealed a risk where developers might misuse this simple store to also manage complex server data, leading to bugs and maintenance issues as the application grows. Additionally, to simplify the POC setup and reduce tooling overhead, we will defer introducing Zustand.
+* **Decision**: We will adopt a phased, disciplined, dual-library strategy for state management:
+    1.  **POC Phase**: Use built-in **React Context + useReducer** for managing pure, global/persistent **Client State**.
+    2.  **All Phases**: Use **TanStack Query** exclusively for all **Server State** (fetching, caching, syncing, mutations).
+    3.  **Post‑POC (Planned)**: Introduce **Zustand** for complex UI-only state once the application grows, keeping the strict separation from server state.
 * **Consequences**:
-    * **Positive**: This separation of concerns is a modern best practice that will significantly improve the reliability and maintainability of our frontend. TanStack Query provides powerful, built-in features for caching and automatic data refetching that will improve performance and reduce the amount of custom code we need to write.
-    * **Negative**: We are adding one more library to our tech stack. However, the benefits in code quality and long-term developer experience far outweigh this minor cost.
+    * **Positive**: Maintains best-practice separation between client and server state; reduces POC complexity by avoiding an additional library; preserves a clear migration path to Zustand without refactoring server-state logic. TanStack Query provides powerful, built-in features for caching and automatic data refetching that will improve performance and reduce the amount of custom code we need to write.
+    * **Negative**: React Context may require more boilerplate than Zustand for some UI patterns during the POC; a later introduction of Zustand will add a small migration step for selected UI state slices.
 
 ---
 ### **ADR-008: `ApprovalProcess` Logic Placement**
