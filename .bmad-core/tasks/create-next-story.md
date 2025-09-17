@@ -48,7 +48,7 @@ To identify the next logical story based on project progress and epic definition
 
 **For ALL Stories:** tech-stack.md, unified-project-structure.md, coding-standards.md, testing-strategy.md
 
-**For Backend/API Stories, additionally:** data-models.md, database-schema.md, backend-architecture.md, api-specification.md, external-apis.md
+**For Backend/API Stories, additionally:** data-models.md, database-schema.md, backend-architecture.md, rest-api-spec.md, external-apis.md
 
 **For Frontend/UI Stories, additionally:** frontend-architecture.md, components.md, core-workflows.md, data-models.md
 
