@@ -5561,6 +5561,45 @@ pnpm start             # Start production build locally
 pnpm preview           # Preview production build
 ```
 
+#### Nx Workspace Commands (alongside pnpm scripts)
+
+These are first-class Nx equivalents you can use directly in the workspace:
+
+```bash
+# Visualize the project graph and task dependencies
+nx graph
+
+# Serve Next.js app (dev server)
+nx serve web
+
+# Build the web app
+nx build web
+
+# Run unit tests for the web app
+nx test web
+
+# Run linter for the web app
+nx lint web
+
+# Format code
+nx format:check
+nx format:write
+
+# Run targets across many projects
+nx run-many -t build
+nx run-many -t test
+
+# Affected (useful in CI or local incremental workflows)
+nx affected -t lint,test,build
+
+# Clear the Nx cache if needed
+nx reset
+
+# Generate code with Nx generators (examples)
+nx g @nx/next:page --project=web --name=members
+nx g @nx/next:component --project=web --name=MemberCard
+```
+
 **Git Hooks & Code Quality Automation:**
 
 The project uses **Husky** and **lint-staged** for automated code quality checks:
