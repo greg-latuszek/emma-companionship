@@ -22,24 +22,26 @@ After evaluating available starter templates against our architectural requireme
 - ❌ **Missing**: Hexagonal Architecture, our specific tech stack (Prisma, Auth.js)
 - **Assessment**: Strong monorepo tooling but different from our chosen stack
 
-#### **Decision: Hybrid Approach**
+#### **Decision: Selected Foundation**
 
-**Selected Foundation**: **Nx Next.js Template** + **T3 Stack Patterns**
+**Selected Foundation**: **Nx Next.js Template**
 
 **Rationale**:
 1. **Nx Workspace** provides a strong, configurable monorepo structure with task graph and caching
-2. **T3 Stack patterns** can be adapted for our technology selections (TypeScript, Next.js, Prisma, Auth.js)
+2. Future enhancement (optional): adopt robust env validation (e.g., `@t3-oss/env-nextjs`) if/when the team needs it
 3. **Custom Hexagonal Architecture** will be implemented within the established monorepo structure
 4. This approach gives us ~40% head start on infrastructure while maintaining full control over architectural patterns
 
 **Implementation Plan**:
 1. Start with Vercels's official Next.js with Nx template (https://vercel.com/templates/monorepos/monorepo-nx)
-2. Integrate T3 Stack's TypeScript configurations and tool setups
+2. Establish TypeScript/ESLint/Prettier baselines using Nx defaults
 3. Add our specific dependencies (Prisma, Auth.js, React Flow, etc.)
 4. Implement custom Modular Monolith structure in `/apps/web/src/lib/modules/`
 5. Apply Hexagonal Architecture patterns within each module
 
-This hybrid approach balances rapid initial setup with our specific architectural requirements.
+Future enhancement: add Zod-based environment validation and consider `@t3-oss/env-nextjs` only if operational need arises.
+
+This approach balances rapid initial setup with our specific architectural requirements.
 
 ### Change Log
 
