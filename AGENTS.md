@@ -2157,9 +2157,9 @@ required:
 
 ### 4. Standards Compliance Check
 
-- Verify adherence to `docs/coding-standards.md`
-- Check compliance with `docs/unified-project-structure.md`
-- Validate testing approach against `docs/testing-strategy.md`
+- Verify adherence to `docs/architecture/coding-standards.md`
+- Check compliance with `docs/architecture/unified-project-structure.md`
+- Validate testing approach against `docs/architecture/testing-strategy.md`
 - Ensure all guidelines mentioned in the story are followed
 
 ### 5. Acceptance Criteria Validation
@@ -3879,7 +3879,7 @@ To identify the next logical story based on project progress and epic definition
 
 **For ALL Stories:** tech-stack.md, unified-project-structure.md, coding-standards.md, testing-strategy.md
 
-**For Backend/API Stories, additionally:** data-models.md, database-schema.md, backend-architecture.md, rest-api-spec.md, external-apis.md
+**For Backend/API Stories, additionally:** data-models.md, database-schema.md, backend-architecture.md, api-specification.md, external-apis.md
 
 **For Frontend/UI Stories, additionally:** frontend-architecture.md, components.md, core-workflows.md, data-models.md
 
