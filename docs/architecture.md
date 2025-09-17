@@ -24,16 +24,16 @@ After evaluating available starter templates against our architectural requireme
 
 #### **Decision: Hybrid Approach**
 
-**Selected Foundation**: **Vercel Turborepo Example** + **T3 Stack Patterns**
+**Selected Foundation**: **Nx Next.js Template** + **T3 Stack Patterns**
 
 **Rationale**:
-1. **Turborepo Example** provides the optimal monorepo structure for our Vercel deployment target
+1. **Nx Workspace** provides a strong, configurable monorepo structure with task graph and caching
 2. **T3 Stack patterns** can be adapted for our technology selections (TypeScript, Next.js, Prisma, Auth.js)
 3. **Custom Hexagonal Architecture** will be implemented within the established monorepo structure
 4. This approach gives us ~40% head start on infrastructure while maintaining full control over architectural patterns
 
 **Implementation Plan**:
-1. Start with Vercel's official Turborepo template for Next.js
+1. Start with Vercels's official Next.js with Nx template (https://vercel.com/templates/monorepos/monorepo-nx)
 2. Integrate T3 Stack's TypeScript configurations and tool setups
 3. Add our specific dependencies (Prisma, Auth.js, React Flow, etc.)
 4. Implement custom Modular Monolith structure in `/apps/web/src/lib/modules/`
@@ -53,22 +53,22 @@ This hybrid approach balances rapid initial setup with our specific architectura
 
 ### Technical Summary
 
-The `emmaCompanionship` system employs a **Modular Monolith** architecture style, delivering a unified full-stack TypeScript application via **Next.js** that combines React Server/Client Components with serverless API routes in a single deployment unit. The core architecture features four distinct business modules (Auth, Geographic, Member Management, and Relationship) that interact through well-defined interfaces, with **PostgreSQL** serving as the centralized data layer and **React Flow** powering the interactive relationship graph visualization. The frontend leverages Next.js App Router with Server Components for optimal performance, while the backend uses serverless API routes and Hexagonal Architecture patterns for clean separation of concerns. Primary technology choices center on the **TypeScript/Next.js/Vercel** stack for rapid development and deployment, enabling type-safe fullstack development with shared interfaces between frontend and backend. This architecture directly supports the PRD goals of improving Delegate operational efficiency by providing a scalable, maintainable foundation for complex relationship management workflows, automated constraint enforcement, and visual dashboards that replace manual spreadsheet-based processes.
+The `emmaCompanionship` system employs a **Modular Monolith** architecture style, delivering a unified full-stack TypeScript application via **Next.js** that combines React Server/Client Components with serverless API routes in a single deployment unit. The core architecture features four distinct business modules (Auth, Geographic, Member Management, and Relationship) that interact through well-defined interfaces, with **PostgreSQL** serving as the centralized data layer and **React Flow** (planned for a later phase) powering the interactive relationship graph visualization. The frontend leverages Next.js App Router with Server Components for optimal performance, while the backend uses serverless API routes and Hexagonal Architecture patterns for clean separation of concerns. Primary technology choices center on the **TypeScript/Next.js/Vercel** stack for rapid development and deployment, enabling type-safe fullstack development with shared interfaces between frontend and backend. This architecture directly supports the PRD goals of improving Delegate operational efficiency by providing a scalable, maintainable foundation for complex relationship management workflows, automated constraint enforcement, and visual dashboards that replace manual spreadsheet-based processes.
 
 ### High Level Overview
 
-Based on the PRD's Technical Assumptions, the system adopts a **Modular Monolith** architectural style that balances development simplicity with future scalability needs. The **Monorepo** structure enables unified TypeScript type sharing across frontend and backend while maintaining clear module boundaries through Turborepo's workspace management. The service architecture follows a **single-deployment, multi-module** approach where business logic is organized into distinct modules (Auth, Geographic, Member, Relationship) that communicate through well-defined interfaces, preventing code entanglement while avoiding the operational complexity of microservices for the MVP.
+Based on the PRD's Technical Assumptions, the system adopts a **Modular Monolith** architectural style that balances development simplicity with future scalability needs. The **Monorepo** structure enables unified TypeScript type sharing across frontend and backend while maintaining clear module boundaries through Nx workspace management. The service architecture follows a **single-deployment, multi-module** approach where business logic is organized into distinct modules (Auth, Geographic, Member, Relationship) that communicate through well-defined interfaces, preventing code entanglement while avoiding the operational complexity of microservices for the MVP.
 
-The primary user interaction flow centers on Delegates accessing a **React-based dashboard** built with Next.js Server Components for initial page loads and Client Components for interactive elements. Users visualize relationship graphs using React Flow, execute guided workflows (assignment wizard, data import), and perform direct manipulations (drag-and-drop reassignments). These frontend interactions trigger **Next.js API routes** that serve as a Backend-for-Frontend (BFF) layer, making type-safe calls to the appropriate business modules, which then update the PostgreSQL database through Prisma ORM adapters. 
+The primary user interaction flow centers on Delegates accessing a **React-based dashboard** built with Next.js Server Components for initial page loads and Client Components for interactive elements. Users will visualize relationship graphs using React Flow (planned for a later phase), execute guided workflows (assignment wizard, data import), and perform direct manipulations (drag-and-drop reassignments). These frontend interactions trigger **Next.js API routes** that serve as a Backend-for-Frontend (BFF) layer, making type-safe calls to the appropriate business modules, which then update the PostgreSQL database through Prisma ORM adapters. 
 
 **Key architectural decisions and their rationale** are documented in detail in [Architecture Decision Records (ADRs)](adr.md), including:
 - [ADR-001: Unified Technology Stack](adr.md#adr-001-unified-technology-stack) - TypeScript/Next.js for full-stack development
-- [ADR-002: Repository Structure](adr.md#adr-002-repository-structure) - Monorepo approach with Turborepo
+- [ADR-002: Repository Structure](adr.md#adr-002-repository-structure) - Monorepo approach
 - [ADR-003: Application and Module Architecture](adr.md#adr-003-application-and-module-architecture) - Modular Monolith with Hexagonal Architecture
 - [ADR-004: Database Technology](adr.md#adr-004-database-technology) - PostgreSQL for relational data modeling
 - [ADR-005: POC Hosting and Database Platform](adr.md#adr-005-poc-hosting-and-database-platform) - Vercel deployment strategy
 - [ADR-006: Graph Visualization Technology](adr.md#adr-006-graph-visualization-technology) - React Flow for interactive graphs
-- [ADR-007: Client-Side State Management Strategy](adr.md#adr-007-client-side-state-management-strategy) - Zustand + TanStack Query separation
+- [ADR-007: Client-Side State Management Strategy](adr.md#adr-007-client-side-state-management-strategy) - POC: React Context for UI state; planned: Zustand + TanStack Query separation
 - [ADR-008: ApprovalProcess Logic Placement](adr.md#adr-008-approvalprocess-logic-placement) - Approval workflow component organization
 - [ADR-009: Decoupled Role and Scope Management](adr.md#adr-009-decoupled-role-and-scope-management) - Flexible role assignment architecture
 - [ADR-010: Candidate Search with Hard and Soft Constraints](adr.md#adr-010-candidate-search-with-hard-and-soft-constraints) - Constraint-based matching algorithm design
@@ -92,15 +92,15 @@ The primary user interaction flow centers on Delegates accessing a **React-based
 
 ### Repository Structure
 
-- **Structure:** Monorepo managed with Turborepo
-- **Monorepo Tool:** Turborepo v1.x for high-performance builds and optimal Vercel integration
+- **Structure:** Monorepo managed with Nx
+- **Monorepo Tool:** Nx (latest) for high-performance builds with task graph and distributed caching
 - **Package Organization:** 
   - `/apps/web` - Next.js fullstack application containing both frontend (App Router) and backend (API routes)
   - `/packages/shared-types` - TypeScript interfaces shared between frontend and backend modules
   - `/packages/ui` - Reusable React components (Button, Card, Form elements)
   - `/packages/config` - Shared configuration (ESLint, TypeScript, Jest configurations)
 
-**Rationale:** Enables unified TypeScript type sharing between frontend and backend, simplifies dependency management, allows code reuse across the stack, and optimizes build performance with Turborepo's intelligent caching. This structure supports our Modular Monolith approach while maintaining clear boundaries between concerns.
+**Rationale:** Enables unified TypeScript type sharing between frontend and backend, simplifies dependency management, allows code reuse across the stack, and optimizes build performance with Nx's task graph and caching. This structure supports our Modular Monolith approach while maintaining clear boundaries between concerns.
 
 ### High Level Architecture Diagram
 
@@ -172,7 +172,7 @@ graph TD
 | **Frontend Framework** | Next.js | ~14.x | React framework with App Router | Unified fullstack development with SSR, API routes, and optimizations     |
 | **UI Component Library** | shadcn/ui | Latest | Pre-built accessible components | Customizable, accessible, built on Radix UI primitives                    |
 | **CSS Framework** | Tailwind CSS | ~3.x | Utility-first CSS framework | Rapid UI development, consistent design system, excellent DX              |
-| **State Management** | Zustand | ~4.x | Client-side UI state management | Lightweight, simple API, perfect for UI-only state                        |
+| **State Management** | React Context + useReducer (POC) | N/A | Client-side UI state management | Built-in React for POC; Zustand planned for later phase                  |
 | **Data Fetching** | TanStack Query | ~5.x | Server state management & caching | Industry standard for server data, automatic caching, optimistic updates  |
 | **Backend Language** | TypeScript | ~5.x | Backend development language | Shared language across stack, type safety, reduced context switching      |
 | **Backend Framework** | Next.js API Routes | ~14.x | Serverless API endpoints | Seamless integration with frontend, automatic deployment                  |
@@ -184,14 +184,14 @@ graph TD
 | **Authentication** | Auth.js (NextAuth) | ~5.x | User authentication and session management | Next.js standard, secure, supports multiple providers                     |
 | **Frontend Testing** | Jest + React Testing Library | Latest | Component and unit testing | React ecosystem standard, excellent component testing                     |
 | **Backend Testing** | Jest + Supertest | Latest | API route and integration testing | Node.js standard, excellent for testing Express-like APIs                 |
-| **E2E Testing** | Playwright | ~1.x | End-to-end browser testing | Modern, reliable, multi-browser support, great debugging                  |
-| **Build Tool** | Turborepo | ~1.x | Monorepo build orchestration | High-performance builds, intelligent caching, great for Next.js           |
+| **E2E Testing** | Playwright (planned) | ~1.x | End-to-end browser testing | Planned for later phase; focus on unit and integration tests in POC      |
+| **Build Tool** | Nx | Latest | Monorepo build orchestration | Task graph, caching, generators, strong monorepo support                  |
 | **Bundler** | Next.js/Webpack | ~14.x | JavaScript bundling and optimization | Built into Next.js, automatic optimizations, code splitting               |
 | **IaC Tool** | Vercel CLI | Latest | Infrastructure as Code | Declarative configuration, seamless deployment, environment management    |
-| **CI/CD** | GitHub Actions | N/A | Continuous integration & deployment | Native GitHub integration, powerful workflows, free for open source       |
+| **CI/CD** | GitHub Actions (planned) | N/A | Continuous integration & deployment | Planned for later phase; POC uses manual Vercel deployment               |
 | **Monitoring** | Vercel Analytics | Latest | Application performance monitoring | Built-in analytics, Core Web Vitals, user experience metrics              |
 | **Logging** | Vercel Functions Logs | N/A | Application logging and debugging | Integrated logging for serverless functions, real-time monitoring         |
-| **Graph Visualization** | React Flow | ~11.x | Interactive graph rendering | Modern, feature-rich, perfect for relationship drag-and-drop UI |
+| **Graph Visualization** | React Flow (planned) | ~11.x | Interactive graph rendering | Planned for later phase; can be introduced with Epic 2 Story 2.4 |
 
 -----
 
@@ -1404,7 +1404,7 @@ The frontend architecture follows Next.js App Router conventions with clear sepa
 
 **Technology Stack:**
 - TanStack Query for server state management and caching
-- Zustand for UI-only state management
+- React Context for UI-only state management (Zustand planned later)
 - Custom hooks for complex business logic
 - TypeScript for hook interfaces and return types
 
@@ -1617,11 +1617,11 @@ const createMember = async (data: CreateMemberRequest): Promise<Member> => {
 
 #### State Management Integration
 
-**Pattern:** Frontend state management separates UI state (Zustand) from server state (TanStack Query).
+**Pattern:** Frontend state management separates UI state (React Context in POC; Zustand planned later) from server state (TanStack Query).
 
 **Implementation:**
 - **TanStack Query** manages all server data with automatic caching and updates
-- **Zustand stores** handle UI-only state (theme, filters, modals)
+- **React Context providers** handle UI-only state (theme, filters, modals) in POC
 - **Custom hooks** combine both for component-level state management
 - **Server Components** handle initial data loading
 
@@ -1635,7 +1635,7 @@ graph TD
         A["React Components<br/>(Server & Client)"]
         B["Custom Hooks<br/>(useAuth, useMembers)"]
         C["Service Layer<br/>(API Clients)"]
-        D["State Management<br/>(Zustand + TanStack Query)"]
+        D["State Management<br/>(React Context + TanStack Query)"]
         
         A --> B
         B --> C
@@ -1715,7 +1715,7 @@ graph TD
     end
     
     subgraph "State Stores"
-        E1["authStore (Zustand)<br/>(UI State)"]
+        E1["Auth Context<br/>(UI State)"]
         E2["Query Cache<br/>(TanStack Query)"]
     end
     
@@ -2157,6 +2157,8 @@ Note: Supervision relationships are implicit through the `RoleAssignment` and `G
 3. The system can determine supervision relationships by querying roles and geographic hierarchy
 
 ### Initial Graph View Implementation Workflow
+
+POC Note: This workflow is planned for a later phase (React Flow deferred).
 **PRD Reference:** Story 2.4 - V1 Graph View for All Relationships
 
 This workflow shows how the system builds and renders the initial view-only graph visualization of both companionship and supervision relationships.
@@ -2227,6 +2229,8 @@ sequenceDiagram
 ```
 
 ### Drag-and-Drop Reassignment Workflow
+
+POC Note: This workflow is planned for a later phase (React Flow deferred).
 **PRD Reference:** Story 4.2 - "Quick Record" Drag-and-Drop Reassignment
 
 This workflow handles the interactive graph reassignment feature.
@@ -2266,6 +2270,8 @@ sequenceDiagram
 ```
 
 ### Graph Filtering and Visualization Workflow
+
+POC Note: This advanced visualization is planned for a later phase (React Flow deferred).
 **PRD Reference:** Story 4.3 - Graph Filtering Capabilities
 
 This advanced fullstack workflow demonstrates dynamic graph filtering with React Flow, real-time updates, debounced filtering, and sophisticated caching strategies.
@@ -2969,7 +2975,7 @@ export const queryKeys = {
 } as const;
 
 // ===============================
-// UI State (Zustand Stores)
+// UI State (React Context/Reducer)
 // ===============================
 
 // Theme and UI preferences
@@ -3113,14 +3119,14 @@ interface AuthContextType {
 - **Dependent Queries:** Conditional queries based on user permissions
 - **Cache Persistence:** LocalStorage persistence for offline functionality
 
-**UI State Management (Zustand):**
+**UI State Management (React Context/Reducer):**
 
-- **Slice Pattern:** Separate stores for different UI concerns
-- **Immer Integration:** Immutable updates with simple mutation syntax
-- **DevTools Support:** Redux DevTools integration for debugging
-- **Persistence Middleware:** LocalStorage sync for user preferences
-- **Computed Values:** Derived state with automatic dependency tracking
-- **Action Creators:** Consistent action patterns across stores
+- **Context Providers per Domain:** Separate providers for UI concerns (theme, layout, modals)
+- **Pure Reducers:** Testable reducers with explicit action types
+- **Typed Actions:** Discriminated unions for action payloads
+- **Custom Hooks as Selectors:** Memoized selectors minimize re-renders
+- **Persistence Layer:** Optional LocalStorage sync for preferences
+- **Migration Path:** Easy transition to Zustand later if UI state grows
 
 **State Synchronization Patterns:**
 
@@ -5288,7 +5294,7 @@ export const authModule = {
 
 ## Unified Project Structure
 
-This comprehensive monorepo structure accommodates both frontend and backend concerns while maintaining clear separation of responsibilities. The layout is optimized for Turborepo and follows Next.js fullstack best practices, with the backend modules within `apps/web/src/lib/modules` providing a clear physical representation of our Modular Monolith and Hexagonal Architecture decisions.
+This comprehensive monorepo structure accommodates both frontend and backend concerns while maintaining clear separation of responsibilities. The layout is optimized for Nx and follows Next.js fullstack best practices, with the backend modules within `apps/web/src/lib/modules` providing a clear physical representation of our Modular Monolith and Hexagonal Architecture decisions.
 
 ```plaintext
 emma-companionship/
@@ -5334,7 +5340,7 @@ emma-companionship/
 │       │   │   │   ├── geo/     # Geographic module
 │       │   │   │   ├── member/  # Member management module
 │       │   │   │   └── relationship/ # Relationship module
-│       │   │   ├── stores/      # Zustand state stores
+│       │   │   ├── stores/      # UI state stores (planned later: Zustand)
 │       │   │   │   ├── authStore.ts # Authentication state
 │       │   │   │   └── uiStore.ts # UI state management
 │       │   │   ├── utils/       # Utility functions
@@ -5421,7 +5427,7 @@ emma-companionship/
 ├── .gitignore                   # Git ignore patterns
 ├── .cursorignore               # Cursor AI ignore patterns
 ├── package.json                 # Root package.json with workspaces
-├── turbo.json                   # Turborepo configuration
+├── nx.json                      # Nx workspace configuration
 ├── docker-compose.yml           # Local development database
 ├── README.md                    # Project overview and setup
 └── LICENSE                      # Project license
@@ -5447,7 +5453,7 @@ emma-companionship/
 
 **Development Infrastructure:**
 - **Testing Strategy**: Co-located component tests with dedicated integration and E2E test directories
-- **Build System**: Turborepo optimizes builds with intelligent caching and parallel execution
+- **Build System**: Nx optimizes builds with task graph execution, caching, and parallelization
 - **Environment Management**: Clear separation of local, staging, and production configurations
 
 -----
@@ -5593,7 +5599,8 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 NEXT_PUBLIC_API_URL="http://localhost:3000/api"
 
 # Feature Flags
-NEXT_PUBLIC_ENABLE_GRAPH_VIEW="true"
+# POC Note: React Flow is deferred; disable graph view by default
+NEXT_PUBLIC_ENABLE_GRAPH_VIEW="false"
 NEXT_PUBLIC_ENABLE_DATA_IMPORT="true"
 
 # Backend Environment Variables (.env)
@@ -5676,6 +5683,28 @@ This section defines our deployment strategy based on our Vercel platform choice
 - **Deployment Method:** Git-based continuous deployment with automatic serverless function creation
 
 ### CI/CD Pipeline
+
+POC Note: CI/CD with GitHub Actions is planned for a later phase. For the POC, deploy manually to Vercel (see below). The following pipeline remains as the planned approach for when CI/CD is enabled.
+
+#### POC Manual Deployment (Vercel)
+
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Login and link project
+vercel login
+vercel link
+
+# Build and deploy preview
+vercel build
+vercel deploy --prebuilt
+
+# Promote to production
+vercel deploy --prebuilt --prod
+```
+
+#### Planned: GitHub Actions CI/CD
 
 Our automated deployment pipeline leverages GitHub Actions for testing and Vercel for deployment:
 
@@ -6000,6 +6029,8 @@ This section defines security and performance considerations for the fullstack a
 
 This section defines a comprehensive testing approach for the fullstack application, providing detailed guidance for AI agents and development teams. All testing practices align with Test-Driven Development (TDD) methodology and architectural decisions.
 
+POC Note: End-to-end (E2E) tests with Playwright are planned for a later phase. The POC focuses on unit and integration tests.
+
 ### Testing Pyramid
 
 ```text
@@ -6055,7 +6086,7 @@ apps/web/src/
 - **Component Tests:** React Testing Library for UI components, user interactions
 - **Hook Tests:** Custom hooks with React Testing Library's renderHook
 - **Service Tests:** API client functions with MSW for HTTP mocking
-- **Store Tests:** Zustand state management with isolated state scenarios
+- **UI State Tests:** React Context/Reducer tests with isolated state scenarios (Zustand planned later)
 - **Utility Tests:** Pure functions for validation, formatting, business logic
 
 #### Backend Tests
@@ -6098,7 +6129,7 @@ apps/web/src/
 - **Database Tests:** Prisma operations with transaction rollback
 - **Middleware Tests:** Authentication, authorization, error handling
 
-#### E2E Tests
+#### E2E Tests (Planned)
 
 ```text
 tests/e2e/
@@ -6417,9 +6448,9 @@ This section establishes a minimal set of high-impact rules that are mandatory f
 - **API Service Layer:** Never make direct HTTP calls - always use the service layer in `lib/api/` for all external API interactions.
 - **Environment Variables:** Access only through type-safe configuration objects, never `process.env` directly in application code. All environment variables must be exposed through a dedicated configuration module.
 - **Enforced Module Boundaries:** Direct cross-module imports of internal, non-public components are strictly forbidden. Modules may only interact through their public API interfaces. An automated ESLint rule will enforce this boundary.
-- **State Management Discipline:** State management must be strictly separated. Use Zustand only for pure UI state (modals, forms, local UI). Use TanStack Query exclusively for all server state (API data, caching, synchronization).
+- **State Management Discipline:** State management must be strictly separated. In the POC, use React Context for pure UI state (modals, forms, local UI). Use TanStack Query exclusively for all server state (API data, caching, synchronization). Zustand is planned for later to simplify complex UI state.
 - **Centralized API Error Handling:** All backend API routes must use the centralized error handling middleware. Never handle errors individually in route handlers.
-- **State Updates:** Never mutate state directly - use proper state management patterns. For Zustand: use set() function. For TanStack Query: use mutations with optimistic updates.
+- **State Updates:** Never mutate state directly - use proper state management patterns. For React Context: use pure reducers and dispatch actions. For TanStack Query: use mutations with optimistic updates.
 - **Strict Type Safety:** All function parameters and return types must be explicitly typed. The `any` type is forbidden. Enable TypeScript strict mode and resolve all type errors.
 - **Import Organization:** Use absolute imports with path mapping (`@/` prefix). Group imports: external libraries → internal modules → types → relative imports.
 - **Component Architecture:** React Server Components by default, Client Components only when needed for interactivity. Mark Client Components with `'use client'` directive.
@@ -6909,7 +6940,7 @@ Within modules, `try/catch` blocks handle recoverable errors (like retries) inte
 ### 2.4 Frontend Design & Implementation (100% Pass Rate)
 **Status: EXCELLENT** ✅
 - Next.js App Router with Server/Client Component patterns
-- TanStack Query + Zustand state management strategy
+- TanStack Query + React Context state management strategy (Zustand planned later)
 - Complete component architecture with accessibility
 - Comprehensive frontend-backend integration
 
