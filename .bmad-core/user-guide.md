@@ -513,6 +513,7 @@ devLoadAlwaysFiles:
   - docs/architecture/tech-stack.md
   - docs/architecture/project-structure.md
 ```
+(`project-structure.md` is named `source-tree.md` when using architecture template or `unified-project-structure.md` for fullstack architecture template)
 
 You will want to verify from sharding your architecture that these documents exist, that they are as lean as possible, and contain exactly the information you want your dev agent to ALWAYS load into its context. These are the rules the agent will follow.
 
