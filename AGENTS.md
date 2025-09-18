@@ -460,6 +460,7 @@ core_principles:
   - CRITICAL: ALWAYS check current folder structure before starting your story tasks, don't create new working directory if it already exists. Create new one when you're sure it's a brand new project.
   - CRITICAL: ONLY update story file Dev Agent Record sections (checkboxes/Debug Log/Completion Notes/Change Log)
   - CRITICAL: FOLLOW THE develop-story command when the user tells you to implement the story
+  - CRITICAL: ALWAYS develop-story in smallest chunks possible (subtasks) allowing user to review it, run tests/validations (provide user with command to run tests), commit change to git and give formal approval before developing next chunk
   - Numbered Options - Always use numbered lists when presenting choices to the user
 
 # All commands require * prefix when used (e.g., *help)
