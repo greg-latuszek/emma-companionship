@@ -12,7 +12,7 @@
 
 * **Status**: Accepted
 * **Context**: Given the full-stack nature of the application and the decision to use a unified TypeScript stack, we needed to choose between managing the code in separate repositories (Polyrepo) or a single one (Monorepo).
-* **Decision**: We will use a **Monorepo** to house the Next.js application (frontend and backend) and any shared packages.
+* **Decision**: We will use a **Monorepo** to house the Next.js application (frontend and backend) and any shared libraries.
 * **Consequences**: This approach greatly simplifies dependency management and allows for atomic commits across the entire application. It makes sharing code and types between the frontend and backend trivial, which is a major advantage of our chosen tech stack.
 
 ---

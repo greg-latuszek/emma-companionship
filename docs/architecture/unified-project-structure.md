@@ -70,7 +70,7 @@ emma-companionship/
 │       ├── tsconfig.json        # TypeScript configuration
 │       └── package.json         # Application dependencies
 │
-├── packages/                    # Shared packages
+├── libs/                        # Shared libraries
 │   ├── shared-types/            # Shared TypeScript interfaces
 │   │   ├── src/
 │   │   │   ├── api/             # API request/response types
@@ -152,7 +152,7 @@ emma-companionship/
 - **API Routes**: RESTful endpoints organized by resource with nested routes for relationships
 - **Shared Logic**: Configuration, utilities, and validations available to all modules
 
-**Shared Packages:**
+**Shared Libraries:**
 - **Type Safety**: Shared TypeScript interfaces ensure consistency across frontend and backend
 - **UI Consistency**: Reusable components built with shadcn/ui and Tailwind CSS
 - **Configuration Management**: Centralized tooling configuration for consistency

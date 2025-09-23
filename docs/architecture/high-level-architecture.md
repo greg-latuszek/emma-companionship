@@ -45,9 +45,9 @@ The primary user interaction flow centers on Delegates accessing a **React-based
 - **Monorepo Tool:** Nx (latest) for high-performance builds with task graph and distributed caching
 - **Package Organization:** 
   - `/apps/web` - Next.js fullstack application containing both frontend (App Router) and backend (API routes)
-  - `/packages/shared-types` - TypeScript interfaces shared between frontend and backend modules
-  - `/packages/ui` - Reusable React components (Button, Card, Form elements)
-  - `/packages/config` - Shared configuration (ESLint, TypeScript, Jest configurations)
+  - `/libs/shared-types` - TypeScript interfaces shared between frontend and backend modules
+  - `/libs/ui` - Reusable React components (Button, Card, Form elements)
+  - `/libs/config` - Shared configuration (ESLint, TypeScript, Jest configurations)
 
 **Rationale:** Enables unified TypeScript type sharing between frontend and backend, simplifies dependency management, allows code reuse across the stack, and optimizes build performance with Nx's task graph and caching. This structure supports our Modular Monolith approach while maintaining clear boundaries between concerns.
 

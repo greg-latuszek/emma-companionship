@@ -98,9 +98,9 @@ The primary user interaction flow centers on Delegates accessing a **React-based
 - **Monorepo Tool:** Nx (latest) for high-performance builds with task graph and distributed caching
 - **Package Organization:** 
   - `/apps/web` - Next.js fullstack application containing both frontend (App Router) and backend (API routes)
-  - `/packages/shared-types` - TypeScript interfaces shared between frontend and backend modules
-  - `/packages/ui` - Reusable React components (Button, Card, Form elements)
-  - `/packages/config` - Shared configuration (ESLint, TypeScript, Jest configurations)
+  - `/libs/shared-types` - TypeScript interfaces shared between frontend and backend modules
+  - `/libs/ui` - Reusable React components (Button, Card, Form elements)
+  - `/libs/config` - Shared configuration (ESLint, TypeScript, Jest configurations)
 
 **Rationale:** Enables unified TypeScript type sharing between frontend and backend, simplifies dependency management, allows code reuse across the stack, and optimizes build performance with Nx's task graph and caching. This structure supports our Modular Monolith approach while maintaining clear boundaries between concerns.
 
@@ -426,9 +426,9 @@ As for Supervisors, Companionship Delegates responsibility (which Members they t
 
 ### Shared TypeScript Interface Organization
 
-The above conceptual models will be implemented as shared TypeScript interfaces organized in `/packages/shared-types/` to enable type-safe communication between frontend and backend components.
+The above conceptual models will be implemented as shared TypeScript interfaces organized in `/libs/shared-types/` to enable type-safe communication between frontend and backend components.
 
-#### Entity Types (`/packages/shared-types/src/entities/`)
+#### Entity Types (`/libs/shared-types/src/entities/`)
 
 Core business entity interfaces that represent our domain models:
 
@@ -479,7 +479,7 @@ export interface Companionship {
 // Additional entities: Couple, Role, RoleAssignment, ApprovalProcess, ApprovalStep
 ```
 
-#### API Types (`/packages/shared-types/src/api/`)
+#### API Types (`/libs/shared-types/src/api/`)
 
 Request/response schemas for type-safe API communication:
 
@@ -577,7 +577,7 @@ export interface GraphEdge {
 }
 ```
 
-#### UI Component Types (`/packages/shared-types/src/ui/`)
+#### UI Component Types (`/libs/shared-types/src/ui/`)
 
 Frontend-specific types for component props and state management:
 
@@ -635,7 +635,7 @@ export interface ToastMessage {
 }
 ```
 
-#### Validation Types (`/packages/shared-types/src/validation/`)
+#### Validation Types (`/libs/shared-types/src/validation/`)
 
 Zod schemas for runtime validation shared between frontend and backend:
 
@@ -688,7 +688,7 @@ export type CreateMemberRequestValidation = z.infer<typeof CreateMemberRequestSc
 export type CompanionshipValidation = z.infer<typeof CompanionshipSchema>;
 ```
 
-#### Type Export Strategy (`/packages/shared-types/src/index.ts`)
+#### Type Export Strategy (`/libs/shared-types/src/index.ts`)
 
 Centralized exports for easy importing across the application:
 
@@ -1429,7 +1429,7 @@ The frontend architecture follows Next.js App Router conventions with clear sepa
 
 **Technology Stack:**
 - Axios/Fetch for HTTP client with interceptors
-- Shared TypeScript interfaces from `/packages/shared-types`
+- Shared TypeScript interfaces from `/libs/shared-types`
 - TanStack Query for caching and background updates
 - Zod schemas for runtime validation of API responses
 
@@ -1576,7 +1576,7 @@ export async function POST(request: Request) {
 
 #### Shared Type Safety Pattern
 
-**Pattern:** TypeScript interfaces from `/packages/shared-types` ensure type safety across the entire stack.
+**Pattern:** TypeScript interfaces from `/libs/shared-types` ensure type safety across the entire stack.
 
 **Implementation:**
 - **Shared interfaces** define contracts between frontend and backend
@@ -1663,7 +1663,7 @@ graph TD
         I --> G
     end
     
-    subgraph "Shared Packages"
+    subgraph "Shared Libraries"
         J["TypeScript Interfaces<br/>(Entity, API, UI Types)"]
         K["UI Components<br/>(shadcn/ui Library)"]
         L["Configuration<br/>(ESLint, TypeScript, Jest)"]
@@ -2780,7 +2780,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { CreateMemberRequest, CreateMemberRequestSchema } from '@/packages/shared-types';
+import { CreateMemberRequest, CreateMemberRequestSchema } from '@/libs/shared-types';
 import { memberService } from '@/lib/api/memberService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -3529,7 +3529,7 @@ Our frontend services layer provides a clean abstraction between React component
 ```typescript
 // lib/api/client.ts - Base API client configuration
 import { QueryClient } from '@tanstack/react-query';
-import { ApiError, ApiResponse } from '@/packages/shared-types';
+import { ApiError, ApiResponse } from '@/libs/shared-types';
 
 // Global query client configuration
 export const queryClient = new QueryClient({
@@ -3747,7 +3747,7 @@ import {
   PaginatedResponse,
   Role,
   RoleAssignment,
-} from '@/packages/shared-types';
+} from '@/libs/shared-types';
 
 export const memberService = {
   // ===============================
@@ -4175,7 +4175,7 @@ import {
   MemberFiltersSchema,
   ApiResponse,
   ApiError 
-} from '@/packages/shared-types';
+} from '@/libs/shared-types';
 import { prisma } from '@/lib/prisma';
 
 // Input validation schemas
@@ -4412,7 +4412,7 @@ import {
   UpdateMemberRequest, 
   MemberFilters,
   PaginatedResponse 
-} from '@/packages/shared-types';
+} from '@/libs/shared-types';
 import { ApiError } from '@/lib/errors';
 
 // Prisma singleton for serverless optimization
@@ -5104,7 +5104,7 @@ export const {
 import { verify } from 'argon2';
 import { prisma } from '@/lib/prisma';
 import { ApiError } from '@/lib/errors';
-import type { Member } from '@/packages/shared-types';
+import type { Member } from '@/libs/shared-types';
 
 export const authModule = {
   async validateCredentials(
@@ -5366,7 +5366,7 @@ emma-companionship/
 │       ├── tsconfig.json        # TypeScript configuration
 │       └── package.json         # Application dependencies
 │
-├── packages/                    # Shared packages
+├── libs/                        # Shared libraries
 │   ├── shared-types/            # Shared TypeScript interfaces
 │   │   ├── src/
 │   │   │   ├── api/             # API request/response types
@@ -5448,7 +5448,7 @@ emma-companionship/
 - **API Routes**: RESTful endpoints organized by resource with nested routes for relationships
 - **Shared Logic**: Configuration, utilities, and validations available to all modules
 
-**Shared Packages:**
+**Shared Libraries:**
 - **Type Safety**: Shared TypeScript interfaces ensure consistency across frontend and backend
 - **UI Consistency**: Reusable components built with shadcn/ui and Tailwind CSS
 - **Configuration Management**: Centralized tooling configuration for consistency
@@ -5516,8 +5516,8 @@ pnpm db:migrate
 # 6. Seed the database with initial data
 pnpm db:seed
 
-# 7. Build shared packages
-pnpm build:packages
+# 7. Build shared libraries
+pnpm build:libs
 ```
 
 #### Development Commands
@@ -5556,7 +5556,7 @@ pnpm db:migrate:reset  # Reset migrations
 # Build commands
 pnpm build             # Build entire monorepo for production
 pnpm build:web         # Build Next.js application only
-pnpm build:packages    # Build shared packages only
+pnpm build:libs        # Build shared libraries only
 
 # Deployment and production
 pnpm start             # Start production build locally
@@ -6485,7 +6485,7 @@ This section establishes a minimal set of high-impact rules that are mandatory f
 
 ### Critical Fullstack Rules
 
-- **Type Sharing:** Always define shared types in `packages/shared-types` and import from there. Never duplicate type definitions between frontend and backend.
+- **Type Sharing:** Always define shared types in `libs/shared-types` and import from there. Never duplicate type definitions between frontend and backend.
 - **API Service Layer:** Never make direct HTTP calls - always use the service layer in `lib/api/` for all external API interactions.
 - **Environment Variables:** Access only through type-safe configuration objects, never `process.env` directly in application code. All environment variables must be exposed through a dedicated configuration module.
 - **Enforced Module Boundaries:** Direct cross-module imports of internal, non-public components are strictly forbidden. Modules may only interact through their public API interfaces. An automated ESLint rule will enforce this boundary.

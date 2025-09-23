@@ -54,8 +54,8 @@ pnpm db:migrate
 # 6. Seed the database with initial data
 pnpm db:seed
 
-# 7. Build shared packages
-pnpm build:packages
+# 7. Build shared libraries
+pnpm build:libs
 ```
 
 ### Development Commands
@@ -94,7 +94,7 @@ pnpm db:migrate:reset  # Reset migrations
 # Build commands
 pnpm build             # Build entire monorepo for production
 pnpm build:web         # Build Next.js application only
-pnpm build:packages    # Build shared packages only
+pnpm build:libs        # Build shared libraries only
 
 # Deployment and production
 pnpm start             # Start production build locally

@@ -88,10 +88,10 @@ This is the only significant "new build" part of the process, but even here, you
 
 * **What is Replaced**: The Next.js routing and page structure (`app/` directory) is replaced by the SPFx web part structure.
 * **What is Reused**:
-    * **UI Components**: All your `shadcn/ui` components from `/packages/ui` are just React components and can be used directly in SPFx.
+    * **UI Components**: All your `shadcn/ui` components from `/libs/ui` are just React components and can be used directly in SPFx.
     * **Client-Side State Management**: Your state management strategy (**ADR-007**) with **Zustand** (for UI state) and **TanStack Query** (for server state) is perfectly portable to the new SPFx frontend.
     * **Data Fetching Logic**: The key change for TanStack Query will be updating the API base URL from `/api/...` to the new Azure Function URLs. The queries themselves remain the same.
-    * **Shared Types**: The entire `/packages/shared-types` package will be reused, ensuring continued type safety.
+    * **Shared Types**: The entire `/libs/shared-types` package will be reused, ensuring continued type safety.
 
 ---
 #### Reusability Summary

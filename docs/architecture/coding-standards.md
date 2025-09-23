@@ -4,7 +4,7 @@ This section establishes a minimal set of high-impact rules that are mandatory f
 
 ## Critical Fullstack Rules
 
-- **Type Sharing:** Always define shared types in `packages/shared-types` and import from there. Never duplicate type definitions between frontend and backend.
+- **Type Sharing:** Always define shared types in `libs/shared-types` and import from there. Never duplicate type definitions between frontend and backend.
 - **API Service Layer:** Never make direct HTTP calls - always use the service layer in `lib/api/` for all external API interactions.
 - **Environment Variables:** Access only through type-safe configuration objects, never `process.env` directly in application code. All environment variables must be exposed through a dedicated configuration module.
 - **Enforced Module Boundaries:** Direct cross-module imports of internal, non-public components are strictly forbidden. Modules may only interact through their public API interfaces. An automated ESLint rule will enforce this boundary.

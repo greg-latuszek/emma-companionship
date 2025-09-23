@@ -227,9 +227,9 @@ As for Supervisors, Companionship Delegates responsibility (which Members they t
 
 ## Shared TypeScript Interface Organization
 
-The above conceptual models will be implemented as shared TypeScript interfaces organized in `/packages/shared-types/` to enable type-safe communication between frontend and backend components.
+The above conceptual models will be implemented as shared TypeScript interfaces organized in `/libs/shared-types/` to enable type-safe communication between frontend and backend components.
 
-### Entity Types (`/packages/shared-types/src/entities/`)
+### Entity Types (`/libs/shared-types/src/entities/`)
 
 Core business entity interfaces that represent our domain models:
 
@@ -280,7 +280,7 @@ export interface Companionship {
 // Additional entities: Couple, Role, RoleAssignment, ApprovalProcess, ApprovalStep
 ```
 
-### API Types (`/packages/shared-types/src/api/`)
+### API Types (`/libs/shared-types/src/api/`)
 
 Request/response schemas for type-safe API communication:
 
@@ -378,7 +378,7 @@ export interface GraphEdge {
 }
 ```
 
-### UI Component Types (`/packages/shared-types/src/ui/`)
+### UI Component Types (`/libs/shared-types/src/ui/`)
 
 Frontend-specific types for component props and state management:
 
@@ -436,7 +436,7 @@ export interface ToastMessage {
 }
 ```
 
-### Validation Types (`/packages/shared-types/src/validation/`)
+### Validation Types (`/libs/shared-types/src/validation/`)
 
 Zod schemas for runtime validation shared between frontend and backend:
 
@@ -489,7 +489,7 @@ export type CreateMemberRequestValidation = z.infer<typeof CreateMemberRequestSc
 export type CompanionshipValidation = z.infer<typeof CompanionshipSchema>;
 ```
 
-### Type Export Strategy (`/packages/shared-types/src/index.ts`)
+### Type Export Strategy (`/libs/shared-types/src/index.ts`)
 
 Centralized exports for easy importing across the application:
 
