@@ -91,7 +91,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { CreateMemberRequest, CreateMemberRequestSchema } from '@/packages/shared-types';
+import { CreateMemberRequest, CreateMemberRequestSchema } from '@/libs/shared-types';
 import { memberService } from '@/lib/api/memberService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -840,7 +840,7 @@ Our frontend services layer provides a clean abstraction between React component
 ```typescript
 // lib/api/client.ts - Base API client configuration
 import { QueryClient } from '@tanstack/react-query';
-import { ApiError, ApiResponse } from '@/packages/shared-types';
+import { ApiError, ApiResponse } from '@/libs/shared-types';
 
 // Global query client configuration
 export const queryClient = new QueryClient({
@@ -1058,7 +1058,7 @@ import {
   PaginatedResponse,
   Role,
   RoleAssignment,
-} from '@/packages/shared-types';
+} from '@/libs/shared-types';
 
 export const memberService = {
   // ===============================

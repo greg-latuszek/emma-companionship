@@ -103,7 +103,7 @@ import {
   MemberFiltersSchema,
   ApiResponse,
   ApiError 
-} from '@/packages/shared-types';
+} from '@/libs/shared-types';
 import { prisma } from '@/lib/prisma';
 
 // Input validation schemas
@@ -340,7 +340,7 @@ import {
   UpdateMemberRequest, 
   MemberFilters,
   PaginatedResponse 
-} from '@/packages/shared-types';
+} from '@/libs/shared-types';
 import { ApiError } from '@/lib/errors';
 
 // Prisma singleton for serverless optimization
@@ -1032,7 +1032,7 @@ export const {
 import { verify } from 'argon2';
 import { prisma } from '@/lib/prisma';
 import { ApiError } from '@/lib/errors';
-import type { Member } from '@/packages/shared-types';
+import type { Member } from '@/libs/shared-types';
 
 export const authModule = {
   async validateCredentials(

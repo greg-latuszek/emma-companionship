@@ -86,7 +86,7 @@ The frontend architecture follows Next.js App Router conventions with clear sepa
 
 **Technology Stack:**
 - Axios/Fetch for HTTP client with interceptors
-- Shared TypeScript interfaces from `/packages/shared-types`
+- Shared TypeScript interfaces from `/libs/shared-types`
 - TanStack Query for caching and background updates
 - Zod schemas for runtime validation of API responses
 
@@ -233,7 +233,7 @@ export async function POST(request: Request) {
 
 ### Shared Type Safety Pattern
 
-**Pattern:** TypeScript interfaces from `/packages/shared-types` ensure type safety across the entire stack.
+**Pattern:** TypeScript interfaces from `/libs/shared-types` ensure type safety across the entire stack.
 
 **Implementation:**
 - **Shared interfaces** define contracts between frontend and backend
@@ -320,7 +320,7 @@ graph TD
         I --> G
     end
     
-    subgraph "Shared Packages"
+    subgraph "Shared Libraries"
         J["TypeScript Interfaces<br/>(Entity, API, UI Types)"]
         K["UI Components<br/>(shadcn/ui Library)"]
         L["Configuration<br/>(ESLint, TypeScript, Jest)"]
