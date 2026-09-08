@@ -1,108 +1,36 @@
----
-name: Monorepo with Nx
-slug: monorepo-nx
-description: Learn to implement a monorepo with a single Next.js site using Nx.
-framework: Next.js
-useCase: Documentation
-css: CSS
-deployUrl: https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fexamples%2Ftree%2Fmain%2Fsolutions%2Fnx-monorepo&project-name=nx-monorepo&output-directory=out%2F.next&build-command=cd+..%2F..%2F+%26%26+npx+nx+build+app+--prod&repository-name=nx-monorepo&root-directory=apps%2Fapp
-relatedTemplates:
-  - monorepo-turborepo
-  - turborepo-next-basic
-  - turborepo-sveltekit-starter
----
-
-# Nx Monorepo
-
-This is a monorepo example using [Nx](https://nx.dev) and a single Next.js site in [./apps/app](./apps/app).
-
-## Demo
-
-https://solutions-nx-monorepo.vercel.sh
-
-## How to Use
-
-You can choose from one of the following two methods to use this repository:
-
-### One-Click Deploy
-
-Deploy the example using [Vercel](https://vercel.com?utm_source=github&utm_medium=readme&utm_campaign=vercel-examples):
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fexamples%2Ftree%2Fmain%2Fsolutions%2Fnx-monorepo&project-name=nx-monorepo&output-directory=out%2F.next&build-command=cd+..%2F..%2F+%26%26+npx+nx+build+app+--prod&repository-name=nx-monorepo&root-directory=apps%2Fapp)
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
 
-Execute [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app) with [npm](https://docs.npmjs.com/cli/init), [Yarn](https://yarnpkg.com/lang/en/docs/cli/create/), or [pnpm](https://pnpm.io) to bootstrap the example:
+First, run the development server:
 
 ```bash
-npx create-next-app --example https://github.com/vercel/examples/tree/main/solutions/nx-monorepo nx-monorepo
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-```bash
-yarn create next-app --example https://github.com/vercel/examples/tree/main/solutions/nx-monorepo nx-monorepo
-```
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-```bash
-pnpm create next-app --example https://github.com/vercel/examples/tree/main/solutions/nx-monorepo nx-monorepo
-```
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-### Development server
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-Run `npx nx serve app` for a dev server. Navigate to http://localhost:4200/. The app will automatically reload if you change any of the source files.
+## Learn More
 
-### Build
+To learn more about Next.js, take a look at the following resources:
 
-Run `npx nx build app` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag for a production build.
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-### Running unit tests
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-Run `npx nx test app` to execute the unit tests via [Jest](https://jestjs.io).
+## Deploy on Vercel
 
-Run `npx nx affected:test` to execute the unit tests affected by a change.
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-### Code scaffolding
-
-Run `nx g @nrwl/react:component my-component --project=app` to generate a new component.
-
-### Generate an application
-
-Run `npx nx g @nrwl/react:app new-app` to generate an application.
-
-> You can use any of the plugins above to generate applications as well.
-
-When using Nx, you can create multiple applications and libraries in the same workspace.
-
-### Generate a library
-
-Run `npx nx g @nrwl/react:lib my-lib` to generate a library.
-
-> You can also use any of the plugins above to generate libraries as well.
-
-Libraries are shareable across libraries and applications. They can be imported from `@with-nx/mylib`.
-
-### Further help
-
-Visit the [Nx Documentation](https://nx.dev) to learn more.
-
-## Nx Cloud
-
-This example is configured to work out of the box with Nx Cloud. However, if deploying an existing project to Vercel - ensure:
-
-If using `@nrwl/nx-cloud@14.6.0` or above
-
-1. Set `NX_CACHE_DIRECTORY=/tmp/nx-cache`
-
-If using `@nrwl/nx-cloud@14.5.0` or below
-
-1. Set `NX_CACHE_DIRECTORY=/tmp/nx-cache`
-2. Set the `cacheDirectory` option for the `@nrwl/nx-cloud` runner in your `nx.json` to match the value of the `NX_CACHE_DIRECTORY` environment variable:
-
-```jsonc
-"runner": "@nrwl/nx-cloud",
-"options": {
-  // this must be the same value as `NX_CACHE_DIRECTORY`
-  "cacheDirectory": "/tmp/nx-cache"
-}
-```
-
-Visit [Nx Cloud](https://nx.app/) to learn more.
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
