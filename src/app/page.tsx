@@ -71,7 +71,13 @@ export default function Home() {
 
               {/* Main Title */}
               <motion.h1
-                className="font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl leading-[1.1] md:leading-[1.05] font-light tracking-tight text-white mb-6 md:mb-8 drop-shadow-lg"
+                className="font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl leading-[1.1] md:leading-[1.05] font-light tracking-tight mb-6 md:mb-8 drop-shadow-lg"
+                style={{
+                  color: 'transparent',
+                  WebkitTextStroke: '2px rgba(176, 205, 232, 0.4)',
+                  textStroke: '2px rgba(176, 205, 232, 0.4)',
+                  filter: 'drop-shadow(0 0 20px rgba(255, 255, 255, 0.4))',
+                }}
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 1.2, delay: 0.3, ease: 'easeOut' }}
