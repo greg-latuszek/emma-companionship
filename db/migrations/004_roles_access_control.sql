@@ -3,48 +3,59 @@
 -- Purpose: Support hierarchical role assignments, approval tracking, and login audit trail
 -- Note: geographic_units table is now created in 002_members_table.sql
 
+-- ========== Roles Table ==========
+-- Matrix-based: name (what) × level (where) = semantic role
+-- E.g., ('Supervisor', 'country') vs ('Supervisor', 'province')
 CREATE TABLE roles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(100) UNIQUE NOT NULL,         -- 'admin', 'delegat_ds_akompaniamentow', 'viewer', etc.
+    
+    name VARCHAR(100) NOT NULL,                -- 'Supervisor', 'Delegate', 'Admin', etc.
+    level VARCHAR(20) NOT NULL CHECK (level IN ('country', 'province', 'sector', 'zone', 'international')),
     description TEXT,
-    is_active BOOLEAN DEFAULT TRUE,
+    
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    
+    -- Semantic role is unique combination of name + level
+    CONSTRAINT unique_role_matrix UNIQUE(name, level)
 );
 
--- Predefined roles (optional - can be managed in code)
-INSERT INTO roles (name, description) VALUES
-    ('admin', 'Full system access, user management, approvals'),
-    ('delegat_ds_akompaniamentow', 'Delegation representative for companionship'),
-    ('viewer', 'Read-only access to assigned resources')
+-- Role matrix from statute documents
+INSERT INTO roles (name, level, description) VALUES
+    ('Admin', 'country', 'Full system access and user management at country level'),
+    ('Supervisor', 'province', 'Supervisory authority at province level'),
+    ('Supervisor', 'country', 'Supervisory authority at country level'),
+    ('Companionship Delegate', 'province', 'Companionship delegation at province level'),
+    ('Companionship Delegate', 'zone', 'Companionship delegation at zone level')
 ON CONFLICT DO NOTHING;
 
--- Role assignments with scope (who has what role where)
+-- ========== Role Assignments Table ==========
+-- Immutable: created or revoked (never modified)
+-- Active state: revoked_at IS NULL (no separate is_active flag needed)
 CREATE TABLE role_assignments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     member_id UUID NOT NULL REFERENCES members(id) ON DELETE CASCADE,
     role_id UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
-    geographic_unit_id UUID REFERENCES geographic_units(id) ON DELETE CASCADE,  -- Scoped to unit (NULL = global)
+    scope_id UUID REFERENCES geographic_units(id) ON DELETE SET NULL,  -- Scope of responsibility (nullable for later assignment)
     
-    -- Admin tracking
+    -- Assignment tracking
     assigned_by UUID NOT NULL REFERENCES members(id) ON DELETE CASCADE,
     assigned_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    revoked_by UUID REFERENCES members(id) ON DELETE SET NULL,
-    revoked_at TIMESTAMP WITH TIME ZONE,
     
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    -- Revocation tracking (terminal action)
+    revoked_by UUID REFERENCES members(id) ON DELETE SET NULL,
+    revoked_at TIMESTAMP WITH TIME ZONE
 );
 
--- Partial unique index (only for active assignments)
+-- Unique active assignment constraint: only one active per member/role/scope combination
 CREATE UNIQUE INDEX idx_role_assignments_active_unique 
-    ON role_assignments(member_id, role_id, geographic_unit_id) WHERE is_active;
+    ON role_assignments(member_id, role_id, scope_id) WHERE revoked_at IS NULL;
 
+-- Performance indexes
 CREATE INDEX idx_role_assignments_member ON role_assignments(member_id);
+CREATE INDEX idx_role_assignments_active_member ON role_assignments(member_id) WHERE revoked_at IS NULL;
 CREATE INDEX idx_role_assignments_role ON role_assignments(role_id);
-CREATE INDEX idx_role_assignments_unit ON role_assignments(geographic_unit_id);
+CREATE INDEX idx_role_assignments_scope ON role_assignments(scope_id);
 
 -- Approval audit trail (history of admin decisions)
 CREATE TABLE approval_audit (

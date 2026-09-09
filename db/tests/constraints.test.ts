@@ -56,28 +56,30 @@ describe('Database Constraints & Business Logic', () => {
 
              expect(result.rows).toHaveLength(1);
            });
-      const oauth_id = 'google_123456';
 
-      // Insert first OAuth member
-      await query(`
-        INSERT INTO members (first_name, last_name, email, phone, oauth_provider, oauth_id)
-        VALUES ('John', 'Doe', 'john@example.com', '+48123456789', 'google', $1)
-      `, [oauth_id]);
+           it('should enforce unique oauth combination', async () => {
+             const oauth_id = 'google_123456';
 
-      // Try to insert duplicate oauth - should fail
-      let error: any;
-      try {
-        await query(`
-          INSERT INTO members (first_name, last_name, email, phone, oauth_provider, oauth_id)
-          VALUES ('Jane', 'Doe', 'jane@example.com', '+48987654321', 'google', $1)
-        `, [oauth_id]);
-      } catch (e) {
-        error = e;
-      }
+             // Insert first OAuth member
+             await query(`
+               INSERT INTO members (first_name, last_name, email, phone, oauth_provider, oauth_id)
+               VALUES ('John', 'Doe', 'john@example.com', '+48123456789', 'google', $1)
+             `, [oauth_id]);
 
-      expect(error).toBeDefined();
-      expect(error.message).toContain('duplicate');
-    });
+             // Try to insert duplicate oauth - should fail
+             let error: any;
+             try {
+               await query(`
+                 INSERT INTO members (first_name, last_name, email, phone, oauth_provider, oauth_id)
+                 VALUES ('Jane', 'Doe', 'jane@example.com', '+48987654321', 'google', $1)
+               `, [oauth_id]);
+             } catch (e) {
+               error = e;
+             }
+
+             expect(error).toBeDefined();
+             expect(error.message).toContain('duplicate');
+           });
 
     it('should set is_active to FALSE by default', async () => {
       await query(`
@@ -242,7 +244,7 @@ describe('Database Constraints & Business Logic', () => {
     });
   });
 
-  describe('Role Assignments', () => {
+         describe('Role Assignments', () => {
            it('should track role assignment history', async () => {
              const memberId = '750e8400-e29b-41d4-a716-446655440000';
              const roleId = '850e8400-e29b-41d4-a716-446655440000';
@@ -260,16 +262,16 @@ describe('Database Constraints & Business Logic', () => {
                VALUES ($1, 'Admin', 'User', 'app_user')
              `, [adminId]);
 
-             // Create role
+             // Create test role
              await query(`
-               INSERT INTO roles (id, name, description)
-               VALUES ($1, 'admin', 'Administrator')
+               INSERT INTO roles (id, name, level, description)
+               VALUES ($1, 'Supervisor', 'country', 'Test role')
              `, [roleId]);
 
              // Assign role
              const assignResult = await query(`
-               INSERT INTO role_assignments (member_id, role_id, assigned_by, is_active)
-               VALUES ($1, $2, $3, true)
+               INSERT INTO role_assignments (member_id, role_id, assigned_by, assigned_at)
+               VALUES ($1, $2, $3, NOW())
                RETURNING assigned_at
              `, [memberId, roleId, adminId]);
 
@@ -281,7 +283,7 @@ describe('Database Constraints & Business Logic', () => {
              const memberId = '750e8400-e29b-41d4-a716-446655440000';
              const roleId = '850e8400-e29b-41d4-a716-446655440000';
              const adminId = '950e8400-e29b-41d4-a716-446655440000';
-             const unitId = 'a50e8400-e29b-41d4-a716-446655440000';
+             const scopeId = 'a50e8400-e29b-41d4-a716-446655440000';
 
              // Create member
              await query(`
@@ -295,35 +297,88 @@ describe('Database Constraints & Business Logic', () => {
                VALUES ($1, 'Admin', 'User', 'app_user')
              `, [adminId]);
 
-             // Create test data
+             // Create test role
              await query(`
-               INSERT INTO roles (id, name, description)
-               VALUES ($1, 'admin', 'Administrator')
+               INSERT INTO roles (id, name, level, description)
+               VALUES ($1, 'Supervisor', 'country', 'Test role')
              `, [roleId]);
 
+             // Create geographic unit (scope)
              await query(`
                INSERT INTO geographic_units (id, name, type)
-               VALUES ($1, 'Test Unit', 'province')
-             `, [unitId]);
+               VALUES ($1, 'Test Scope', 'country')
+             `, [scopeId]);
 
              // First assignment
              await query(`
-               INSERT INTO role_assignments (member_id, role_id, geographic_unit_id, assigned_by, is_active)
-               VALUES ($1, $2, $3, $4, true)
-             `, [memberId, roleId, unitId, adminId]);
+               INSERT INTO role_assignments (member_id, role_id, scope_id, assigned_by, assigned_at)
+               VALUES ($1, $2, $3, $4, NOW())
+             `, [memberId, roleId, scopeId, adminId]);
 
              // Duplicate active assignment should fail
              let error: any;
              try {
                await query(`
-                 INSERT INTO role_assignments (member_id, role_id, geographic_unit_id, assigned_by, is_active)
-                 VALUES ($1, $2, $3, $4, true)
-               `, [memberId, roleId, unitId, adminId]);
+                 INSERT INTO role_assignments (member_id, role_id, scope_id, assigned_by, assigned_at)
+                 VALUES ($1, $2, $3, $4, NOW())
+               `, [memberId, roleId, scopeId, adminId]);
              } catch (e) {
                error = e;
              }
 
              expect(error).toBeDefined();
+           });
+
+           it('should allow same role assignment after revocation', async () => {
+             const memberId = '750e8400-e29b-41d4-a716-446655440000';
+             const roleId = '850e8400-e29b-41d4-a716-446655440000';
+             const adminId = '950e8400-e29b-41d4-a716-446655440000';
+             const scopeId = 'a50e8400-e29b-41d4-a716-446655440000';
+
+             // Setup members
+             await query(`
+               INSERT INTO members (id, first_name, last_name, member_type)
+               VALUES ($1, 'John', 'Doe', 'app_user')
+             `, [memberId]);
+             await query(`
+               INSERT INTO members (id, first_name, last_name, member_type)
+               VALUES ($1, 'Admin', 'User', 'app_user')
+             `, [adminId]);
+
+             // Create role
+             await query(`
+               INSERT INTO roles (id, name, level, description)
+               VALUES ($1, 'Supervisor', 'country', 'Test role')
+             `, [roleId]);
+
+             // Create scope
+             await query(`
+               INSERT INTO geographic_units (id, name, type)
+               VALUES ($1, 'Test Scope', 'country')
+             `, [scopeId]);
+
+             // Initial assignment
+             const firstAssignment = await query(`
+               INSERT INTO role_assignments (member_id, role_id, scope_id, assigned_by, assigned_at)
+               VALUES ($1, $2, $3, $4, NOW())
+               RETURNING id
+             `, [memberId, roleId, scopeId, adminId]);
+
+             // Revoke it
+             await query(`
+               UPDATE role_assignments 
+               SET revoked_at = NOW(), revoked_by = $1
+               WHERE id = $2
+             `, [adminId, firstAssignment.rows[0].id]);
+
+             // Re-assign same role - should succeed (revoked_at makes it inactive)
+             const reAssignment = await query(`
+               INSERT INTO role_assignments (member_id, role_id, scope_id, assigned_by, assigned_at)
+               VALUES ($1, $2, $3, $4, NOW())
+               RETURNING id
+             `, [memberId, roleId, scopeId, adminId]);
+
+             expect(reAssignment.rows).toHaveLength(1);
            });
   });
 

@@ -127,6 +127,113 @@ describe('Database Schema Validation', () => {
     });
   });
 
+  describe('Roles Table Structure', () => {
+    it('should have correct columns', async () => {
+      const result = await query(`
+        SELECT column_name, data_type, is_nullable
+        FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'roles'
+        ORDER BY ordinal_position
+      `);
+
+      const columns = result.rows.map((row: any) => row.column_name);
+      expect(columns).toContain('id');
+      expect(columns).toContain('name');
+      expect(columns).toContain('level');
+      expect(columns).toContain('description');
+      expect(columns).toContain('created_at');
+    });
+
+    it('should have name and level columns (no is_active or updated_at)', async () => {
+      const result = await query(`
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'roles'
+      `);
+
+      const columns = result.rows.map((row: any) => row.column_name);
+      expect(columns).toContain('name');
+      expect(columns).toContain('level');
+      expect(columns).not.toContain('is_active');
+      expect(columns).not.toContain('updated_at');
+    });
+
+    it('should have level constraint', async () => {
+      const result = await query(`
+        SELECT constraint_name
+        FROM information_schema.table_constraints
+        WHERE table_schema = 'public' AND table_name = 'roles' AND constraint_type = 'CHECK'
+      `);
+
+      expect(result.rows.length).toBeGreaterThan(0);
+    });
+
+    it('should enforce unique role matrix (name + level)', async () => {
+      const result = await query(`
+        SELECT constraint_name
+        FROM information_schema.table_constraints
+        WHERE table_schema = 'public' AND table_name = 'roles' AND constraint_type = 'UNIQUE'
+      `);
+
+      const constraints = result.rows.map((row: any) => row.constraint_name);
+      expect(constraints.some((c: string) => c.includes('unique'))).toBe(true);
+    });
+  });
+
+  describe('Role Assignments Table Structure', () => {
+    it('should have correct columns', async () => {
+      const result = await query(`
+        SELECT column_name, data_type, is_nullable
+        FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'role_assignments'
+        ORDER BY ordinal_position
+      `);
+
+      const columns = result.rows.map((row: any) => row.column_name);
+      expect(columns).toContain('id');
+      expect(columns).toContain('member_id');
+      expect(columns).toContain('role_id');
+      expect(columns).toContain('scope_id');
+      expect(columns).toContain('assigned_by');
+      expect(columns).toContain('assigned_at');
+      expect(columns).toContain('revoked_by');
+      expect(columns).toContain('revoked_at');
+    });
+
+    it('should not have is_active or updated_at columns', async () => {
+      const result = await query(`
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'role_assignments'
+      `);
+
+      const columns = result.rows.map((row: any) => row.column_name);
+      expect(columns).not.toContain('is_active');
+      expect(columns).not.toContain('updated_at');
+      expect(columns).not.toContain('created_at');
+    });
+
+    it('should have scope_id nullable', async () => {
+      const result = await query(`
+        SELECT is_nullable
+        FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'role_assignments' AND column_name = 'scope_id'
+      `);
+
+      expect(result.rows[0].is_nullable).toBe('YES');
+    });
+
+    it('should have revoked_at nullable', async () => {
+      const result = await query(`
+        SELECT is_nullable
+        FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'role_assignments' AND column_name = 'revoked_at'
+      `);
+
+      expect(result.rows[0].is_nullable).toBe('YES');
+    });
+  });
+
   describe('Indexes', () => {
     it('should have indexes on members table', async () => {
       const result = await query(`
