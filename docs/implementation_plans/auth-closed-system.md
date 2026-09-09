@@ -936,47 +936,142 @@ process.env.DATABASE_URL = process.env.DATABASE_TEST_URL;
 
 ### COMMIT 2: Database Schema
 
-Add auth-specific tables and fields:
+Create SQL migration files in `db/migrations/` directory using raw SQL (language-agnostic):
 
-```sql
--- Main auth tables
-UPDATE members table with:
-  • password_hash (for form-based)
-  • oauth_provider, oauth_id (for OAuth)
-  • is_active (admin approval gate)
-  • geographic_unit_id (admin assigns)
-  • requested_at, approved_by, approved_at (tracking)
-  • registry_check_result (verification checks)
-  • profile_picture (from OAuth or user)
+```
+Migration Files (executed in order):
 
--- Security tables
-CREATE TABLE blacklist (
-  • id, email, oauth_provider, oauth_id
-  • reason, blacklisted_by, blacklisted_at
-  • unblacklisted_by, unblacklisted_at
-  • is_active (TRUE=blocked, FALSE=unblocked)
-)
+001_init.sql
+  - CREATE EXTENSION "uuid-ossp", "pgcrypto"
+  - CREATE TABLE _schema_migrations (version, description, executed_at)
 
-CREATE TABLE security_events (
-  • id, event_type ('blacklist_blocked', 'duplicate_prevented', etc.)
-  • email, oauth_provider, oauth_id
-  • ip_address, user_agent
-  • reason, severity ('info', 'warning', 'critical')
-  • created_at
-)
+002_members_table.sql
+  - CREATE TABLE members (
+      id UUID PRIMARY KEY,
+      first_name, last_name, email (UNIQUE), phone,
+      password_hash (form-based, nullable),
+      oauth_provider, oauth_id (OAuth, nullable),
+      UNIQUE(oauth_provider, oauth_id),
+      is_active BOOLEAN DEFAULT FALSE,
+      geographic_unit_id UUID REFERENCES geographic_units(id),
+      requested_at, approved_by UUID REFERENCES members(id),
+      approved_at, registry_check_result JSONB,
+      profile_picture TEXT,
+      created_at, updated_at
+    )
 
-CREATE TABLE role_assignments (
-  • member_id → role_id → scope_id
-)
+003_oauth_identities.sql
+  - (Optional - if using separate oauth_identities table)
 
-CREATE TABLE approval_audit (
-  • member_id, admin_id, status_change, reason, approved_at
-)
+004_blacklist_security.sql
+  - CREATE TABLE blacklist (
+      id UUID PRIMARY KEY,
+      email VARCHAR(255),
+      oauth_provider, oauth_id,
+      reason TEXT NOT NULL,
+      blacklisted_by UUID NOT NULL REFERENCES members(id),
+      blacklisted_at TIMESTAMP,
+      unblacklisted_by UUID REFERENCES members(id),
+      unblacklisted_at TIMESTAMP,
+      is_active BOOLEAN DEFAULT TRUE,
+      UNIQUE(email) WHERE is_active,
+      UNIQUE(oauth_provider, oauth_id) WHERE is_active
+    )
+  
+  - CREATE TABLE security_events (
+      id UUID PRIMARY KEY,
+      event_type VARCHAR(50),
+      email, oauth_provider, oauth_id,
+      ip_address INET, user_agent TEXT,
+      reason TEXT, severity VARCHAR(20),
+      created_at TIMESTAMP
+    )
 
-CREATE TABLE auth_events (
-  • member_id, event_type, provider, ip_address, user_agent
-  • success, reason, created_at
-)
+005_roles_access_control.sql
+  - CREATE TABLE role_assignments (
+      id UUID PRIMARY KEY,
+      member_id UUID REFERENCES members(id),
+      role_id UUID REFERENCES roles(id),
+      scope_id UUID REFERENCES geographic_units(id),
+      assigned_at TIMESTAMP,
+      assigned_by UUID REFERENCES members(id)
+    )
+  
+  - CREATE TABLE approval_audit (
+      id UUID PRIMARY KEY,
+      member_id UUID REFERENCES members(id),
+      admin_id UUID REFERENCES members(id),
+      status_change VARCHAR(50),
+      reason TEXT,
+      approved_at TIMESTAMP,
+      created_at TIMESTAMP
+    )
+  
+  - CREATE TABLE auth_events (
+      id UUID PRIMARY KEY,
+      member_id UUID REFERENCES members(id),
+      event_type VARCHAR(50),
+      provider VARCHAR(50),
+      ip_address INET,
+      user_agent TEXT,
+      success BOOLEAN,
+      reason TEXT,
+      created_at TIMESTAMP
+    )
+
+006_companionship.sql
+  - (From archived schema - companionship relationships)
+
+007_approval_workflow.sql
+  - (From archived schema - approval process workflow)
+
+008_two_factor_auth.sql (NEW - Future-proofed for 2FA feature)
+  - CREATE TABLE two_factor_auth (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      member_id UUID NOT NULL UNIQUE REFERENCES members(id) ON DELETE CASCADE,
+      
+      method VARCHAR(50) NOT NULL DEFAULT 'totp',
+      secret VARCHAR(255) NOT NULL,
+      
+      enabled BOOLEAN DEFAULT FALSE,
+      enabled_at TIMESTAMP WITH TIME ZONE,
+      verified_at TIMESTAMP WITH TIME ZONE,
+      
+      backup_codes TEXT[] NOT NULL,
+      backup_codes_generated_at TIMESTAMP WITH TIME ZONE,
+      
+      last_used_at TIMESTAMP WITH TIME ZONE,
+      
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    )
+  
+  CREATE INDEX idx_two_factor_auth_member_id ON two_factor_auth(member_id);
+  CREATE INDEX idx_two_factor_auth_enabled ON two_factor_auth(enabled);
+```
+
+**Why Include 2FA Table Now?**
+- ✅ Extensible for future methods (SMS, security keys, WebAuthn)
+- ✅ No migration needed when feature launches (COMMIT 10)
+- ✅ Language-agnostic (Python backend uses same .sql files)
+- ✅ Optional per user (only populated if 2FA enabled)
+- ✅ Audit trail of 2FA changes ready
+
+**Run Migrations:**
+
+```bash
+# Start database
+npm run db:start
+
+# Run all migrations
+npm run db:migrate:dev
+
+# Set up test database
+npm run db:migrate:test
+
+# Verify schema
+npm run db:psql -c "\dt"  # List tables
+npm run db:psql -c "\d members"  # Describe members table
 ```
 
 ### COMMIT 3: Auth.js Setup
@@ -1576,30 +1671,36 @@ Admin must:
 
 1. **COMMIT 1.3 (First):** Set up Docker infrastructure
    - Create `docker-compose.yml` for PostgreSQL
-   - Create `.env.local` for local development
-   - Add npm scripts for `db:start`, `db:migrate:dev`, `db:studio`
+   - Create `.env.local` for local development (add to .gitignore)
+   - Add npm scripts for `db:start`, `db:migrate:dev`, `db:migrate:test`, `db:psql`
    - Validate: `npm run db:start` works and DB is accessible
 
-2. **COMMIT 2 (Second):** Define database schema using Prisma
-   - Create `prisma/schema.prisma` with all tables:
-     - members (with all auth fields)
-     - blacklist (security)
-     - security_events (logging)
-     - role_assignments (hierarchical access)
-     - approval_audit (admin decisions)
-     - auth_events (login/logout tracking)
-   - Run `npm run db:migrate:dev` to create migration
-   - Validate: Schema in actual database
+2. **COMMIT 2 (Second):** Define database schema using raw SQL
+   - Create 8 migration files in `db/migrations/`:
+     - 001_init.sql (extensions + migration tracking)
+     - 002_members_table.sql (auth fields: password_hash, oauth_provider, oauth_id, is_active, etc.)
+     - 003_oauth_identities.sql (optional - if separate table)
+     - 004_blacklist_security.sql (blacklist + security_events tables)
+     - 005_roles_access_control.sql (role_assignments + approval_audit + auth_events)
+     - 006_companionship.sql (from archived schema)
+     - 007_approval_workflow.sql (from archived schema)
+     - 008_two_factor_auth.sql (future-proofed for COMMIT 10, includes TOTP secret + backup codes)
+   - Run `npm run db:migrate:dev` to apply migrations
+   - Run `npm run db:migrate:test` to set up test database
 
 3. **COMMIT 2 (Same):** Write database integration tests
-   - Test: Schema created correctly
-   - Test: Constraints enforced
-   - Test: Indexes created
-   - Test: Relationships work
-   - Tests connect to real PostgreSQL (via Prisma)
+   - Test: Schema created correctly (all 8 tables)
+   - Test: Constraints enforced (UNIQUE, FK, CHECK constraints)
+   - Test: Indexes created for performance
+   - Test: Relationships work (FKs resolve correctly)
+   - Tests connect to real PostgreSQL (via DATABASE_TEST_URL in separate DB)
 
-4. Questions for approval:
-   - Should we use Prisma for ORM + migrations?
-   - Or raw SQL migrations (better for hexagonal)?
-   - .env.local needs secrets - add to .gitignore?
-   - Test database: separate container or same with test suffix?
+4. **2FA Future-Proofing:**
+   - `two_factor_auth` table included in COMMIT 2
+   - No schema migration needed when 2FA feature launches (COMMIT 10)
+   - Just populate table and add login verification logic
+
+5. All questions answered:
+   - ✅ Raw SQL for language-agnostic migrations (Python backend later)
+   - ✅ .env.local in .gitignore (secrets safe)
+   - ✅ Test DB uses same container with different name (isolated, lightweight)

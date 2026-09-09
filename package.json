@@ -10,7 +10,15 @@
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "db:start": "docker compose up -d postgres && sleep 2 && npm run db:create",
+    "db:stop": "docker compose down",
+    "db:create": "bash db/scripts/create-databases.sh",
+    "db:migrate:dev": "bash db/migrate.sh ${npm_package_config_dbNameDev:-emma_companionship_dev}",
+    "db:migrate:test": "bash db/migrate.sh ${npm_package_config_dbNameTest:-emma_companionship_test}",
+    "db:psql": "docker exec -it emma_companionship_db psql -U devuser -d emma_companionship_dev",
+    "db:reset": "npm run db:stop && npm run db:start",
+    "db:logs": "docker compose logs -f postgres"
   },
   "dependencies": {
     "motion": "^13.2.0",
