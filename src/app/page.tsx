@@ -21,14 +21,16 @@ export default function Home(): JSX.Element {
         imageAlt="Christ and St. Menas Background"
       />
 
-      {/* Navigation Bar with Login Button */}
-      <Navbar
-        rightContent={
-          <SemiTransparentLink href="/app/companionship-panel" delay={0.5}>
-            Zaloguj się
-          </SemiTransparentLink>
-        }
-      />
+      {/* Navigation Bar with Login Button - Absolute at top */}
+      <div className="absolute top-0 left-0 right-0 z-40">
+        <Navbar
+          rightContent={
+            <SemiTransparentLink href="/app/companionship-panel" delay={0.5}>
+              Zaloguj się
+            </SemiTransparentLink>
+          }
+        />
+      </div>
 
       {/* Main Content - Centered */}
       <div className="w-full h-full flex flex-col items-center justify-center z-20 relative px-4">

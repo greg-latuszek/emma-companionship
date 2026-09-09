@@ -34,7 +34,7 @@ export function Navbar({
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: logoDelay }}
-      className="relative z-40 w-full px-6 sm:px-12 py-6 sm:py-8 flex items-center justify-between"
+      className="w-full px-6 sm:px-12 py-6 sm:py-8 flex items-center justify-between"
     >
       {/* Logo on the left */}
       <motion.div

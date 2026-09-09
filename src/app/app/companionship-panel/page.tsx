@@ -24,16 +24,18 @@ export default function CompanionshipPanelPage(): JSX.Element {
       />
 
       {/* Navbar with Logout Button */}
-      <Navbar
-        rightContent={
-          <LogoutButton
-            userName={mockUser.name}
-            userEmail={mockUser.email}
-            href="/"
-            delay={0.3}
-          />
-        }
-      />
+      <div className="relative z-40 w-full">
+        <Navbar
+          rightContent={
+            <LogoutButton
+              userName={mockUser.name}
+              userEmail={mockUser.email}
+              href="/"
+              delay={0.3}
+            />
+          }
+        />
+      </div>
 
       {/* All content on top of background */}
       <div className="relative z-20 w-full flex-1 flex flex-col">
