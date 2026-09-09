@@ -1074,30 +1074,214 @@ npm run db:psql -c "\dt"  # List tables
 npm run db:psql -c "\d members"  # Describe members table
 ```
 
-### COMMIT 3: Auth.js Setup
+### COMMIT 3: Auth.js Setup + TypeScript/Zod Types
 
-Initialize Next-Auth v5 with providers:
+**First, define TypeScript types for database models:**
 
 ```typescript
-// lib/auth.ts
+// src/types/auth.ts
+export interface Member {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string | null;
+  phone: string | null;
+  member_type: 'app_user' | 'companion';
+  password_hash: string | null;
+  oauth_provider: string | null;
+  oauth_id: string | null;
+  is_active: boolean;
+  requested_at: Date;
+  approved_by: string | null;
+  approved_at: Date | null;
+  registry_check_result: RegistryCheckResult | null;
+  profile_picture: string | null;
+  geographic_unit_id: string | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+export interface Role {
+  id: string;
+  name: string;
+  level: 'country' | 'province' | 'sector' | 'zone' | 'international';
+  description: string | null;
+  created_at: Date;
+}
+
+export interface RoleAssignment {
+  id: string;
+  member_id: string;
+  role_id: string;
+  scope_id: string | null;
+  assigned_by: string;
+  assigned_at: Date;
+  revoked_by: string | null;
+  revoked_at: Date | null;
+}
+
+export interface Blacklist {
+  id: string;
+  email: string | null;
+  oauth_provider: string | null;
+  oauth_id: string | null;
+  reason: string;
+  blacklisted_by: string;
+  blacklisted_at: Date;
+  unblacklisted_by: string | null;
+  unblacklisted_at: Date | null;
+  is_active: boolean;
+}
+
+export interface RegistryCheckResult {
+  emailMatch: boolean;
+  phoneMatch: boolean;
+  nameMatch: boolean;
+  registryEntry?: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    role: string;
+    geographicUnit: string;
+  };
+  mismatches?: Record<string, string>;
+  recommendation: string;
+  checked_at: Date;
+}
+```
+
+**Zod validation schemas:**
+
+```typescript
+// src/schemas/auth.ts
+import { z } from 'zod';
+
+// Login validation
+export const loginSchema = z.object({
+  email: z.string().email('Invalid email format'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+});
+
+export type LoginInput = z.infer<typeof loginSchema>;
+
+// Registration validation
+export const registrationSchema = z.object({
+  firstName: z.string().min(2, 'First name required').max(255),
+  lastName: z.string().min(2, 'Last name required').max(255),
+  email: z.string().email('Invalid email format'),
+  phone: z.string().min(10, 'Invalid phone number').max(50),
+  password: z.string().min(8, 'Password must be at least 8 characters').optional(),
+  authMethod: z.enum(['form', 'google', 'facebook']),
+  oauth_provider: z.enum(['google', 'facebook']).optional(),
+  oauth_id: z.string().optional(),
+});
+
+export type RegistrationInput = z.infer<typeof registrationSchema>;
+
+// OAuth callback validation
+export const oauthProfileSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  email: z.string().email(),
+  phone: z.string().nullable().optional(),
+  image: z.string().url().nullable().optional(),
+});
+
+export type OAuthProfile = z.infer<typeof oauthProfileSchema>;
+
+// Blacklist validation
+export const blacklistSchema = z.object({
+  email: z.string().email().optional(),
+  oauth_provider: z.enum(['google', 'facebook']).optional(),
+  oauth_id: z.string().optional(),
+  reason: z.string().min(5, 'Please provide a reason for blacklisting'),
+}).refine(
+  (data) => data.email || (data.oauth_provider && data.oauth_id),
+  'Must provide either email or oauth_provider + oauth_id'
+);
+
+export type BlacklistInput = z.infer<typeof blacklistSchema>;
+```
+
+**Auth.js configuration (using `pg` library directly - NO ORM):**
+
+```typescript
+// src/lib/auth.ts
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import Facebook from "next-auth/providers/facebook";
 import Credentials from "next-auth/providers/credentials";
+import { getPool } from "@/infrastructure/db/connection";
+import { loginSchema } from "@/schemas/auth";
+import { verifyPassword } from "@/infrastructure/auth/password";
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(db),
+  // NO Prisma adapter - use pg library for direct DB queries
   
   providers: [
-    Google({ /* config */ }),
-    Facebook({ /* config */ }),
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      profile(profile) {
+        return {
+          id: profile.sub,
+          name: profile.name,
+          email: profile.email,
+          phone: profile.phone_number || null,
+          image: profile.picture,
+        };
+      },
+    }),
+    
+    Facebook({
+      clientId: process.env.FACEBOOK_APP_ID,
+      clientSecret: process.env.FACEBOOK_APP_SECRET,
+      profile(profile) {
+        return {
+          id: profile.id,
+          name: profile.name,
+          email: profile.email,
+          phone: profile.phone || null,
+          image: profile.picture,
+        };
+      },
+    }),
+    
     Credentials({
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        // Verify form-based login
+        // Validate input with Zod
+        const parsed = loginSchema.safeParse(credentials);
+        if (!parsed.success) return null;
+
+        const { email, password } = parsed.data;
+        
+        // Query database directly with pg library
+        const pool = getPool();
+        const result = await pool.query(
+          'SELECT id, first_name, last_name, email, password_hash, is_active, member_type FROM members WHERE email = $1 AND member_type = $2',
+          [email, 'app_user']
+        );
+
+        if (result.rows.length === 0) return null;
+
+        const member = result.rows[0];
+
+        // Verify password with Argon2
+        const isValid = await verifyPassword(password, member.password_hash);
+        if (!isValid) return null;
+
+        return {
+          id: member.id,
+          name: member.first_name,
+          email: member.email,
+          is_active: member.is_active,
+          member_type: member.member_type,
+        };
       },
     }),
   ],
@@ -1107,22 +1291,102 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id;
         token.is_active = user.is_active;
-        token.role = user.role;
+        token.member_type = user.member_type;
       }
       return token;
     },
     
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id;
-        session.user.is_active = token.is_active;
-        session.user.role = token.role;
+        session.user.id = token.id as string;
+        session.user.is_active = token.is_active as boolean;
+        session.user.member_type = token.member_type as string;
       }
       return session;
+    },
+    
+    async signIn({ user, account }) {
+      // Check blacklist before allowing login
+      const pool = getPool();
+      
+      if (user.email) {
+        const blacklisted = await pool.query(
+          'SELECT id FROM blacklist WHERE email = $1 AND is_active = true',
+          [user.email]
+        );
+        if (blacklisted.rows.length > 0) return false;
+      }
+      
+      if (account?.provider === 'google' || account?.provider === 'facebook') {
+        const blacklisted = await pool.query(
+          'SELECT id FROM blacklist WHERE oauth_provider = $1 AND oauth_id = $2 AND is_active = true',
+          [account.provider, account.providerAccountId]
+        );
+        if (blacklisted.rows.length > 0) return false;
+      }
+      
+      return true;
     },
   },
 });
 ```
+
+**Database connection (using `pg` library):**
+
+```typescript
+// src/infrastructure/db/connection.ts
+import { Pool } from 'pg';
+
+let pool: Pool | null = null;
+
+export function getPool(): Pool {
+  if (!pool) {
+    pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+    });
+  }
+  return pool;
+}
+
+export async function query<T = any>(
+  sql: string,
+  values?: any[]
+): Promise<{ rows: T[]; rowCount: number }> {
+  const result = await getPool().query(sql, values);
+  return {
+    rows: result.rows,
+    rowCount: result.rowCount || 0,
+  };
+}
+```
+
+**Password hashing (Argon2):**
+
+```typescript
+// src/infrastructure/auth/password.ts
+import argon2 from 'argon2';
+
+export async function hashPassword(password: string): Promise<string> {
+  return argon2.hash(password, {
+    type: argon2.argon2id,
+    memoryCost: 19456,
+    timeCost: 2,
+    parallelism: 1,
+  });
+}
+
+export async function verifyPassword(password: string, hash: string): Promise<boolean> {
+  return argon2.verify(hash, password);
+}
+```
+
+**Key architecture improvements:**
+- ✅ NO Prisma ORM (direct `pg` queries)
+- ✅ TypeScript types for type safety
+- ✅ Zod for runtime validation
+- ✅ Hexagonal architecture (DB is replaceable)
+- ✅ Consistent with raw SQL migrations (no duplication)
+- ✅ Future-proof for Python backend (same SQL)
 
 ### COMMIT 4: Registration (Form + OAuth)
 
@@ -1443,16 +1707,24 @@ Frontend:
 Backend Auth:
   - Auth.js v5 (NextAuth successor)
   - Argon2 password hashing
-  - Prisma ORM (type-safe DB)
-  - jsonwebtoken (JWT tokens)
+  - pg library (direct PostgreSQL queries, NO ORM)
+  
+Type Safety & Validation:
+  - TypeScript interfaces for database models
+  - Zod for runtime validation
+  - Full type inference from Zod schemas
 
 Database:
-  - PostgreSQL (Vercel Postgres or local Docker)
+  - PostgreSQL 16+ (Vercel Postgres or local Docker)
+  - Raw SQL migrations (language-agnostic)
   - Custom auth-specific tables
-  - Indexes for performance
+  - Indexed for performance
 
-Form Validation:
-  - Zod for schemas
+Key Architecture Decision:
+  ✅ NO Prisma ORM - Direct pg library queries
+  ✅ Raw SQL migrations - Reusable by Python backend later
+  ✅ TypeScript types - Manual but flexible
+  ✅ Hexagonal architecture - DB is replaceable
 ```
 
 ---
