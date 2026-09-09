@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import Image from 'next/image';
 import { useState } from 'react';
 import type { JSX } from 'react';
+import { PageBackground } from '@/components/PageBackground';
 
 export default function Home(): JSX.Element {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -14,20 +15,10 @@ export default function Home(): JSX.Element {
       id="welcome-container"
       className="min-h-screen w-full flex flex-col items-center justify-center text-white font-serif select-none overflow-hidden relative"
     >
-      {/* Background Image */}
-      <div className="absolute inset-0 w-full h-full z-0 pointer-events-none">
-        <Image
-          src="/docs/img/Christ_and_st_Menas.webp"
-          alt="Christ and St. Menas Background"
-          fill
-          className="object-cover object-top"
-          priority
-          quality={85}
-        />
-      </div>
-
-      {/* Dark Overlay with gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/60 z-10 pointer-events-none"></div>
+      <PageBackground
+        imageSource="/docs/img/Christ_and_st_Menas.webp"
+        imageAlt="Christ and St. Menas Background"
+      />
 
       {/* Navigation Bar */}
       <nav className="absolute top-0 left-0 right-0 z-40 px-6 sm:px-12 py-6 sm:py-8 flex items-center justify-between">

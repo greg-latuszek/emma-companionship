@@ -1,7 +1,7 @@
 'use client';
 
-import Image from 'next/image';
 import { DashboardNavbar } from '@/components/DashboardNavbar';
+import { PageBackground } from '@/components/PageBackground';
 import { motion, AnimatePresence } from 'motion/react';
 import type { JSX } from 'react';
 
@@ -19,18 +19,10 @@ export default function CompanionshipPanelPage(): JSX.Element {
       <DashboardNavbar userEmail={mockUser.email} userName={mockUser.name} />
 
       <div className="relative">
-        {/* Background Image */}
-        <div className="absolute inset-0 h-[400px]">
-          <Image
-            src="/docs/img/Christ_and_st_Menas.webp"
-            alt="Background"
-            fill
-            className="object-cover object-top"
-            priority
-            quality={85}
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-gray-50" />
-        </div>
+        <PageBackground
+          imageSource="/docs/img/Christ_and_st_Menas.webp"
+          imageAlt="Background"
+        />
 
         {/* Content */}
         <AnimatePresence>
