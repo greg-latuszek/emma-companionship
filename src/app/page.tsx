@@ -21,8 +21,14 @@ export default function Home(): JSX.Element {
         imageAlt="Christ and St. Menas Background"
       />
 
-      {/* Navigation Bar */}
-      <Navbar />
+      {/* Navigation Bar with Login Button */}
+      <Navbar
+        rightContent={
+          <SemiTransparentLink href="/app/companionship-panel" delay={0.5}>
+            Zaloguj się
+          </SemiTransparentLink>
+        }
+      />
 
       {/* Main Content - Centered */}
       <div className="w-full h-full flex flex-col items-center justify-center z-20 relative px-4">
@@ -68,11 +74,6 @@ export default function Home(): JSX.Element {
               >
                 Serwis dla Delegatów ds. Akompaniamentów
               </motion.p>
-
-              {/* CTA Button */}
-              <SemiTransparentLink href="/app/companionship-panel" delay={0.7} className="mt-12 md:mt-16">
-                Zaloguj się
-              </SemiTransparentLink>
             </motion.main>
           )}
         </AnimatePresence>
