@@ -1,7 +1,8 @@
 'use client';
 
-import { DashboardNavbar } from '@/components/DashboardNavbar';
 import { PageBackground } from '@/components/PageBackground';
+import { Navbar } from '@/components/Navbar';
+import { LogoutButton } from '@/components/LogoutButton';
 import { motion, AnimatePresence } from 'motion/react';
 import type { JSX } from 'react';
 
@@ -22,10 +23,17 @@ export default function CompanionshipPanelPage(): JSX.Element {
         imageAlt="Background"
       />
 
-      {/* Navbar - above background */}
-      <div className="relative z-40 w-full">
-        <DashboardNavbar userEmail={mockUser.email} userName={mockUser.name} />
-      </div>
+      {/* Navbar with Logout Button */}
+      <Navbar
+        rightContent={
+          <LogoutButton
+            userName={mockUser.name}
+            userEmail={mockUser.email}
+            href="/"
+            delay={0.3}
+          />
+        }
+      />
 
       {/* All content on top of background */}
       <div className="relative z-20 w-full flex-1 flex flex-col">
