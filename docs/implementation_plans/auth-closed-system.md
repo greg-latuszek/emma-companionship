@@ -598,6 +598,124 @@ Facebook({
 
 ## Implementation Phases
 
+### COMMIT 1.2: Mocked UI (Already Done ✓)
+
+Basic navigation + mocked panel with placeholder data.
+
+### COMMIT 1.3: Docker + Local Development Database Setup
+
+Set up PostgreSQL container for local development and testing **BEFORE defining schema**.
+
+**Create `docker-compose.yml`:**
+
+```yaml
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: emma-postgres-dev
+    
+    environment:
+      POSTGRES_USER: emma_dev
+      POSTGRES_PASSWORD: emma_dev_password
+      POSTGRES_DB: emma_companionship_dev
+    
+    ports:
+      - "5432:5432"
+    
+    volumes:
+      - emma_postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U emma_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  emma_postgres_data:
+```
+
+**Create `.env.local`:**
+
+```
+DATABASE_URL=postgresql://emma_dev:emma_dev_password@localhost:5432/emma_companionship_dev
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=generate-with-openssl
+```
+
+**Add to `package.json`:**
+
+```json
+{
+  "scripts": {
+    "db:start": "docker-compose up -d postgres && docker-compose exec -T postgres pg_isready -U emma_dev",
+    "db:stop": "docker-compose down",
+    "db:reset": "docker-compose down -v && docker-compose up -d postgres",
+    "db:migrate": "prisma migrate deploy",
+    "db:migrate:dev": "prisma migrate dev",
+    "db:studio": "prisma studio"
+  }
+}
+```
+
+**Install Prisma:**
+
+```bash
+npm install @prisma/client
+npm install -D prisma
+npx prisma init
+```
+
+**Create `prisma/schema.prisma` (initial template):**
+
+```prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Tables defined in COMMIT 2
+```
+
+**Development Workflow:**
+
+```bash
+# 1. Start local Postgres
+npm run db:start
+
+# 2. After schema defined (COMMIT 2), run migrations
+npm run db:migrate:dev
+
+# 3. Inspect data
+npm run db:studio
+
+# 4. Run tests (connect to same DB)
+npm test
+
+# 5. Reset DB (destructive!)
+npm run db:reset
+
+# 6. Stop
+npm run db:stop
+```
+
+**Why COMMIT 1.3 before COMMIT 2:**
+
+✅ Infrastructure ready before schema definition
+✅ COMMIT 2 schema can be tested immediately
+✅ Tests check actual DB entries (not mocks)
+✅ Migrations created and validated
+✅ Path to production (switch DATABASE_URL to Vercel Postgres)
+
+---
+
 ### COMMIT 2: Database Schema
 
 Add auth-specific tables and fields:
@@ -1238,8 +1356,32 @@ Admin must:
 
 ## Next Steps
 
-1. Review and approve this plan
-2. Create database schema migration
-3. Begin COMMIT 2 (database)
-4. Does the manual-only approval approach work for your team?
-5. Any questions about verification checks JSON structure?
+1. **COMMIT 1.3 (First):** Set up Docker infrastructure
+   - Create `docker-compose.yml` for PostgreSQL
+   - Create `.env.local` for local development
+   - Add npm scripts for `db:start`, `db:migrate:dev`, `db:studio`
+   - Validate: `npm run db:start` works and DB is accessible
+
+2. **COMMIT 2 (Second):** Define database schema using Prisma
+   - Create `prisma/schema.prisma` with all tables:
+     - members (with all auth fields)
+     - blacklist (security)
+     - security_events (logging)
+     - role_assignments (hierarchical access)
+     - approval_audit (admin decisions)
+     - auth_events (login/logout tracking)
+   - Run `npm run db:migrate:dev` to create migration
+   - Validate: Schema in actual database
+
+3. **COMMIT 2 (Same):** Write database integration tests
+   - Test: Schema created correctly
+   - Test: Constraints enforced
+   - Test: Indexes created
+   - Test: Relationships work
+   - Tests connect to real PostgreSQL (via Prisma)
+
+4. Questions for approval:
+   - Should we use Prisma for ORM + migrations?
+   - Or raw SQL migrations (better for hexagonal)?
+   - .env.local needs secrets - add to .gitignore?
+   - Test database: separate container or same with test suffix?
