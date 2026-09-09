@@ -101,14 +101,15 @@ export default function Home(): JSX.Element {
               </motion.p>
 
               {/* CTA Button */}
-              <motion.button
+              <motion.a
+                href="/app/companionship-panel"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 1, delay: 0.7, ease: 'easeOut' }}
-                className="mt-12 md:mt-16 px-8 sm:px-12 py-3 sm:py-4 rounded-full bg-white/15 hover:bg-white/25 border border-white/35 text-white font-sans font-medium text-sm sm:text-base uppercase tracking-widest transition-all duration-300 backdrop-blur-md shadow-lg hover:shadow-xl"
+                className="inline-block mt-12 md:mt-16 px-8 sm:px-12 py-3 sm:py-4 rounded-full bg-white/15 hover:bg-white/25 border border-white/35 text-white font-sans font-medium text-sm sm:text-base uppercase tracking-widest transition-all duration-300 backdrop-blur-md shadow-lg hover:shadow-xl"
               >
                 Zaloguj się
-              </motion.button>
+              </motion.a>
             </motion.main>
           )}
         </AnimatePresence>
