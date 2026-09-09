@@ -38,19 +38,20 @@ describe('Database Schema Validation', () => {
       expect(result.rows).toHaveLength(1);
     });
 
-    it('should have all 10 required tables', async () => {
-      const expectedTables = [
-        '_schema_migrations',
-        'members',
-        'roles',
-        'geographic_units',
-        'role_assignments',
-        'blacklist',
-        'security_events',
-        'approval_audit',
-        'auth_events',
-        'two_factor_auth',
-      ];
+           it('should have all required tables', async () => {
+             const expectedTables = [
+               '_schema_migrations',
+               'members',
+               'couples',
+               'roles',
+               'geographic_units',
+               'role_assignments',
+               'blacklist',
+               'security_events',
+               'approval_audit',
+               'auth_events',
+               'two_factor_auth',
+             ];
 
       const result = await query(`
         SELECT table_name 
@@ -92,16 +93,17 @@ describe('Database Schema Validation', () => {
       expect(columnNames).toContain('registry_check_result');
     });
 
-    it('should have email unique constraint', async () => {
-      const result = await query(`
-        SELECT constraint_name, constraint_type
-        FROM information_schema.table_constraints
-        WHERE table_schema = 'public' AND table_name = 'members' AND constraint_type = 'UNIQUE'
-      `);
+           it('should have email partial unique index for app_users', async () => {
+             const result = await query(`
+               SELECT indexname
+               FROM pg_indexes
+               WHERE tablename = 'members' AND indexname LIKE '%email%'
+             `);
 
-      const constraints = result.rows.map((row: any) => row.constraint_name);
-      expect(constraints).toContain('members_email_key');
-    });
+             const indexes = result.rows.map((row: any) => row.indexname);
+             expect(indexes.length).toBeGreaterThan(0);
+             expect(indexes.some((idx: string) => idx.includes('app_users'))).toBe(true);
+           });
 
     it('should have oauth unique constraint', async () => {
       const result = await query(`
@@ -236,33 +238,33 @@ describe('Database Schema Validation', () => {
   });
 
   describe('Constraints and Rules', () => {
-    it('should enforce NOT NULL on required members columns', async () => {
-      const result = await query(`
-        SELECT column_name, is_nullable
-        FROM information_schema.columns
-        WHERE table_schema = 'public' 
-        AND table_name = 'members'
-        AND column_name IN ('first_name', 'last_name', 'email', 'phone', 'requested_at')
-      `);
+           it('should enforce NOT NULL on core required members columns', async () => {
+             const result = await query(`
+               SELECT column_name, is_nullable
+               FROM information_schema.columns
+               WHERE table_schema = 'public' 
+               AND table_name = 'members'
+               AND column_name IN ('first_name', 'last_name', 'requested_at')
+             `);
 
-      result.rows.forEach((row: any) => {
-        expect(row.is_nullable).toBe('NO');
-      });
-    });
+             result.rows.forEach((row: any) => {
+               expect(row.is_nullable).toBe('NO');
+             });
+           });
 
-    it('should allow NULL for optional auth fields', async () => {
-      const result = await query(`
-        SELECT column_name, is_nullable
-        FROM information_schema.columns
-        WHERE table_schema = 'public' 
-        AND table_name = 'members'
-        AND column_name IN ('password_hash', 'oauth_provider', 'oauth_id')
-      `);
+           it('should allow NULL for optional auth and contact fields', async () => {
+             const result = await query(`
+               SELECT column_name, is_nullable
+               FROM information_schema.columns
+               WHERE table_schema = 'public' 
+               AND table_name = 'members'
+               AND column_name IN ('password_hash', 'oauth_provider', 'oauth_id', 'email', 'phone')
+             `);
 
-      result.rows.forEach((row: any) => {
-        expect(row.is_nullable).toBe('YES');
-      });
-    });
+             result.rows.forEach((row: any) => {
+               expect(row.is_nullable).toBe('YES');
+             });
+           });
   });
 
   describe('Extensions', () => {

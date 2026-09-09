@@ -1,6 +1,7 @@
 -- COMMIT 2: Roles, Access Control, and Audit Tables
 -- Migration: 004_roles_access_control.sql
 -- Purpose: Support hierarchical role assignments, approval tracking, and login audit trail
+-- Note: geographic_units table is now created in 002_members_table.sql
 
 CREATE TABLE roles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -18,18 +19,6 @@ INSERT INTO roles (name, description) VALUES
     ('viewer', 'Read-only access to assigned resources')
 ON CONFLICT DO NOTHING;
 
-CREATE TABLE geographic_units (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(255) NOT NULL,
-    description TEXT,
-    parent_id UUID REFERENCES geographic_units(id) ON DELETE CASCADE,  -- Hierarchical
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
-CREATE INDEX idx_geographic_units_parent ON geographic_units(parent_id);
-
 -- Role assignments with scope (who has what role where)
 CREATE TABLE role_assignments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -39,9 +28,9 @@ CREATE TABLE role_assignments (
     geographic_unit_id UUID REFERENCES geographic_units(id) ON DELETE CASCADE,  -- Scoped to unit (NULL = global)
     
     -- Admin tracking
-    assigned_by UUID NOT NULL,                 -- Which admin made the assignment
+    assigned_by UUID NOT NULL REFERENCES members(id) ON DELETE CASCADE,
     assigned_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    revoked_by UUID,                           -- Admin who revoked it
+    revoked_by UUID REFERENCES members(id) ON DELETE SET NULL,
     revoked_at TIMESTAMP WITH TIME ZONE,
     
     is_active BOOLEAN DEFAULT TRUE,

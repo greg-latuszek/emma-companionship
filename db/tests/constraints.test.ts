@@ -18,29 +18,44 @@ describe('Database Constraints & Business Logic', () => {
   });
 
   describe('Members Table Constraints', () => {
-    it('should enforce unique email', async () => {
-      // Insert first member
-      await query(`
-        INSERT INTO members (first_name, last_name, email, phone)
-        VALUES ('John', 'Doe', 'john@example.com', '+48123456789')
-      `);
+           it('should prevent duplicate email for app_users', async () => {
+             // Insert first app_user member
+             await query(`
+               INSERT INTO members (first_name, last_name, member_type, email, phone)
+               VALUES ('John', 'Doe', 'app_user', 'john@example.com', '+48123456789')
+             `);
 
-      // Try to insert duplicate email - should fail
-      let error: any;
-      try {
-        await query(`
-          INSERT INTO members (first_name, last_name, email, phone)
-          VALUES ('Jane', 'Doe', 'john@example.com', '+48987654321')
-        `);
-      } catch (e) {
-        error = e;
-      }
+             // Try to insert duplicate email for app_user - should fail
+             let error: any;
+             try {
+               await query(`
+                 INSERT INTO members (first_name, last_name, member_type, email, phone)
+                 VALUES ('Jane', 'Doe', 'app_user', 'john@example.com', '+48987654321')
+               `);
+             } catch (e) {
+               error = e;
+             }
 
-      expect(error).toBeDefined();
-      expect(error.message).toContain('duplicate');
-    });
+             expect(error).toBeDefined();
+             expect(error.message).toContain('duplicate');
+           });
 
-    it('should enforce unique oauth combination', async () => {
+           it('should allow duplicate email for companions', async () => {
+             // Insert first companion with email
+             await query(`
+               INSERT INTO members (first_name, last_name, member_type, email, phone)
+               VALUES ('John', 'Doe', 'companion', 'shared@example.com', '+48123456789')
+             `);
+
+             // Insert second companion with same email - should succeed
+             const result = await query(`
+               INSERT INTO members (first_name, last_name, member_type, email, phone)
+               VALUES ('Jane', 'Doe', 'companion', 'shared@example.com', '+48987654321')
+               RETURNING id
+             `);
+
+             expect(result.rows).toHaveLength(1);
+           });
       const oauth_id = 'google_123456';
 
       // Insert first OAuth member
@@ -228,88 +243,88 @@ describe('Database Constraints & Business Logic', () => {
   });
 
   describe('Role Assignments', () => {
-    it('should track role assignment history', async () => {
-      const memberId = '750e8400-e29b-41d4-a716-446655440000';
-      const roleId = '850e8400-e29b-41d4-a716-446655440000';
-      const adminId = '950e8400-e29b-41d4-a716-446655440000';
+           it('should track role assignment history', async () => {
+             const memberId = '750e8400-e29b-41d4-a716-446655440000';
+             const roleId = '850e8400-e29b-41d4-a716-446655440000';
+             const adminId = '950e8400-e29b-41d4-a716-446655440000';
 
-      // Create member first (FK requirement)
-      await query(`
-        INSERT INTO members (id, first_name, last_name, email, phone)
-        VALUES ($1, 'John', 'Doe', 'john@example.com', '+48123456789')
-      `, [memberId]);
+             // Create member first (FK requirement)
+             await query(`
+               INSERT INTO members (id, first_name, last_name, member_type)
+               VALUES ($1, 'John', 'Doe', 'app_user')
+             `, [memberId]);
 
-      // Create admin member
-      await query(`
-        INSERT INTO members (id, first_name, last_name, email, phone)
-        VALUES ($1, 'Admin', 'User', 'admin@example.com', '+48999999999')
-      `, [adminId]);
+             // Create admin member
+             await query(`
+               INSERT INTO members (id, first_name, last_name, member_type)
+               VALUES ($1, 'Admin', 'User', 'app_user')
+             `, [adminId]);
 
-      // Create role
-      await query(`
-        INSERT INTO roles (id, name, description)
-        VALUES ($1, 'admin', 'Administrator')
-      `, [roleId]);
+             // Create role
+             await query(`
+               INSERT INTO roles (id, name, description)
+               VALUES ($1, 'admin', 'Administrator')
+             `, [roleId]);
 
-      // Assign role
-      const assignResult = await query(`
-        INSERT INTO role_assignments (member_id, role_id, assigned_by, is_active)
-        VALUES ($1, $2, $3, true)
-        RETURNING assigned_at
-      `, [memberId, roleId, adminId]);
+             // Assign role
+             const assignResult = await query(`
+               INSERT INTO role_assignments (member_id, role_id, assigned_by, is_active)
+               VALUES ($1, $2, $3, true)
+               RETURNING assigned_at
+             `, [memberId, roleId, adminId]);
 
-      const assignedAt = new Date(assignResult.rows[0].assigned_at);
-      expect(assignedAt.getTime()).toBeGreaterThan(0);
-    });
+             const assignedAt = new Date(assignResult.rows[0].assigned_at);
+             expect(assignedAt.getTime()).toBeGreaterThan(0);
+           });
 
-    it('should enforce partial unique index on active assignments', async () => {
-      const memberId = '750e8400-e29b-41d4-a716-446655440000';
-      const roleId = '850e8400-e29b-41d4-a716-446655440000';
-      const adminId = '950e8400-e29b-41d4-a716-446655440000';
-      const unitId = 'a50e8400-e29b-41d4-a716-446655440000';
+           it('should enforce partial unique index on active assignments', async () => {
+             const memberId = '750e8400-e29b-41d4-a716-446655440000';
+             const roleId = '850e8400-e29b-41d4-a716-446655440000';
+             const adminId = '950e8400-e29b-41d4-a716-446655440000';
+             const unitId = 'a50e8400-e29b-41d4-a716-446655440000';
 
-      // Create member
-      await query(`
-        INSERT INTO members (id, first_name, last_name, email, phone)
-        VALUES ($1, 'John', 'Doe', 'john@example.com', '+48123456789')
-      `, [memberId]);
+             // Create member
+             await query(`
+               INSERT INTO members (id, first_name, last_name, member_type)
+               VALUES ($1, 'John', 'Doe', 'app_user')
+             `, [memberId]);
 
-      // Create admin
-      await query(`
-        INSERT INTO members (id, first_name, last_name, email, phone)
-        VALUES ($1, 'Admin', 'User', 'admin@example.com', '+48999999999')
-      `, [adminId]);
+             // Create admin
+             await query(`
+               INSERT INTO members (id, first_name, last_name, member_type)
+               VALUES ($1, 'Admin', 'User', 'app_user')
+             `, [adminId]);
 
-      // Create test data
-      await query(`
-        INSERT INTO roles (id, name, description)
-        VALUES ($1, 'admin', 'Administrator')
-      `, [roleId]);
+             // Create test data
+             await query(`
+               INSERT INTO roles (id, name, description)
+               VALUES ($1, 'admin', 'Administrator')
+             `, [roleId]);
 
-      await query(`
-        INSERT INTO geographic_units (id, name)
-        VALUES ($1, 'Test Unit')
-      `, [unitId]);
+             await query(`
+               INSERT INTO geographic_units (id, name, type)
+               VALUES ($1, 'Test Unit', 'province')
+             `, [unitId]);
 
-      // First assignment
-      await query(`
-        INSERT INTO role_assignments (member_id, role_id, geographic_unit_id, assigned_by, is_active)
-        VALUES ($1, $2, $3, $4, true)
-      `, [memberId, roleId, unitId, adminId]);
+             // First assignment
+             await query(`
+               INSERT INTO role_assignments (member_id, role_id, geographic_unit_id, assigned_by, is_active)
+               VALUES ($1, $2, $3, $4, true)
+             `, [memberId, roleId, unitId, adminId]);
 
-      // Duplicate active assignment should fail
-      let error: any;
-      try {
-        await query(`
-          INSERT INTO role_assignments (member_id, role_id, geographic_unit_id, assigned_by, is_active)
-          VALUES ($1, $2, $3, $4, true)
-        `, [memberId, roleId, unitId, adminId]);
-      } catch (e) {
-        error = e;
-      }
+             // Duplicate active assignment should fail
+             let error: any;
+             try {
+               await query(`
+                 INSERT INTO role_assignments (member_id, role_id, geographic_unit_id, assigned_by, is_active)
+                 VALUES ($1, $2, $3, $4, true)
+               `, [memberId, roleId, unitId, adminId]);
+             } catch (e) {
+               error = e;
+             }
 
-      expect(error).toBeDefined();
-    });
+             expect(error).toBeDefined();
+           });
   });
 
   describe('Auth Events Logging', () => {
