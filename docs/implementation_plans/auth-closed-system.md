@@ -626,7 +626,7 @@ services:
     
     volumes:
       - emma_postgres_data:/var/lib/postgresql/data
-      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/001-init.sql:ro
     
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U emma_dev"]
@@ -638,12 +638,183 @@ volumes:
   emma_postgres_data:
 ```
 
-**Create `.env.local`:**
+**Create `.env.local` (add to .gitignore):**
 
 ```
+# Local Development Database
 DATABASE_URL=postgresql://emma_dev:emma_dev_password@localhost:5432/emma_companionship_dev
+DATABASE_TEST_URL=postgresql://emma_dev:emma_dev_password@localhost:5432/emma_companionship_test
+
+# Auth.js
 NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=generate-with-openssl
+NEXTAUTH_SECRET=generate-with-openssl-rand-hex-32
+```
+
+**Create `.gitignore` entry:**
+
+```gitignore
+# Environment
+.env.local
+.env.local.backup
+.env.*.local
+
+# Docker
+.docker/
+postgres-data/
+```
+
+**SQL Migrations Structure:**
+
+```
+db/
+├── migrations/
+│   ├── 001_init.sql                    # Initial database setup
+│   ├── 002_members_table.sql           # Members table
+│   ├── 003_oauth_tables.sql            # OAuth support
+│   ├── 004_blacklist_security.sql      # Security tables
+│   ├── 005_roles_access_control.sql    # Role system
+│   ├── 006_companionship.sql           # Companionship relationships
+│   └── 007_approval_workflow.sql       # Approval system
+└── schema.md                            # Schema documentation (readable)
+```
+
+**Create `scripts/init-db.sql`:**
+
+```sql
+-- Initial database setup
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- Migration tracking table (language-agnostic)
+CREATE TABLE IF NOT EXISTS _schema_migrations (
+    id SERIAL PRIMARY KEY,
+    version VARCHAR(255) NOT NULL UNIQUE,
+    description VARCHAR(500),
+    executed_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Log all migrations
+INSERT INTO _schema_migrations (version, description) 
+VALUES ('0', 'Initial setup') 
+ON CONFLICT DO NOTHING;
+```
+
+**Create `scripts/migrate-dev.sh`:**
+
+```bash
+#!/bin/bash
+
+# Run migrations on development database
+set -e
+
+echo "Running migrations on development database..."
+
+DATABASE_URL=${1:-$DATABASE_URL}
+
+if [ -z "$DATABASE_URL" ]; then
+    echo "Error: DATABASE_URL not set"
+    exit 1
+fi
+
+# Find and run all migration files in order
+for migration in db/migrations/*.sql; do
+    if [ -f "$migration" ]; then
+        filename=$(basename "$migration")
+        echo "Running: $filename"
+        
+        # Run migration
+        psql "$DATABASE_URL" -f "$migration"
+        
+        if [ $? -eq 0 ]; then
+            echo "✓ $filename completed"
+        else
+            echo "✗ $filename failed"
+            exit 1
+        fi
+    fi
+done
+
+echo "All migrations completed!"
+```
+
+**Create `scripts/migrate-test.sh`:**
+
+```bash
+#!/bin/bash
+
+# Create test database and run migrations
+set -e
+
+echo "Setting up test database..."
+
+# Extract connection info from DATABASE_URL
+MAIN_DB_URL=$DATABASE_URL
+TEST_DB_URL=$DATABASE_TEST_URL
+
+# Create test database if not exists
+psql "$MAIN_DB_URL" -tc "SELECT 1 FROM pg_database WHERE datname = 'emma_companionship_test'" | grep -q 1 || \
+    createdb -U emma_dev emma_companionship_test
+
+echo "Running migrations on test database..."
+
+# Run migrations on test database
+for migration in db/migrations/*.sql; do
+    if [ -f "$migration" ]; then
+        filename=$(basename "$migration")
+        echo "Running: $filename"
+        psql "$TEST_DB_URL" -f "$migration"
+    fi
+done
+
+echo "Test database ready!"
+```
+
+**Create `scripts/postgres-start.sh`:**
+
+```bash
+#!/bin/bash
+
+echo "Starting PostgreSQL container..."
+docker-compose up -d postgres
+
+echo "Waiting for PostgreSQL to be ready..."
+docker-compose exec -T postgres pg_isready -U emma_dev
+
+echo "✓ PostgreSQL is ready!"
+echo ""
+echo "Development database:"
+echo "  URL: postgresql://emma_dev:emma_dev_password@localhost:5432/emma_companionship_dev"
+echo ""
+echo "Next steps:"
+echo "  1. npm run db:migrate:dev    # Run migrations"
+echo "  2. npm run db:migrate:test   # Set up test DB"
+echo "  3. npm test                  # Run tests"
+```
+
+**Create `scripts/postgres-stop.sh`:**
+
+```bash
+#!/bin/bash
+echo "Stopping PostgreSQL container..."
+docker-compose down
+```
+
+**Create `scripts/postgres-reset.sh`:**
+
+```bash
+#!/bin/bash
+
+echo "WARNING: This will delete ALL data in the development database!"
+read -p "Continue? (y/N) " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    docker-compose down -v
+    docker-compose up -d postgres
+    docker-compose exec -T postgres pg_isready -U emma_dev
+    echo "✓ Database reset complete"
+else
+    echo "Cancelled"
+fi
 ```
 
 **Add to `package.json`:**
@@ -651,68 +822,115 @@ NEXTAUTH_SECRET=generate-with-openssl
 ```json
 {
   "scripts": {
-    "db:start": "docker-compose up -d postgres && docker-compose exec -T postgres pg_isready -U emma_dev",
-    "db:stop": "docker-compose down",
-    "db:reset": "docker-compose down -v && docker-compose up -d postgres",
-    "db:migrate": "prisma migrate deploy",
-    "db:migrate:dev": "prisma migrate dev",
-    "db:studio": "prisma studio"
+    "db:start": "bash scripts/postgres-start.sh",
+    "db:stop": "bash scripts/postgres-stop.sh",
+    "db:reset": "bash scripts/postgres-reset.sh",
+    "db:migrate:dev": "bash scripts/migrate-dev.sh $DATABASE_URL",
+    "db:migrate:test": "bash scripts/migrate-test.sh",
+    "db:psql": "psql $DATABASE_URL",
+    "db:psql:test": "psql $DATABASE_TEST_URL"
   }
 }
-```
-
-**Install Prisma:**
-
-```bash
-npm install @prisma/client
-npm install -D prisma
-npx prisma init
-```
-
-**Create `prisma/schema.prisma` (initial template):**
-
-```prisma
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
-generator client {
-  provider = "prisma-client-js"
-}
-
-// Tables defined in COMMIT 2
 ```
 
 **Development Workflow:**
 
 ```bash
-# 1. Start local Postgres
+# 1. Start PostgreSQL container
 npm run db:start
 
-# 2. After schema defined (COMMIT 2), run migrations
+# 2. Set up development database with migrations
 npm run db:migrate:dev
 
-# 3. Inspect data
-npm run db:studio
+# 3. Set up test database
+npm run db:migrate:test
 
-# 4. Run tests (connect to same DB)
+# 4. Run tests (tests connect to test DB)
 npm test
 
-# 5. Reset DB (destructive!)
+# 5. Direct SQL access if needed
+npm run db:psql
+
+# 6. Reset everything (destructive!)
 npm run db:reset
 
-# 6. Stop
+# 7. Stop when done
 npm run db:stop
 ```
 
+**Test Database Connection (in tests):**
+
+```typescript
+// tests/db.setup.ts
+process.env.DATABASE_URL = process.env.DATABASE_TEST_URL;
+
+// Tests connect to emma_companionship_test database automatically
+// Not mocked - real PostgreSQL queries
+```
+
+**Why Raw SQL:**
+
+✅ Language-agnostic (future Python backend reads same SQL)
+✅ Version controlled migrations (like git for DB)
+✅ Explicit, clear (no ORM hiding DB details)
+✅ Hexagonal architecture (DB as separate concern)
+✅ No build step needed (SQL is source)
+✅ Easy auditing (see exactly what changed)
+✅ No library lock-in (SQL works everywhere)
+
+**Why Same Container, Different DB:**
+
+✅ Lightweight (no second container)
+✅ Same configuration (identical schema)
+✅ Tests isolated (separate DB name)
+✅ Quick reset between test runs
+✅ Easy cleanup (drop test DB, keep dev data)
+
+**Key Files Created:**
+
+```
+/
+├── docker-compose.yml                    ← Docker infrastructure
+├── .env.local                            ← Local dev environment (in .gitignore)
+├── .gitignore                            ← Protects secrets
+├── db/
+│   ├── migrations/
+│   │   ├── 001_init.sql
+│   │   ├── 002_members_table.sql
+│   │   ├── 003_oauth_tables.sql
+│   │   ├── 004_blacklist_security.sql
+│   │   ├── 005_roles_access_control.sql
+│   │   ├── 006_companionship.sql
+│   │   └── 007_approval_workflow.sql
+│   └── schema.md                         ← Documentation
+└── scripts/
+    ├── init-db.sql                       ← Initial setup
+    ├── migrate-dev.sh                    ← Run migrations
+    ├── migrate-test.sh                   ← Test DB setup
+    ├── postgres-start.sh                 ← Start Docker
+    ├── postgres-stop.sh                  ← Stop Docker
+    └── postgres-reset.sh                 ← Reset (destructive)
+```
+
+**What this enables:**
+
+✅ Local PostgreSQL without manual installation
+✅ SQL migrations version controlled
+✅ Language-agnostic (Python backend later, same .sql files)
+✅ Test database isolated but same setup
+✅ Repeatable, disposable environments
+✅ Easy reset for testing
+✅ .env.local protects secrets (in .gitignore)
+✅ Compatible with CI/CD (same Docker config)
+✅ Path to Vercel Postgres (just change DATABASE_URL)
+
 **Why COMMIT 1.3 before COMMIT 2:**
 
-✅ Infrastructure ready before schema definition
-✅ COMMIT 2 schema can be tested immediately
-✅ Tests check actual DB entries (not mocks)
-✅ Migrations created and validated
-✅ Path to production (switch DATABASE_URL to Vercel Postgres)
+- Infrastructure ready when schema defined (COMMIT 2)
+- COMMIT 2 schema can be tested immediately
+- Tests verify actual DB (not mocks)
+- Migrations created as SQL files (language-agnostic)
+- .sql files committed to git (full history)
 
 ---
 
