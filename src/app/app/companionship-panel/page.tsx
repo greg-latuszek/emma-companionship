@@ -3,6 +3,7 @@
 import { PageBackground } from '@/components/PageBackground';
 import { Navbar } from '@/components/Navbar';
 import { LogoutButton } from '@/components/LogoutButton';
+import { PageTitle } from '@/components/PageTitle';
 import { motion, AnimatePresence } from 'motion/react';
 import type { JSX } from 'react';
 
@@ -47,16 +48,9 @@ export default function CompanionshipPanelPage(): JSX.Element {
             transition={{ duration: 1, delay: 0.2 }}
             className="pt-16 pb-16 px-4 text-center"
           >
-            <h1
-              className="font-serif text-5xl md:text-6xl font-light mb-6 drop-shadow-lg"
-              style={{
-                color: 'transparent',
-                WebkitTextStroke: '2px white',
-                filter: 'drop-shadow(0 0 20px rgba(255, 255, 255, 0.4))',
-              } as React.CSSProperties}
-            >
+            <PageTitle delay={0.2}>
               Witamy Delegata ds. Akompaniamentów
-            </h1>
+            </PageTitle>
 
             <motion.div
               initial={{ opacity: 0 }}
