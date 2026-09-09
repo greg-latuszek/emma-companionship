@@ -156,6 +156,14 @@ Frontend changes:   ZERO (same login flow)
 - [x] Create `IAuthProvider` interface (auth port)
 - [x] Setup Prisma schema for users
 
+### Phase 1.2: Mocked Dashboard UI (Visual Testing) (Day 2.5)
+- [x] Create mocked companionship panel (static)
+- [x] Add "Zaloguj się" button on home page
+- [x] Add "Wyloguj mnie" button on panel navbar
+- [x] Simple routing (no auth, no API calls yet)
+- [x] Display placeholder data (mocked user info)
+- [x] Visual layout testing before auth wiring
+
 ### Phase 2: Core Authentication (Days 3-5)
 - [x] Implement `NextAuthAdapter` (Auth.js wrapper)
 - [x] Implement email/password registration
@@ -177,15 +185,19 @@ Frontend changes:   ZERO (same login flow)
 - [x] Create 2FA UI components
 - [x] Test with Authenticator app
 
-### Phase 5: UI & Login Flow (Days 11-13)
+### Phase 5: UI - Login & Register Pages (Days 11-12)
 - [x] Create login page component
 - [x] Create register page component
-- [x] Create companionship panel (protected page)
-- [x] Display user info (name + email)
-- [x] Implement logout
-- [x] Navbar with logout button
+- [x] Form validation and error handling
+- [x] Redirect to companionship panel on success
 
-### Phase 6: Testing & Documentation (Days 14-15)
+### Phase 6: UI - Real Companionship Panel (Day 13)
+- [x] Connect mocked panel from Phase 1.2 to real auth
+- [x] Replace placeholder data with real user info
+- [x] Implement logout with session cleanup
+- [x] Protect panel routes with middleware
+
+### Phase 7: Testing & Documentation (Days 14-15)
 - [x] End-to-end testing
 - [x] Security audit
 - [x] Documentation
@@ -333,7 +345,251 @@ chore: setup eslint, prettier, and typescript strict mode
 
 ---
 
-### COMMIT 2: Prisma Schema & Database Models
+### COMMIT 1.2: Mocked Companionship Panel (Static UI + Simple Routing)
+
+**Goal**: Create visual mockup of companionship panel with placeholder data and basic navigation between home and panel
+
+**Why Before Real Auth**: This allows visual testing of the layout, styling, and routing before wiring up real authentication. You can see exactly how the login flow will feel and look.
+
+**Tasks**:
+1. Create companionship panel page with placeholder user data
+2. Add "Zaloguj się" button to home page that navigates to panel
+3. Add "Wyloguj mnie" button to panel navbar that navigates back to home
+4. Use hardcoded placeholder data ("Your Name" + "your.email@example.com")
+5. Create shared DashboardNavbar component (will be reused in COMMIT 10)
+
+**Files to Create**:
+- `src/app/app/companionship-panel/page.tsx` - Mocked panel page
+- `src/components/DashboardNavbar.tsx` - Navbar with logout button
+
+**Files to Modify**:
+- `src/app/page.tsx` - Add "Zaloguj się" button linking to panel
+
+**Code Changes**:
+
+```typescript
+// src/components/DashboardNavbar.tsx
+'use client';
+
+import Image from 'next/image';
+import Link from 'next/link';
+import { motion } from 'motion/react';
+
+interface DashboardNavbarProps {
+  userEmail?: string;
+  userName?: string;
+}
+
+export function DashboardNavbar({
+  userEmail = 'your.email@example.com',
+  userName = 'Your Name',
+}: DashboardNavbarProps): JSX.Element {
+  return (
+    <motion.nav
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="flex items-center justify-between px-8 py-4 bg-white shadow-md"
+    >
+      <div className="flex items-center gap-4">
+        <div className="relative w-12 h-12">
+          <Image
+            src="/docs/img/logo_emmanuel_en-1.png"
+            alt="emaCompanionship"
+            fill
+            className="object-contain"
+            quality={90}
+          />
+        </div>
+        <span className="text-xl font-serif font-light">emaCompanionship</span>
+      </div>
+
+      <div className="flex items-center gap-4">
+        <div className="text-right">
+          <p className="font-medium">{userName}</p>
+          <p className="text-sm text-gray-500">{userEmail}</p>
+        </div>
+        <Link
+          href="/"
+          className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 font-medium transition-colors"
+        >
+          Wyloguj mnie
+        </Link>
+      </div>
+    </motion.nav>
+  );
+}
+```
+
+```typescript
+// src/app/app/companionship-panel/page.tsx
+import Image from 'next/image';
+import { DashboardNavbar } from '@/components/DashboardNavbar';
+import { motion, AnimatePresence } from 'motion/react';
+
+export const metadata = {
+  title: 'Companionship Panel - emaCompanionship',
+  description: 'Companionship management dashboard',
+};
+
+export default function CompanionshipPanelPage(): JSX.Element {
+  // Placeholder/mocked user data - will be replaced in COMMIT 10
+  const mockUser = {
+    name: 'Your Name',
+    email: 'your.email@example.com',
+    id: 'mock-user-id',
+    createdAt: new Date(),
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <DashboardNavbar userEmail={mockUser.email} userName={mockUser.name} />
+
+      <div className="relative">
+        {/* Background Image */}
+        <div className="absolute inset-0 h-[400px]">
+          <Image
+            src="/docs/img/Christ_and_st_Menas.webp"
+            alt="Background"
+            fill
+            className="object-cover object-top"
+            priority
+            quality={85}
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-gray-50" />
+        </div>
+
+        {/* Content */}
+        <AnimatePresence>
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 0.2 }}
+            className="relative pt-32 pb-16 px-4 text-center"
+          >
+            <h1
+              className="font-serif text-5xl md:text-6xl font-light mb-6 drop-shadow-lg"
+              style={{
+                color: 'transparent',
+                WebkitTextStroke: '2px white',
+                filter: 'drop-shadow(0 0 20px rgba(255, 255, 255, 0.4))',
+              } as React.CSSProperties}
+            >
+              Witamy Delegata ds. Akompaniamentów
+            </h1>
+
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="bg-white rounded-lg shadow-lg p-6 max-w-md mx-auto mt-12"
+            >
+              <p className="text-gray-600 text-sm mb-2">Zalogowany użytkownik:</p>
+              <p className="text-2xl font-bold text-gray-800 mb-1">{mockUser.name}</p>
+              <p className="text-gray-500 mb-6">{mockUser.email}</p>
+
+              <div className="border-t pt-4 text-sm text-gray-600">
+                <p>ID: {mockUser.id}</p>
+                <p>
+                  Zarejestrowany:{' '}
+                  {mockUser.createdAt.toLocaleDateString('pl-PL')}
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* Main Content Area - Placeholder Cards */}
+      <div className="px-4 py-16 max-w-6xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-bold mb-2">Companionship Relations</h3>
+            <p className="text-gray-600 text-sm">
+              Manage your companionship relationships
+            </p>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-bold mb-2">Health Dashboard</h3>
+            <p className="text-gray-600 text-sm">
+              View relationship health status
+            </p>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-bold mb-2">Settings</h3>
+            <p className="text-gray-600 text-sm">Manage your account settings</p>
+          </div>
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+```
+
+Now update the home page to add the "Zaloguj się" button:
+
+```typescript
+// src/app/page.tsx - Update the CTA Button
+
+              {/* CTA Button */}
+              <motion.a
+                href="/app/companionship-panel"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 1, delay: 0.7, ease: 'easeOut' }}
+                className="inline-block mt-12 md:mt-16 px-8 sm:px-12 py-3 sm:py-4 rounded-full bg-white/15 hover:bg-white/25 border border-white/35 text-white font-sans font-medium text-sm sm:text-base uppercase tracking-widest transition-all duration-300 backdrop-blur-md shadow-lg hover:shadow-xl"
+              >
+                Zaloguj się
+              </motion.a>
+```
+
+**Tests**:
+```bash
+# Type checking
+npm run type-check
+
+# Linting
+npm run lint
+
+# Visual testing (manual)
+npm run dev
+# Navigate to http://localhost:3000
+# Click "Zaloguj się" button → should navigate to /app/companionship-panel
+# Click "Wyloguj mnie" button → should navigate back to /
+```
+
+**Expected behavior**:
+- ✅ Home page loads with "Zaloguj się" button
+- ✅ Clicking button navigates to companionship panel
+- ✅ Panel shows title, placeholder user data, and content cards
+- ✅ Navbar shows placeholder name and email
+- ✅ Clicking "Wyloguj mnie" navigates back to home
+- ✅ All TypeScript types correct
+- ✅ No ESLint errors
+
+**Commit Message**:
+```
+feat(ui): add mocked companionship panel with basic routing
+
+- create /app/companionship-panel page with placeholder data
+- add DashboardNavbar component with logout button
+- add "Zaloguj się" button to home page linking to panel
+- "Wyloguj mnie" button navigates back to home
+- use hardcoded placeholder data (Your Name, your.email@example.com)
+- display same layout as home (background image, title, cards)
+- enables visual testing before auth wiring in later commits
+```
+
+---
+
+
 
 **Goal**: Define user authentication data model
 
