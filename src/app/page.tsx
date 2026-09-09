@@ -1,15 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import Image from 'next/image';
+import { useState } from 'react';
+import type { JSX } from 'react';
 
-export default function Home() {
-  const [isLoaded, setIsLoaded] = useState(false);
-
-  useEffect(() => {
-    setIsLoaded(true);
-  }, []);
+export default function Home(): JSX.Element {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [isLoaded, _setIsLoaded] = useState(true);
 
   return (
     <div
@@ -75,9 +73,8 @@ export default function Home() {
                 style={{
                   color: 'transparent',
                   WebkitTextStroke: '2px rgba(176, 205, 232, 0.4)',
-                  textStroke: '2px rgba(176, 205, 232, 0.4)',
                   filter: 'drop-shadow(0 0 20px rgba(255, 255, 255, 0.4))',
-                }}
+                } as React.CSSProperties}
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 1.2, delay: 0.3, ease: 'easeOut' }}
