@@ -1,313 +1,537 @@
-# Authentication Implementation Plan - UPDATED FOR CLOSED, ADMIN-APPROVAL SYSTEM
+# Authentication Implementation Plan - CLOSED, ADMIN-APPROVAL SYSTEM
 
 ## Overview
 
-emmaCompanionship uses a **closed, role-based authentication system** with **admin approval workflow**. This plan reflects the enterprise/community-focused architecture where only approved community members with assigned roles can access the application.
+emaCompanionship uses a **closed, role-based authentication system** with **mandatory admin approval**. This plan reflects the enterprise/community-focused architecture where only verified community members with assigned roles can access the application.
 
-**Key principle:** No open registration. Only community members verified and approved by admins can authenticate.
+**Key principles:**
+- ✅ No open registration or self-service signup
+- ✅ ALL users require manual admin approval (no auto-approval)
+- ✅ Admin gets verification checks to review, but always makes final decision
+- ✅ Admin assigns geographic unit and role for each user
+- ✅ Security-first approach suitable for small, trusted community
 
 ---
 
-## Closed-System Auth Workflow
+## Registration & Approval Workflow
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│           NEW USER (First-Time Registration Request)             │
+│                 USER REGISTRATION (Simple)                       │
+│                                                                  │
+│  firstName:  [__________]                                        │
+│  lastName:   [__________]                                        │
+│  email:      [__________]   OR  [Login with Google/Facebook]    │
+│  phone:      [__________]        (OAuth pre-fills if available)  │
+│  password:   [__________]   (Form-based only)                    │
+│                                                                  │
+│              [Register]                                          │
 └──────────────────────────────────────────────────────────────────┘
                               ↓
-                    FORM-BASED SIGNUP
-                    ─────────────────
-          User fills form: Name, Email, Password
-                 (optional: Phone, Notes)
+    ┌──────────────────────────────────────────────────────┐
+    │ User created in database:                            │
+    │ • is_active = FALSE (pending admin approval)         │
+    │ • geographic_unit_id = NULL (admin assigns)          │
+    │ • role = NULL (admin assigns)                        │
+    │ • requested_at = NOW                                 │
+    │ • registry_check_result = NULL (until admin reviews) │
+    └──────────────────────────────────────────────────────┘
                               ↓
-          ┌────────────────────┴────────────────────┐
-          │ OPTION 1: Email + Password              │ OPTION 2: OAuth
-          │ • Argon2 hash password                  │ • Google/Facebook
-          │ • Store in DB                           │ • OAuth provider 
-          │                                          │   verifies email
-          └────────────────────┬────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│            ADMIN APPROVAL WORKFLOW (Manual Only)                 │
+└──────────────────────────────────────────────────────────────────┘
                               ↓
-    ┌──────────────────────────────────────────────────┐
-    │    User Created with is_active = FALSE           │
-    │    role = NULL (pending approval)                │
-    └──────────────────────────────────────────────────┘
+        [Admin accesses "Pending Approvals" dashboard]
                               ↓
-    ┌──────────────────────────────────────────────────┐
-    │         ADMIN APPROVAL WORKFLOW                  │
-    │  (Manual verification - no email confirmation)   │
-    └──────────────────────────────────────────────────┘
+        System auto-runs verification checks:
+        ┌─────────────────────────────────────────────┐
+        │ 1. Query community registry                  │
+        │ 2. Check: email match? YES/NO               │
+        │ 3. Check: phone match? YES/NO               │
+        │ 4. Check: name match? YES/NO                │
+        │ 5. Store result in registry_check_result    │
+        └─────────────────────────────────────────────┘
                               ↓
-    [Admin sees "New Join Requests" in admin panel]
+        [Admin sees verification checks as reference]
+        [Admin makes decision - ALWAYS MANUAL]
                               ↓
-    Admin verification process:
-    ┌─────────────────────────────────────────────────┐
-    │ 1. Check: Is email in known community members?   │
-    │ 2. Verify: Phone call or email with person       │
-    │ 3. Review: Community records for role match      │
-    │ 4. Assign: Correct role (e.g., Delegate_L1)      │
-    │ 5. Activate: is_active = TRUE                    │
-    └─────────────────────────────────────────────────┘
+        Admin can:
+        ┌─────────────────────────────────────────────┐
+        │ Option 1: APPROVE                           │
+        │ • Call user to verify identity (optional)   │
+        │ • Assign Geographic Unit (dropdown)         │
+        │ • Assign Role (dropdown)                    │
+        │ • Add notes                                 │
+        │ • [Approve Button]                          │
+        │                                             │
+        │ Option 2: REJECT                            │
+        │ • Provide reason                            │
+        │ • [Reject Button]                           │
+        └─────────────────────────────────────────────┘
                               ↓
-    ┌──────────────────────────────────────────────────┐
-    │       User now can LOGIN to application          │
-    │  • OAuth: Automatic redirect to panel            │
-    │  • Email: Enter email + password                 │
-    └──────────────────────────────────────────────────┘
+        If APPROVED:
+        ┌─────────────────────────────────────────────┐
+        │ • Set is_active = TRUE                       │
+        │ • Set geographic_unit_id = {selected}        │
+        │ • Create RoleAssignment                      │
+        │ • Set approved_by = {admin ID}               │
+        │ • Set approved_at = NOW                      │
+        │ • Send notification to user                  │
+        └─────────────────────────────────────────────┘
+                              ↓
+        If REJECTED:
+        ┌─────────────────────────────────────────────┐
+        │ • Keep is_active = FALSE                     │
+        │ • Mark as rejected with reason               │
+        │ • User cannot login                          │
+        └─────────────────────────────────────────────┘
+                              ↓
+    ┌──────────────────────────────────────────────────────┐
+    │ User can now LOGIN to application (if approved)      │
+    │ • Form-based: email + password                       │
+    │ • OAuth: Google/Facebook (matches registered email)  │
+    │ • Redirected to panel (if is_active=TRUE)            │
+    │ • Denied access (if is_active=FALSE)                 │
+    └──────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Database Requirements (from Archived Analysis)
+## Member Table Schema
 
-The existing DB design (`_archived_docs/architecture/database-schema.md`) already includes:
-
-### ✅ Already Included
+### Complete Fields (from archived design + auth additions)
 
 ```sql
--- Members table (simplified for auth focus)
 CREATE TABLE members (
-    id UUID PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    
+    -- Core identity
     first_name VARCHAR(255) NOT NULL,
     last_name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,  -- Argon2 for form-based
+    phone VARCHAR(20) NOT NULL,
     
-    -- CRITICAL for closed system
-    is_active BOOLEAN DEFAULT FALSE,      -- ← Admin approval gate
+    -- Authentication methods (flexible - support multiple)
+    password_hash VARCHAR(255),                -- NULL if OAuth-only
+    oauth_provider VARCHAR(50),                -- 'google', 'facebook', NULL if form-based
+    oauth_id VARCHAR(255),                     -- External provider ID from OAuth service
+    CONSTRAINT unique_oauth UNIQUE(oauth_provider, oauth_id),
     
-    geographic_unit_id UUID NOT NULL,     -- ← Member's location
-    created_at TIMESTAMP,
-    updated_at TIMESTAMP
+    -- Status
+    is_active BOOLEAN DEFAULT FALSE,           -- Admin approval gate (blocks login if FALSE)
+    
+    -- Geographic & Role (admin assigns)
+    geographic_unit_id UUID REFERENCES geographic_units(id),
+    
+    -- Admin approval tracking
+    requested_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),  -- When user registered
+    approved_by UUID REFERENCES members(id),                        -- Which admin approved them
+    approved_at TIMESTAMP WITH TIME ZONE,                           -- When admin approved
+    registry_check_result JSONB,                                    -- Verification checks:
+                                                                    -- {
+                                                                    --   emailMatch: boolean,
+                                                                    --   phoneMatch: boolean,
+                                                                    --   nameMatch: boolean,
+                                                                    --   recommendation: string,
+                                                                    --   checked_at: timestamp
+                                                                    -- }
+    
+    -- Profile (from OAuth or user-provided)
+    profile_picture TEXT,                      -- URL or data
+    
+    -- Audit
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Role assignments (hierarchical access control)
-CREATE TABLE role_assignments (
-    id UUID PRIMARY KEY,
-    member_id UUID REFERENCES members(id),
-    role_id UUID REFERENCES roles(id),
-    scope_id UUID REFERENCES geographic_units(id),  -- ← Where role applies
-    assigned_at TIMESTAMP
-);
-
--- Roles available
-CREATE TABLE roles (
-    id UUID PRIMARY KEY,
-    name VARCHAR(100) UNIQUE,             -- 'Companionship Delegate', 'Supervisor', 'Admin'
-    level VARCHAR(20)                     -- 'sector', 'province', 'zone', etc.
-);
+-- Indexes for common queries
+CREATE INDEX idx_members_email ON members(email);
+CREATE INDEX idx_members_is_active ON members(is_active);
+CREATE INDEX idx_members_oauth ON members(oauth_provider, oauth_id);
+CREATE INDEX idx_members_requested_at ON members(requested_at);
+CREATE INDEX idx_members_approved_by ON members(approved_by);
 ```
 
-### ⚠️ Needs for Auth (Add to `docs/architecture/` - NOT modify `_archived_docs`)
+### registry_check_result JSON Structure
 
-```sql
--- OAuth Identity Tracking (new, specific to auth)
-CREATE TABLE oauth_identities (
-    id UUID PRIMARY KEY,
-    member_id UUID NOT NULL REFERENCES members(id) ON DELETE CASCADE,
-    provider VARCHAR(50) NOT NULL,        -- 'google', 'facebook'
-    provider_id VARCHAR(255) NOT NULL,    -- External ID from provider
-    email_verified BOOLEAN DEFAULT FALSE, -- From provider
-    created_at TIMESTAMP,
-    
-    CONSTRAINT unique_oauth_identity UNIQUE(provider, provider_id)
-);
-
--- Admin Approval Audit Trail (new, for tracking approvals)
-CREATE TABLE approval_audit (
-    id UUID PRIMARY KEY,
-    member_id UUID NOT NULL REFERENCES members(id),
-    admin_id UUID REFERENCES members(id), -- Who approved
-    status_change VARCHAR(50),            -- 'pending' → 'approved' OR 'rejected'
-    reason TEXT,                          -- Admin notes
-    approved_at TIMESTAMP,
-    created_at TIMESTAMP
-);
-
--- Login/Auth Events (new, for security logging)
-CREATE TABLE auth_events (
-    id UUID PRIMARY KEY,
-    member_id UUID NOT NULL REFERENCES members(id),
-    event_type VARCHAR(50),               -- 'login', 'logout', 'failed_login', 'password_changed'
-    provider VARCHAR(50),                 -- 'form', 'google', 'facebook'
-    ip_address INET,
-    user_agent TEXT,
-    success BOOLEAN,
-    reason TEXT,                          -- 'inactive_account', 'wrong_password', etc.
-    created_at TIMESTAMP
-);
+```json
+{
+  "emailMatch": true,
+  "phoneMatch": false,
+  "nameMatch": true,
+  "registryEntry": {
+    "firstName": "John",
+    "lastName": "Kowalski",
+    "email": "john@parish.pl",
+    "phone": "+48111222333",
+    "role": "Companionship Delegate",
+    "geographicUnit": "Kraków Province"
+  },
+  "mismatches": {
+    "phone": "Registry has +48111222333, user registered +48123456789"
+  },
+  "recommendation": "Phone mismatch - recommend calling to verify identity",
+  "checked_at": "2026-09-09T15:42:00Z"
+}
 ```
 
 ---
 
-## Implementation Plan
+## OAuth Configuration
 
-### COMMIT 1.2: Mocked UI (Already Done ✓)
+### Google OAuth
 
-Basic navigation + mocked panel with placeholder data.
+```typescript
+// Requests email + phone scope
+Google({
+  clientId: process.env.GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  profile(profile) {
+    return {
+      id: profile.sub,
+      name: profile.name,
+      email: profile.email,
+      phone: profile.phone_number || null,  // May be null
+      image: profile.picture,
+    };
+  },
+})
+```
+
+### Facebook OAuth
+
+```typescript
+// Requests email + phone scope
+Facebook({
+  clientId: process.env.FACEBOOK_APP_ID,
+  clientSecret: process.env.FACEBOOK_APP_SECRET,
+  profile(profile) {
+    return {
+      id: profile.id,
+      name: profile.name,
+      email: profile.email,
+      phone: profile.phone || null,  // May be null
+      image: profile.picture,
+    };
+  },
+})
+```
+
+**Important:** Phone from OAuth may be:
+- NULL (user didn't provide or didn't grant permission)
+- Pre-filled in registration form (user can edit)
+- Still requires admin verification
+
+---
+
+## Implementation Phases
 
 ### COMMIT 2: Database Schema
 
-**Add auth-specific tables:**
+Add auth-specific tables and fields:
 
 ```sql
--- oauth_identities table (for OAuth provider tracking)
--- approval_audit table (for admin approval tracking)
--- auth_events table (for security logging)
-```
+-- Update members table with:
+-- • password_hash (for form-based)
+-- • oauth_provider, oauth_id (for OAuth)
+-- • is_active (admin approval gate)
+-- • geographic_unit_id (admin assigns)
+-- • requested_at, approved_by, approved_at (tracking)
+-- • registry_check_result (verification checks)
+-- • profile_picture (from OAuth or user)
 
-**Also create:**
-- Indexes for common queries
-- Functions to update is_active status
-- Triggers for audit trail
+-- Create supporting tables:
+-- • role_assignments (member → role → scope)
+-- • approval_audit (log all approval decisions)
+-- • auth_events (login/logout/failed attempts)
+```
 
 ### COMMIT 3: Auth.js Setup
 
-Initialize Auth.js with:
-- NextAuth v5 configuration
-- Adapter (Postgres)
-- Google OAuth provider
-- Facebook OAuth provider
-- Credentials provider (form-based email + password)
-
-**Output:**
-- `lib/auth.ts` - Auth configuration
-- `app/api/auth/[...nextauth]/route.ts` - Auth API route
-
-### COMMIT 4: Domain Layer - AuthService
-
-Create business logic layer:
+Initialize Next-Auth v5 with providers:
 
 ```typescript
-// src/domain/auth/AuthService.ts
-export class AuthService {
+// lib/auth.ts
+import NextAuth from "next-auth";
+import Google from "next-auth/providers/google";
+import Facebook from "next-auth/providers/facebook";
+import Credentials from "next-auth/providers/credentials";
+
+export const { auth, handlers, signIn, signOut } = NextAuth({
+  adapter: PrismaAdapter(db),
   
-  // Form-based registration
-  async registerWithEmail(
-    email: string,
-    password: string,
-    firstName: string,
-    lastName: string,
-    geographicUnitId: UUID
-  ): Promise<{ member: Member; requiresApproval: true }>;
+  providers: [
+    Google({ /* config */ }),
+    Facebook({ /* config */ }),
+    Credentials({
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        // Verify form-based login
+      },
+    }),
+  ],
   
-  // Form-based login
-  async loginWithEmail(
-    email: string,
-    password: string
-  ): Promise<{ success: boolean; member?: Member; reason?: string }>;
-  
-  // OAuth registration/login (unified)
-  async authenticateWithOAuth(
-    provider: 'google' | 'facebook',
-    oauthData: OAuthProfile
-  ): Promise<{ member: Member; isNewUser: boolean; isActive: boolean }>;
-  
-  // 2FA setup
-  async setupTOTP(memberId: UUID): Promise<{ secret: string; qrCode: string }>;
-  
-  // 2FA verification
-  async verifyTOTP(memberId: UUID, token: string): Promise<boolean>;
-  
-  // Logout
-  async logout(memberId: UUID): Promise<void>;
-}
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.is_active = user.is_active;
+        token.role = user.role;
+      }
+      return token;
+    },
+    
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id;
+        session.user.is_active = token.is_active;
+        session.user.role = token.role;
+      }
+      return session;
+    },
+  },
+});
 ```
 
-### COMMIT 5: Auth Port & Adapter
+### COMMIT 4: Registration (Form + OAuth)
 
-Create abstraction layer:
+Implement registration endpoints:
 
 ```typescript
-// src/domain/auth/IAuthProvider.ts (PORT)
-export interface IAuthProvider {
-  hashPassword(password: string): Promise<string>;
-  verifyPassword(password: string, hash: string): Promise<boolean>;
-  generateTOTPSecret(): { secret: string; qrCode: string };
-  verifyTOTPToken(secret: string, token: string): boolean;
+// src/app/api/auth/register/route.ts
+POST /api/auth/register
+
+Request:
+{
+  firstName: string,
+  lastName: string,
+  email: string,
+  phone: string,
+  password?: string,  // Form-based only
+  authMethod: 'form' | 'google' | 'facebook'
 }
 
-// src/infrastructure/auth/NextAuthAdapter.ts (ADAPTER)
-export class NextAuthAdapter implements IAuthProvider {
-  // Implementation using bcrypt/Argon2, speakeasy for TOTP
+Response:
+{
+  memberId: UUID,
+  is_active: false,
+  requiresAdminReview: true,
+  message: "Registration successful. Awaiting admin approval."
 }
+
+Actions:
+1. Create member with is_active=FALSE
+2. Hash password (if form-based)
+3. Store OAuth data (if OAuth)
+4. Log requested_at timestamp
+5. Queue verification checks for admin
 ```
 
-### COMMIT 6: Admin Dashboard - New Joins List
+### COMMIT 5: Verification Checks Service
 
-Create admin panel to see pending users:
-
-```typescript
-// src/app/admin/pending-users/page.tsx
-// Shows list of is_active=FALSE users
-// Buttons: [View] [Approve & Assign Role] [Reject]
-```
-
-**Features:**
-- List pending users with timestamp
-- Search/filter by name or email
-- Approve with role assignment
-- Reject with reason
-
-### COMMIT 7: Admin Dashboard - Activate User
-
-Implement approval logic:
+Run checks for admin review:
 
 ```typescript
-// src/app/api/admin/users/[id]/activate/route.ts
-POST /api/admin/users/{memberId}/activate
-  Body: {
-    role: 'Companionship Delegate' | 'Supervisor' | 'Admin',
-    scope: UUID (geographic unit),
-    approvedBy: UUID (admin ID),
-    notes: string
+// src/domain/auth/VerificationService.ts
+export class VerificationService {
+  
+  async runRegistryChecks(member: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+  }): Promise<RegistryCheckResult> {
+    
+    // 1. Query community registry
+    const registryEntry = await this.communityRegistry.findByNameAndEmail({
+      firstName: member.firstName,
+      lastName: member.lastName,
+      email: member.email,
+    });
+    
+    if (!registryEntry) {
+      return {
+        emailMatch: false,
+        phoneMatch: false,
+        nameMatch: false,
+        recommendation: "Not found in registry - manual verification required",
+        checked_at: new Date(),
+      };
+    }
+    
+    // 2. Compare fields
+    const emailMatch = member.email === registryEntry.email;
+    const phoneMatch = member.phone === registryEntry.phone;
+    const nameMatch = true; // Already matched in query
+    
+    // 3. Generate recommendation
+    let recommendation = "Matched registry entry";
+    if (!phoneMatch) {
+      recommendation = "Email and name match but phone differs - recommend calling to verify";
+    }
+    
+    return {
+      emailMatch,
+      phoneMatch,
+      nameMatch,
+      registryEntry,
+      mismatches: phoneMatch ? undefined : {
+        phone: `Registry: ${registryEntry.phone}, User: ${member.phone}`,
+      },
+      recommendation,
+      checked_at: new Date(),
+    };
   }
-  
-  Result:
-  - Set is_active = TRUE
-  - Create RoleAssignment
-  - Log to approval_audit
+}
 ```
 
-### COMMIT 8: Protected Routes
+### COMMIT 6: Admin Dashboard - Pending Approvals
 
-Add auth middleware:
+Create admin UI:
+
+```typescript
+// src/app/admin/pending-approvals/page.tsx
+GET /admin/pending-approvals
+
+Display:
+┌─────────────────────────────────────────────────────────┐
+│ Pending Approvals (is_active = FALSE)                   │
+├─────────────────────────────────────────────────────────┤
+│ Name            │ Email           │ Phone    │ Requested │
+├─────────────────────────────────────────────────────────┤
+│ John Kowalski   │ john@parish.pl  │ +48 123  │ 1h ago   │
+│ Maria Nowak     │ maria@church.pl │ +48 456  │ 4h ago   │
+└─────────────────────────────────────────────────────────┘
+
+Click user → Shows verification checks + approval form
+```
+
+### COMMIT 7: Admin Approval Logic
+
+Implement approve/reject:
+
+```typescript
+// src/app/api/admin/users/[id]/approve/route.ts
+POST /api/admin/users/{memberId}/approve
+
+Request:
+{
+  approved: boolean,
+  geographicUnitId?: UUID,
+  roleId?: UUID,
+  notes?: string
+}
+
+If approved:
+1. Set is_active = TRUE
+2. Set geographic_unit_id
+3. Create RoleAssignment
+4. Set approved_by = current admin ID
+5. Set approved_at = NOW
+6. Log to approval_audit
+7. Send notification to user
+
+If rejected:
+1. Keep is_active = FALSE
+2. Log rejection reason
+3. Send notification to user
+```
+
+### COMMIT 8: Login Middleware
+
+Protect routes with auth checks:
 
 ```typescript
 // src/middleware.ts
-Verify:
-  1. User authenticated (session/JWT valid)
-  2. User is_active = TRUE (approved by admin)
-  3. User has required role for route
+export function middleware(request: NextRequest) {
+  const session = auth();
   
-Deny: 401 or 403
+  // Check 1: User authenticated?
+  if (!session?.user) {
+    return NextResponse.redirect(new URL('/auth/login', request.url));
+  }
+  
+  // Check 2: User approved?
+  if (!session.user.is_active) {
+    return NextResponse.redirect(new URL('/auth/pending', request.url));
+  }
+  
+  // Check 3: User has required role?
+  if (request.nextUrl.pathname.startsWith('/admin') && session.user.role !== 'Admin') {
+    return NextResponse.redirect(new URL('/forbidden', request.url));
+  }
+}
+
+export const config = {
+  matcher: ['/app/:path*', '/admin/:path*'],
+};
 ```
 
-### COMMIT 9: Login/Logout UI
+### COMMIT 9: Login/Logout Pages
 
-Update from mocked to real auth:
+Update UI:
 
 ```typescript
-// src/app/app/companionship-panel/page.tsx
+// src/app/auth/login/page.tsx - Login form with OAuth buttons
+
+// src/app/auth/pending/page.tsx - "Awaiting approval" message
+
+// src/app/auth/logout/route.ts - Logout handler
+
+// Update companionship panel to use real session
+export default function CompanionshipPanelPage() {
+  const session = useSession();
   
-Before: Static mocked user
-After:  
-  - Get real user from session
-  - Show real name + email
-  - Logout button actually logs out
-  - Redirect to login if not authenticated
+  if (!session?.user?.is_active) {
+    redirect('/auth/login');
+  }
+  
+  return (
+    <Navbar
+      rightContent={
+        <LogoutButton
+          userName={session.user.name}
+          userEmail={session.user.email}
+          href="/auth/logout"
+        />
+      }
+    />
+  );
+}
 ```
 
-### COMMIT 10: Integration Testing
+### COMMIT 10: Security Logging
+
+Add auth event tracking:
 
 ```typescript
-// tests/auth.integration.spec.ts
-Test flows:
-  1. User registers with email + password
-  2. User is not active (is_active=FALSE)
-  3. Admin sees user in pending list
-  4. Admin approves + assigns role
-  5. User can now login
-  6. User cannot access restricted routes without proper role
+// src/infrastructure/auth/AuthEventLogger.ts
+export class AuthEventLogger {
+  
+  async logLogin(memberId: UUID, provider: string, ipAddress: string): Promise<void> {
+    await db.auth_events.create({
+      member_id: memberId,
+      event_type: 'login',
+      provider,
+      ip_address: ipAddress,
+      success: true,
+      created_at: new Date(),
+    });
+  }
+  
+  async logFailedLogin(email: string, reason: string): Promise<void> {
+    await db.auth_events.create({
+      event_type: 'failed_login',
+      email,
+      reason,
+      success: false,
+      created_at: new Date(),
+    });
+  }
+}
 ```
 
 ---
@@ -316,40 +540,77 @@ Test flows:
 
 ```
 Frontend:
-  - Next.js 14+
+  - Next.js 14+ (App Router)
   - React Components
   - TailwindCSS (existing)
-  - motion/react for animations
+  - motion/react (existing)
 
 Backend Auth:
   - Auth.js v5 (NextAuth successor)
   - Argon2 password hashing
-  - speakeasy for TOTP/2FA
-  - jsonwebtoken for JWT
+  - Prisma ORM (type-safe DB)
+  - jsonwebtoken (JWT tokens)
 
 Database:
-  - PostgreSQL (via Vercel Postgres or local Docker)
-  - Prisma ORM (for type-safe queries)
+  - PostgreSQL (Vercel Postgres or local Docker)
+  - Custom auth-specific tables
+  - Indexes for performance
 
-External (Post-POC):
-  - Google OAuth
-  - Facebook OAuth
-  - (Email service - deferred until Phase 2)
+Form Validation:
+  - Zod for schemas
 ```
 
 ---
 
-## Key Differences from Open Services
+## Key Design Decisions
 
-| Aspect | Open Service | emmaCompanionship |
-|--------|---|---|
-| **Registration** | Self-service | Form + Admin approval |
-| **Email verification** | Automatic (email sent) | Manual (phone/email check) |
-| **Activation** | Immediate | Requires admin action |
-| **Roles** | Default or self-selected | Admin assigns from roles table |
-| **Access control** | Role checked in UI | Role checked at backend + middleware |
-| **Admin panel** | Not needed | Required for approvals |
-| **User flow** | Register → Verify email → Login | Register → Admin review → Login |
+### ✅ NO Auto-Approval
+- **Why:** Security-first for small community
+- **Alternative:** Could add later if volume grows
+- **Benefit:** Admin always makes informed decision
+
+### ✅ Verification Checks as Admin Reference
+- **Why:** Admin needs decision-supporting info, but makes final call
+- **Checks:** Email match, phone match, name match
+- **Stored:** JSON in registry_check_result for audit trail
+
+### ✅ No Geographic Unit or Role in Registration
+- **Why:** User doesn't know community hierarchy
+- **Who assigns:** Admin selects from dropdown after approval
+- **Benefit:** Reduces user confusion, gives admin full control
+
+### ✅ Support Multiple Auth Methods
+- **Form-based:** Email + password (Argon2)
+- **OAuth:** Google + Facebook
+- **Unified:** Both paths go through same approval gate
+
+### ✅ Phone is Mandatory
+- **Why:** Best tool for identity verification
+- **Source:** OAuth (pre-fill) or user-entered
+- **Community use:** Already in their registry
+
+---
+
+## Database Relationships
+
+```
+Member (is_active = FALSE initially)
+├─ requested_at (when registered)
+├─ registry_check_result (verification checks)
+│
+├─ (Admin reviews and decides)
+│
+└─ If APPROVED:
+   ├─ Set is_active = TRUE
+   ├─ Set geographic_unit_id
+   ├─ Set approved_by (admin ID)
+   ├─ Set approved_at
+   │
+   └─ RoleAssignment created:
+      ├─ member_id → Member
+      ├─ role_id → Role
+      └─ scope_id → GeographicUnit
+```
 
 ---
 
@@ -358,77 +619,36 @@ External (Post-POC):
 ### Authentication (Who are you?)
 
 ✅ **Form-based:**
-- Argon2 password hashing (industry standard)
+- Argon2 password hashing (OWASP standard)
 - No passwords in logs
-- Password never sent over non-HTTPS
+- HTTPS only
 
 ✅ **OAuth:**
-- Email verified by provider (no phishing)
-- No passwords stored
-- Tokens refreshed automatically
+- Provider verifies identity
+- Email verified by Google/Facebook
+- Tokens managed by Auth.js
 
 ### Authorization (What can you do?)
 
-✅ **Role-Based Access Control:**
-- Member must have role for feature
-- Role scope checked (e.g., Province Delegate can only see their province)
-- Middleware validates before API call
+✅ **Admin Approval Gate:**
+- is_active check blocks all unapproved users
+- Cannot bypass with technical knowledge
 
-✅ **Admin Approval:**
-- is_active gate prevents unauthorized access
-- All approvals logged in approval_audit
-- Phone verification prevents account takeover
+✅ **Role-Based Access:**
+- Middleware checks user.role
+- Backend validates role for each endpoint
 
-✅ **2FA Optional:**
-- TOTP compatible with Google Authenticator
-- Backup codes for account recovery
-- Post-POC feature (not in COMMIT 2-10)
-
----
-
-## Database Relationships for Auth
-
-```
-Member
-├─ is_active (admin approval gate)
-├─ password_hash (Argon2)
-├─ geographicUnitId (where they belong)
-│
-├─ RoleAssignments (many)
-│  ├─ Role (Delegate, Supervisor, Admin)
-│  └─ GeographicUnit (scope - where role applies)
-│
-├─ OAuthIdentities (0 or more)
-│  ├─ provider (google, facebook)
-│  └─ provider_id (external ID)
-│
-└─ AuthEvents (many - for security logging)
-   ├─ event_type (login, logout, failed_login)
-   └─ ip_address, user_agent
-```
-
----
-
-## Implementation Order
-
-**Why this order:**
-
-1. **Schema first** - Everything depends on database
-2. **Auth.js setup** - Third-party integration
-3. **Domain layer** - Business logic (clean, testable)
-4. **Port/Adapter** - Abstraction (enables flexibility)
-5. **Admin panel** - Cannot proceed without approving users
-6. **Protected routes** - Enforce authorization
-7. **UI integration** - Use real auth instead of mocks
-8. **Tests** - Verify all flows work
+✅ **Audit Trail:**
+- All approvals logged (who, when, decision)
+- All logins logged (user, provider, timestamp)
+- Phone used for manual verification
 
 ---
 
 ## Next Steps
 
-1. Create auth schema migration in `docs/architecture/database-auth.md`
-2. Review DB additions needed (oauth_identities, approval_audit, auth_events)
-3. Decide: Start with COMMIT 2 (DB schema)?
-4. Confirm: Should both form-based AND OAuth be in COMMIT 3, or separate?
-
-Does this align with your vision for the closed system? Should we start with database schema?
+1. Review and approve this plan
+2. Create database schema migration
+3. Begin COMMIT 2 (database)
+4. Does the manual-only approval approach work for your team?
+5. Any questions about verification checks JSON structure?
