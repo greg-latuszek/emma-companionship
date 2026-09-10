@@ -4,12 +4,19 @@
  */
 
 import { queryOne, queryMany } from './db';
-import { Role, RoleAssignment } from '@/types/auth';
+import {
+  Role,
+  RoleAssignment,
+  RoleId,
+  MemberId,
+  RoleAssignmentId,
+  GeographicUnitId,
+} from '@/types/auth';
 
 /**
  * Find a role by ID
  */
-export async function findRoleById(id: string): Promise<Role | null> {
+export async function findRoleById(id: RoleId): Promise<Role | null> {
   return queryOne<Role>(
     `SELECT * FROM roles WHERE id = $1`,
     [id]
@@ -74,10 +81,10 @@ export async function getRoleMatrix(): Promise<
  * Create a role assignment
  */
 export async function assignRole(data: {
-  member_id: string;
-  role_id: string;
-  scope_id?: string | null;
-  assigned_by: string; // admin member ID
+  member_id: MemberId;
+  role_id: RoleId;
+  scope_id?: GeographicUnitId | null;
+  assigned_by: MemberId; // admin member ID
 }): Promise<RoleAssignment> {
   const result = await queryOne<RoleAssignment>(
     `INSERT INTO role_assignments (member_id, role_id, scope_id, assigned_by, assigned_at)
@@ -97,7 +104,7 @@ export async function assignRole(data: {
  * Get all active role assignments for a member
  */
 export async function getMemberRoleAssignments(
-  memberId: string
+  memberId: MemberId
 ): Promise<RoleAssignment[]> {
   return queryMany<RoleAssignment>(
     `SELECT * FROM role_assignments 
@@ -110,7 +117,7 @@ export async function getMemberRoleAssignments(
 /**
  * Get all active role assignments for a role
  */
-export async function getRoleAssignments(roleId: string): Promise<RoleAssignment[]> {
+export async function getRoleAssignments(roleId: RoleId): Promise<RoleAssignment[]> {
   return queryMany<RoleAssignment>(
     `SELECT * FROM role_assignments 
      WHERE role_id = $1 AND revoked_at IS NULL
@@ -122,21 +129,21 @@ export async function getRoleAssignments(roleId: string): Promise<RoleAssignment
 /**
  * Get all active members with a specific role
  */
-export async function getMembersWithRole(roleId: string): Promise<string[]> {
+export async function getMembersWithRole(roleId: RoleId): Promise<MemberId[]> {
   const results = await queryMany<{ member_id: string }>(
     `SELECT DISTINCT member_id FROM role_assignments 
      WHERE role_id = $1 AND revoked_at IS NULL`,
     [roleId]
   );
-  return results.map((r) => r.member_id);
+  return results.map((r) => MemberId(r.member_id));
 }
 
 /**
  * Revoke a role assignment (soft delete via revoked_at)
  */
 export async function revokeRoleAssignment(
-  assignmentId: string,
-  adminId: string
+  assignmentId: RoleAssignmentId,
+  adminId: MemberId
 ): Promise<RoleAssignment> {
   const result = await queryOne<RoleAssignment>(
     `UPDATE role_assignments 
@@ -157,8 +164,8 @@ export async function revokeRoleAssignment(
  * Revoke all roles for a member (except those already revoked)
  */
 export async function revokeMemberRoles(
-  memberId: string,
-  adminId: string
+  memberId: MemberId,
+  adminId: MemberId
 ): Promise<RoleAssignment[]> {
   return queryMany<RoleAssignment>(
     `UPDATE role_assignments 
@@ -174,8 +181,8 @@ export async function revokeMemberRoles(
  * Note: This should rarely happen - better to revoke and reassign
  */
 export async function updateRoleAssignmentScope(
-  assignmentId: string,
-  newScopeId: string | null
+  assignmentId: RoleAssignmentId,
+  newScopeId: GeographicUnitId | null
 ): Promise<RoleAssignment> {
   const result = await queryOne<RoleAssignment>(
     `UPDATE role_assignments 
@@ -196,7 +203,7 @@ export async function updateRoleAssignmentScope(
  * Get assignment history for audit trail
  */
 export async function getRoleAssignmentHistory(
-  memberId: string
+  memberId: MemberId
 ): Promise<(RoleAssignment & { role_name: string; role_level: string })[]> {
   return queryMany(
     `SELECT ra.*, r.name as role_name, r.level as role_level
@@ -212,9 +219,9 @@ export async function getRoleAssignmentHistory(
  * Check if a role assignment exists (for duplicate prevention)
  */
 export async function roleAssignmentExists(
-  memberId: string,
-  roleId: string,
-  scopeId?: string | null
+  memberId: MemberId,
+  roleId: RoleId,
+  scopeId?: GeographicUnitId | null
 ): Promise<boolean> {
   let query = `
     SELECT EXISTS(
@@ -222,6 +229,7 @@ export async function roleAssignmentExists(
       WHERE member_id = $1 AND role_id = $2 AND revoked_at IS NULL
   `;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const values: any[] = [memberId, roleId];
 
   if (scopeId) {

@@ -69,6 +69,7 @@ export async function closePool(): Promise<void> {
  */
 export async function query<T extends QueryResultRow = any>(
   text: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   values?: any[]
 ): Promise<QueryResult<T>> {
   const pool = getPool();
@@ -80,6 +81,7 @@ export async function query<T extends QueryResultRow = any>(
  */
 export async function queryOne<T extends QueryResultRow = any>(
   text: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   values?: any[]
 ): Promise<T | null> {
   const result = await query<T>(text, values);
@@ -91,6 +93,7 @@ export async function queryOne<T extends QueryResultRow = any>(
  */
 export async function queryMany<T extends QueryResultRow = any>(
   text: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   values?: any[]
 ): Promise<T[]> {
   const result = await query<T>(text, values);

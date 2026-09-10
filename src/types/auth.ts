@@ -1,10 +1,44 @@
 /**
  * Authentication & Authorization Types
  * Interfaces for database models used in the closed-admin-approval auth system
+ *
+ * Entity-specific branded ID types ensure type safety without coupling to UUID format.
+ * Works with any ID backend: PostgreSQL (uuid), MongoDB (ObjectId), DynamoDB (string), nanoid, etc.
  */
 
+// ===== Entity-Specific Branded ID Types =====
+// Prevents mixing IDs from different entities at compile time
+
+/** Member entity ID (branded type) */
+export type MemberId = string & { readonly __brand: 'MemberId' };
+export const MemberId = (id: string): MemberId => id as MemberId;
+
+/** Role entity ID (branded type) */
+export type RoleId = string & { readonly __brand: 'RoleId' };
+export const RoleId = (id: string): RoleId => id as RoleId;
+
+/** RoleAssignment entity ID (branded type) */
+export type RoleAssignmentId = string & { readonly __brand: 'RoleAssignmentId' };
+export const RoleAssignmentId = (id: string): RoleAssignmentId =>
+  id as RoleAssignmentId;
+
+/** GeographicUnit entity ID (branded type) */
+export type GeographicUnitId = string & { readonly __brand: 'GeographicUnitId' };
+export const GeographicUnitId = (id: string): GeographicUnitId =>
+  id as GeographicUnitId;
+
+/** Couple entity ID (branded type) */
+export type CoupleId = string & { readonly __brand: 'CoupleId' };
+export const CoupleId = (id: string): CoupleId => id as CoupleId;
+
+/** Blacklist entry ID (branded type) */
+export type BlacklistId = string & { readonly __brand: 'BlacklistId' };
+export const BlacklistId = (id: string): BlacklistId => id as BlacklistId;
+
+// ===== Database Models =====
+
 export interface Member {
-  id: string;
+  id: MemberId;
   first_name: string;
   last_name: string;
   gender: string | null;
@@ -19,9 +53,9 @@ export interface Member {
   oauth_provider: string | null;
   oauth_id: string | null;
   profile_picture: string | null;
-  geographic_unit_id: string | null;
+  geographic_unit_id: GeographicUnitId | null;
   requested_at: Date;
-  approved_by: string | null;
+  approved_by: MemberId | null;
   approved_at: Date | null;
   registry_check_result: RegistryCheckResult | null; // JSON object
   created_at: Date;
@@ -29,33 +63,33 @@ export interface Member {
 }
 
 export interface Role {
-  id: string;
+  id: RoleId;
   name: string;
-  level: 'sector' | 'province' | 'country' | 'zone' | 'international';
+  level: 'country' | 'province' | 'sector' | 'zone' | 'international';
   description: string | null;
   created_at: Date;
 }
 
 export interface RoleAssignment {
-  id: string;
-  member_id: string;
-  role_id: string;
-  scope_id: string | null; // Geographic unit ID (nullable, assigned later)
-  assigned_by: string;
+  id: RoleAssignmentId;
+  member_id: MemberId;
+  role_id: RoleId;
+  scope_id: GeographicUnitId | null; // Geographic unit ID (nullable, assigned later)
+  assigned_by: MemberId;
   assigned_at: Date;
-  revoked_by: string | null; // Admin who revoked this
+  revoked_by: MemberId | null; // Admin who revoked this
   revoked_at: Date | null; // When revoked (null = active)
 }
 
 export interface Blacklist {
-  id: string;
+  id: BlacklistId;
   email: string | null;
   oauth_provider: string | null;
   oauth_id: string | null;
   reason: string;
-  blacklisted_by: string;
+  blacklisted_by: MemberId;
   blacklisted_at: Date;
-  unblacklisted_by: string | null;
+  unblacklisted_by: MemberId | null;
   unblacklisted_at: Date | null;
 }
 
@@ -77,26 +111,25 @@ export interface RegistryCheckResult {
 }
 
 export interface GeographicUnit {
-  id: string;
+  id: GeographicUnitId;
   name: string;
-  type: 'sector' | 'province' | 'country' | 'zone' | 'international';
-  parent_id: string | null;
+  type: 'country' | 'province' | 'sector' | 'zone' | 'international';
+  parent_id: GeographicUnitId | null;
   created_at: Date;
 }
 
 export interface Couple {
-  id: string;
-  member_1_id: string;
-  member_2_id: string;
+  id: CoupleId;
+  member_1_id: MemberId;
+  member_2_id: MemberId;
   wedding_date: string | null; // ISO 8601 date
   created_at: Date;
 }
 
-/**
- * Session & JWT Claims
- */
+// ===== Session & JWT Claims =====
+
 export interface SessionUser {
-  id: string;
+  id: MemberId;
   email: string;
   firstName: string;
   lastName: string;
@@ -104,12 +137,12 @@ export interface SessionUser {
   roles: Array<{
     name: string;
     level: string;
-    scopeId: string | null;
+    scopeId: GeographicUnitId | null;
   }>;
 }
 
 export interface JWTClaims {
-  sub: string; // member ID
+  sub: MemberId; // member ID
   email: string;
   roles: Array<{
     name: string;

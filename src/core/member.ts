@@ -4,12 +4,17 @@
  */
 
 import { queryOne, queryMany } from './db';
-import { Member, Role } from '@/types/auth';
+import {
+  Member,
+  Role,
+  MemberId,
+  GeographicUnitId,
+} from '@/types/auth';
 
 /**
  * Find a member by ID
  */
-export async function findMemberById(id: string): Promise<Member | null> {
+export async function findMemberById(id: MemberId): Promise<Member | null> {
   return queryOne<Member>(
     `SELECT * FROM members WHERE id = $1`,
     [id]
@@ -118,10 +123,11 @@ export async function createMember(data: {
  * Update member profile
  */
 export async function updateMemberProfile(
-  memberId: string,
+  memberId: MemberId,
   data: Partial<Member>
 ): Promise<Member> {
   const updates: string[] = [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const values: any[] = [];
   let paramCount = 1;
 
@@ -178,8 +184,8 @@ export async function updateMemberProfile(
  * Approve a member registration (admin only)
  */
 export async function approveMember(
-  memberId: string,
-  adminId: string
+  memberId: MemberId,
+  adminId: MemberId
 ): Promise<Member> {
   const result = await queryOne<Member>(
     `UPDATE members 
@@ -199,7 +205,9 @@ export async function approveMember(
 /**
  * Get member roles
  */
-export async function getMemberRoles(memberId: string): Promise<Array<Role & { scope_id: string | null }>> {
+export async function getMemberRoles(
+  memberId: MemberId
+): Promise<Array<Role & { scope_id: GeographicUnitId | null }>> {
   return queryMany(
     `SELECT r.*, ra.scope_id FROM roles r
      INNER JOIN role_assignments ra ON r.id = ra.role_id
@@ -213,7 +221,7 @@ export async function getMemberRoles(memberId: string): Promise<Array<Role & { s
  * Check if member has a specific role
  */
 export async function memberHasRole(
-  memberId: string,
+  memberId: MemberId,
   roleName: string,
   roleLevel?: string
 ): Promise<boolean> {
@@ -226,6 +234,7 @@ export async function memberHasRole(
       AND ra.revoked_at IS NULL
   `;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const values: any[] = [memberId, roleName];
 
   if (roleLevel) {
@@ -243,8 +252,8 @@ export async function memberHasRole(
  * Get member by ID with roles loaded
  */
 export async function getMemberWithRoles(
-  memberId: string
-): Promise<(Member & { roles: Array<Role & { scope_id: string | null }> }) | null> {
+  memberId: MemberId
+): Promise<(Member & { roles: Array<Role & { scope_id: GeographicUnitId | null }> }) | null> {
   const member = await findMemberById(memberId);
   if (!member) return null;
 
@@ -259,7 +268,7 @@ export async function getMemberWithRoles(
 /**
  * Delete member (soft delete would be better - mark as inactive)
  */
-export async function deactivateMember(memberId: string): Promise<Member> {
+export async function deactivateMember(memberId: MemberId): Promise<Member> {
   const result = await queryOne<Member>(
     `UPDATE members 
      SET updated_at = NOW()

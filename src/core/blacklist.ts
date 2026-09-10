@@ -4,7 +4,7 @@
  */
 
 import { query, queryOne } from './db';
-import { Blacklist } from '@/types/auth';
+import { Blacklist, MemberId } from '@/types/auth';
 
 /**
  * Check if an email is blacklisted
@@ -70,7 +70,7 @@ export async function addToBlacklist(
     oauth_provider?: string | null;
     oauth_id?: string | null;
     reason: string;
-    blacklisted_by: string; // admin member ID
+    blacklisted_by: MemberId; // admin member ID
   }
 ): Promise<Blacklist> {
   const result = await queryOne<Blacklist>(
@@ -98,7 +98,7 @@ export async function addToBlacklist(
  */
 export async function removeFromBlacklist(
   blacklistId: string,
-  unblacklisted_by: string // admin member ID
+  unblacklisted_by: MemberId // admin member ID
 ): Promise<Blacklist> {
   const result = await queryOne<Blacklist>(
     `UPDATE blacklist 
@@ -130,6 +130,7 @@ export async function hasRecentRegistrationAttempt(
     [email, withinMinutes]
   );
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return result ? parseInt(result.count as any, 10) > 2 : false;
 }
 
