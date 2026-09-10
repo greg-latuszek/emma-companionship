@@ -135,6 +135,7 @@ export class PgMemberRepository implements IMemberRepository {
 
   /**
    * Update member profile
+   * Fields ordered per schema for consistency
    */
   async updateMemberProfile(
     memberId: MemberId,
@@ -145,7 +146,7 @@ export class PgMemberRepository implements IMemberRepository {
     const values: any[] = [];
     let paramCount = 1;
 
-    // Dynamically build SET clause for provided fields
+    // GROUP 1: CORE IDENTITY
     if (data.first_name !== undefined) {
       updates.push(`first_name = $${paramCount++}`);
       values.push(data.first_name);
@@ -153,18 +154,6 @@ export class PgMemberRepository implements IMemberRepository {
     if (data.last_name !== undefined) {
       updates.push(`last_name = $${paramCount++}`);
       values.push(data.last_name);
-    }
-    if (data.email !== undefined) {
-      updates.push(`email = $${paramCount++}`);
-      values.push(data.email);
-    }
-    if (data.phone !== undefined) {
-      updates.push(`phone = $${paramCount++}`);
-      values.push(data.phone);
-    }
-    if (data.profile_picture !== undefined) {
-      updates.push(`profile_picture = $${paramCount++}`);
-      values.push(data.profile_picture);
     }
     if (data.gender !== undefined) {
       updates.push(`gender = $${paramCount++}`);
@@ -174,9 +163,71 @@ export class PgMemberRepository implements IMemberRepository {
       updates.push(`marital_status = $${paramCount++}`);
       values.push(data.marital_status);
     }
+    if (data.date_of_birth !== undefined) {
+      updates.push(`date_of_birth = $${paramCount++}`);
+      values.push(data.date_of_birth);
+    }
+    if (data.consecrated_status !== undefined) {
+      updates.push(`consecrated_status = $${paramCount++}`);
+      values.push(data.consecrated_status);
+    }
     if (data.languages !== undefined) {
       updates.push(`languages = $${paramCount++}`);
       values.push(data.languages ? JSON.stringify(data.languages) : null);
+    }
+
+    // GROUP 2: CONTACT INFORMATION
+    if (data.email !== undefined) {
+      updates.push(`email = $${paramCount++}`);
+      values.push(data.email);
+    }
+    if (data.phone !== undefined) {
+      updates.push(`phone = $${paramCount++}`);
+      values.push(data.phone);
+    }
+
+    // GROUP 3: IMAGES & NOTES
+    if (data.image_url !== undefined) {
+      updates.push(`image_url = $${paramCount++}`);
+      values.push(data.image_url);
+    }
+    if (data.profile_picture !== undefined) {
+      updates.push(`profile_picture = $${paramCount++}`);
+      values.push(data.profile_picture);
+    }
+    if (data.notes !== undefined) {
+      updates.push(`notes = $${paramCount++}`);
+      values.push(data.notes);
+    }
+
+    // GROUP 4: ORGANIZATION & STATUS
+    if (data.community_engagement_status !== undefined) {
+      updates.push(`community_engagement_status = $${paramCount++}`);
+      values.push(data.community_engagement_status);
+    }
+    if (data.accompanying_readiness !== undefined) {
+      updates.push(`accompanying_readiness = $${paramCount++}`);
+      values.push(data.accompanying_readiness);
+    }
+
+    // GROUP 5: AUTHENTICATION
+    if (data.password_hash !== undefined) {
+      updates.push(`password_hash = $${paramCount++}`);
+      values.push(data.password_hash);
+    }
+    if (data.oauth_provider !== undefined) {
+      updates.push(`oauth_provider = $${paramCount++}`);
+      values.push(data.oauth_provider);
+    }
+    if (data.member_type !== undefined) {
+      updates.push(`member_type = $${paramCount++}`);
+      values.push(data.member_type);
+    }
+
+    // GROUP 6: MEMBER CLASSIFICATION
+    if (data.password_hash !== undefined) {
+      updates.push(`password_hash = $${paramCount++}`);
+      values.push(data.password_hash);
     }
 
     updates.push(`updated_at = NOW()`);
