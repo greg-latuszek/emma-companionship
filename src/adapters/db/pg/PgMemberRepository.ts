@@ -348,4 +348,96 @@ export class PgMemberRepository implements IMemberRepository {
 
     return result;
   }
+
+  /**
+   * Assign member to geographic location
+   * Resource operation: may update geographic_unit_id and audit trail
+   */
+  async assignLocation(memberId: MemberId, geoUnitId: GeographicUnitId): Promise<Member> {
+    const result = await queryOne<Member>(
+      `UPDATE members 
+       SET geographic_unit_id = $1, updated_at = NOW()
+       WHERE id = $2
+       RETURNING *`,
+      [geoUnitId, memberId]
+    );
+
+    if (!result) {
+      throw new Error('Member not found');
+    }
+
+    return result;
+  }
+
+  /**
+   * Create couple relationship
+   * Resource operation: INSERT into couples + UPDATE members x2
+   * Adapter handles multi-table coordination
+   */
+  async makeCouple(
+    member1Id: MemberId,
+    member2Id: MemberId,
+    weddingDate?: string | null
+  ): Promise<Couple> {
+    //TODO: need transaction / unitOfWork
+    const result = await queryOne<Couple>(
+      `INSERT INTO couples (member1_id, member2_id, wedding_date, created_at, updated_at)
+       VALUES ($1, $2, $3, NOW(), NOW())
+       RETURNING id, member1_id as member_1_id, member2_id as member_2_id, wedding_date, created_at`,
+      [member1Id, member2Id, weddingDate || null]
+    );
+
+    if (!result) {
+      throw new Error('Failed to create couple');
+    }
+
+    // Update both members with couple_id
+    await queryOne<Member>(
+      `UPDATE members SET couple_id = $1, updated_at = NOW() WHERE id = $2`,
+      [result.id, member1Id]
+    );
+
+    await queryOne<Member>(
+      `UPDATE members SET couple_id = $1, updated_at = NOW() WHERE id = $2`,
+      [result.id, member2Id]
+    );
+
+    return result;
+  }
+
+  /**
+   * End couple relationship
+   * Resource operation: DELETE couple + UPDATE members x2
+   * Adapter handles multi-table coordination
+   */
+  async endCouple(coupleId: CoupleId): Promise<void> {
+    //TODO: need transaction / unitOfWork
+
+    // Get couple info to know which members to update
+    const couple = await queryOne<Couple>(
+      `SELECT * FROM couples WHERE id = $1`,
+      [coupleId]
+    );
+
+    if (!couple) {
+      throw new Error('Couple not found');
+    }
+
+    // Update both members to remove couple_id
+    await queryOne<Member>(
+      `UPDATE members SET couple_id = NULL, updated_at = NOW() WHERE id = $1`,
+      [couple.member_1_id]
+    );
+
+    await queryOne<Member>(
+      `UPDATE members SET couple_id = NULL, updated_at = NOW() WHERE id = $1`,
+      [couple.member_2_id]
+    );
+
+    // Delete couple
+    await queryOne(
+      `DELETE FROM couples WHERE id = $1`,
+      [coupleId]
+    );
+  }
 }
