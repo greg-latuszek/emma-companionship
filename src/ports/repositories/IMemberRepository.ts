@@ -48,14 +48,35 @@ export interface CreateMemberInput {
 }
 
 export interface UpdateMemberInput {
+  // GROUP 1: CORE IDENTITY (all optional for updates)
   first_name?: string;
   last_name?: string;
-  email?: string;
-  phone?: string;
-  profile_picture?: string;
   gender?: string | null;
   marital_status?: string | null;
+  date_of_birth?: string | null;
+  consecrated_status?: string | null;
   languages?: string[] | null;
+
+  // GROUP 2: CONTACT INFORMATION
+  email?: string;
+  phone?: string;
+
+  // GROUP 3: IMAGES & NOTES
+  image_url?: string | null;
+  profile_picture?: string | null;
+  notes?: string | null;
+
+  // GROUP 4: ORGANIZATION & STATUS
+  community_engagement_status?: string | null;
+  accompanying_readiness?: string | null;
+
+  // GROUP 5: AUTHENTICATION (app_users only)
+  password_hash?: string;
+  oauth_provider?: string;
+  oauth_id?: string;
+
+  // GROUP 6: MEMBER CLASSIFICATION
+  member_type?: 'app_user' | 'companion';
 }
 
 /**
