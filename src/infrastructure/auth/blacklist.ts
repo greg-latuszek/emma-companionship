@@ -3,7 +3,7 @@
  * Prevents registration of blacklisted users and OAuth accounts
  */
 
-import { query, queryOne } from './db';
+import { query, queryOne } from '@/infrastructure/db/pg';
 import { Blacklist, MemberId } from '@/types/auth';
 
 /**
