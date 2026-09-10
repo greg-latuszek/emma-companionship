@@ -93,7 +93,14 @@ export interface IMemberRepository {
   isOAuthRegistered(provider: string, oauthId: string): Promise<boolean>;
   createMember(data: CreateMemberInput): Promise<Member>;
   updateMemberProfile(memberId: MemberId, data: UpdateMemberInput): Promise<Member>;
+
+  // Resource-level domain operations (may touch multiple tables via adapter)
   approveMember(memberId: MemberId, adminId: MemberId): Promise<Member>;
+  assignLocation(memberId: MemberId, geoUnitId: GeographicUnitId): Promise<Member>;
+  makeCouple(member1Id: MemberId, member2Id: MemberId, weddingDate?: string | null): Promise<Couple>;
+  endCouple(coupleId: CoupleId): Promise<void>;
+
+  // Relationship queries
   getMemberRoles(memberId: MemberId): Promise<Array<Role & { scope_id: GeographicUnitId | null }>>;
   memberHasRole(memberId: MemberId, roleName: string, roleLevel?: string): Promise<boolean>;
   getMemberWithRoles(memberId: MemberId): Promise<(Member & { roles: Array<Role & { scope_id: GeographicUnitId | null }> }) | null>;
