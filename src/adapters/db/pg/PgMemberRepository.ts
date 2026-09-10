@@ -247,21 +247,43 @@ export class PgMemberRepository implements IMemberRepository {
 
   /**
    * Approve a member registration (admin only)
+   * Sets is_active=true (approval gate) + approved_by (who) + approved_at (when)
+   * Validates both member and admin exist before approval
    */
   async approveMember(
     memberId: MemberId,
     adminId: MemberId
   ): Promise<Member> {
+    //TODO: how about updating approval_audit Table?
+    //      do it here as atomic action or leave for business logic
+    //      to coordinate 2 tables/repositories?
+
+    // Validate admin exists (must be an actual member who can approve)
+    const admin = await this.findMemberById(adminId);
+    if (!admin) {
+      throw new Error('Admin member not found');
+    }
+
+    // Validate target member exists
+    const targetMember = await this.findMemberById(memberId);
+    if (!targetMember) {
+      throw new Error('Member not found');
+    }
+
+    // Update: is_active gates login; approved_by tracks who approved; approved_at tracks when
     const result = await queryOne<Member>(
       `UPDATE members 
-       SET approved_by = $1, approved_at = NOW(), updated_at = NOW()
+       SET is_active = true,
+           approved_by = $1, 
+           approved_at = NOW(), 
+           updated_at = NOW()
        WHERE id = $2
        RETURNING *`,
       [adminId, memberId]
     );
 
     if (!result) {
-      throw new Error('Member not found');
+      throw new Error('Failed to approve member');
     }
 
     return result;
