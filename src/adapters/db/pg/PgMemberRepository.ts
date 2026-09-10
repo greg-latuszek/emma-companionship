@@ -353,19 +353,37 @@ export class PgMemberRepository implements IMemberRepository {
   }
 
   /**
-   * Deactivate member
+   * Deactivate/revoke member approval (admin only)
+   * Sets is_active=false + revoked_by + revoked_at timestamp
+   * Validates both member and admin exist
    */
-  async deactivateMember(memberId: MemberId): Promise<Member> {
+  async deactivateMember(memberId: MemberId, adminId: MemberId): Promise<Member> {
+    // Validate admin exists
+    const admin = await this.findMemberById(adminId);
+    if (!admin) {
+      throw new Error('Admin member not found');
+    }
+
+    // Validate target member exists
+    const targetMember = await this.findMemberById(memberId);
+    if (!targetMember) {
+      throw new Error('Member not found');
+    }
+
+    // Update: is_active=false (gates login), revoked_by (who), revoked_at (when)
     const result = await queryOne<Member>(
       `UPDATE members 
-       SET updated_at = NOW()
-       WHERE id = $1
+       SET is_active = false,
+           revoked_by = $1, 
+           revoked_at = NOW(), 
+           updated_at = NOW()
+       WHERE id = $2
        RETURNING *`,
-      [memberId]
+      [adminId, memberId]
     );
 
     if (!result) {
-      throw new Error('Member not found');
+      throw new Error('Failed to deactivate member');
     }
 
     return result;

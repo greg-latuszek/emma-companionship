@@ -57,6 +57,8 @@ export interface Member {
   requested_at: Date;
   approved_by: MemberId | null;
   approved_at: Date | null;
+  revoked_by: MemberId | null; // Admin who revoked approval (null = never revoked)
+  revoked_at: Date | null; // When approval was revoked (null = not revoked or still active)
   registry_check_result: RegistryCheckResult | null; // JSON object
   created_at: Date;
   updated_at: Date;

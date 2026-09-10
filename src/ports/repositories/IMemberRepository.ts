@@ -95,7 +95,6 @@ export interface IMemberRepository {
   updateMemberProfile(memberId: MemberId, data: UpdateMemberInput): Promise<Member>;
 
   // Resource-level domain operations (may touch multiple tables via adapter)
-  approveMember(memberId: MemberId, adminId: MemberId): Promise<Member>;
   assignLocation(memberId: MemberId, geoUnitId: GeographicUnitId): Promise<Member>;
   makeCouple(member1Id: MemberId, member2Id: MemberId, weddingDate?: string | null): Promise<Couple>;
   endCouple(coupleId: CoupleId): Promise<void>;
@@ -106,5 +105,6 @@ export interface IMemberRepository {
   getMemberWithRoles(memberId: MemberId): Promise<(Member & { roles: Array<Role & { scope_id: GeographicUnitId | null }> }) | null>;
 
   // Lifecycle
-  deactivateMember(memberId: MemberId): Promise<Member>;
+  approveMember(memberId: MemberId, adminId: MemberId): Promise<Member>;
+  deactivateMember(memberId: MemberId, adminId: MemberId): Promise<Member>;
 }

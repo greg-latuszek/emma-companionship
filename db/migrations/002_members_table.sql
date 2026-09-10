@@ -62,6 +62,8 @@ CREATE TABLE members (
     requested_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     approved_by UUID,  -- Will be FK to members after members table is created
     approved_at TIMESTAMP WITH TIME ZONE,
+    revoked_by UUID,  -- Will be FK to members after members table is created (who revoked approval)
+    revoked_at TIMESTAMP WITH TIME ZONE,       -- When approval was revoked (null = not revoked or still active)
     registry_check_result JSONB,               -- Verification checks
                                                -- {
                                                --   emailMatch: boolean,
@@ -80,6 +82,9 @@ CREATE TABLE members (
 ALTER TABLE members ADD CONSTRAINT fk_members_approved_by 
     FOREIGN KEY (approved_by) REFERENCES members(id) ON DELETE SET NULL;
 
+ALTER TABLE members ADD CONSTRAINT fk_members_revoked_by 
+    FOREIGN KEY (revoked_by) REFERENCES members(id) ON DELETE SET NULL;
+
 -- ========== Partial Unique Indexes (Enforce Business Rules) ==========
 -- Email unique only for app_users (companions can have NULL or duplicate emails)
 CREATE UNIQUE INDEX idx_members_email_app_users 
@@ -96,8 +101,15 @@ CREATE INDEX idx_members_geographic_unit_id
     ON members(geographic_unit_id);
 
 -- Active members lookup (for login, approval queries)
-CREATE INDEX idx_members_is_active 
-    ON members(is_active);
+-- Active = is_active=true AND revoked_at IS NULL
+CREATE INDEX idx_members_active_status 
+    ON members(is_active, revoked_at) 
+    WHERE is_active = true AND revoked_at IS NULL;
+
+-- Audit trail queries (who revoked approvals)
+CREATE INDEX idx_members_revoked_by 
+    ON members(revoked_by) 
+    WHERE revoked_at IS NOT NULL;
 
 -- Additional useful indexes
 CREATE INDEX idx_members_couple_id ON members(couple_id);
