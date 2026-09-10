@@ -2,6 +2,8 @@
  * Member Repository Port
  * Defines the contract for all member operations
  * Implementations: PgMemberRepository, PrismaMemberRepository
+ *
+ * Field order matches db/migrations/002_members_table.sql for easier verification
  */
 
 import {
@@ -9,19 +11,40 @@ import {
   Role,
   MemberId,
   GeographicUnitId,
+  Couple,
+  CoupleId,
 } from '@/types/auth';
 
 export interface CreateMemberInput {
+  // GROUP 1: CORE IDENTITY (ordered by schema)
   first_name: string;
   last_name: string;
+  gender?: string | null;
+  marital_status?: string | null;
+  date_of_birth?: string | null;
+  consecrated_status?: string | null;
+  languages?: string[] | null;
+
+  // GROUP 2: CONTACT INFORMATION
   email?: string;
   phone?: string;
-  member_type: 'app_user' | 'companion';
+
+  // GROUP 3: IMAGES & NOTES
+  image_url?: string | null;
+  profile_picture?: string | null;
+  notes?: string | null;
+
+  // GROUP 4: ORGANIZATION & STATUS (geographic_unit_id + couple_id handled by assignLocation/makeCouple)
+  community_engagement_status?: string | null;
+  accompanying_readiness?: string | null;
+
+  // GROUP 5: AUTHENTICATION (app_users only)
   password_hash?: string;
   oauth_provider?: string;
   oauth_id?: string;
-  profile_picture?: string;
-  languages?: string[];
+
+  // GROUP 6: MEMBER CLASSIFICATION
+  member_type: 'app_user' | 'companion';
 }
 
 export interface UpdateMemberInput {
