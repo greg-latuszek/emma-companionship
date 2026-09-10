@@ -1388,6 +1388,175 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 - ✅ Consistent with raw SQL migrations (no duplication)
 - ✅ Future-proof for Python backend (same SQL)
 
+### COMMIT 3.5: Hexagonal Ports/Adapters + Dual DB Implementations
+
+**Critical Architecture Refactor:**
+
+Convert hand-written repository layer into proper hexagonal architecture with **two parallel database adapters** (Pg and Prisma).
+
+**Current Problem Identified:**
+- ❌ Hand-written repository layer is a de facto ORM (not battle-tested)
+- ❌ Missing port/adapter separation (no interfaces defining contracts)
+- ❌ No dependency injection (tightly coupled to pg implementation)
+- ❌ No way to swap implementations or compare approaches
+
+**Hexagonal Solution:**
+
+```
+src/
+├── ports/                                 ← PORTS (Abstract interfaces)
+│   ├── repositories/
+│   │   ├── IMemberRepository.ts
+│   │   ├── IRoleRepository.ts
+│   │   └── IBlacklistRepository.ts
+│   └── IRepositoryContainer.ts
+│
+├── adapters/
+│   ├── db/pg/                            ← ADAPTER: pg + raw SQL
+│   │   ├── PgMemberRepository.ts
+│   │   ├── PgRoleRepository.ts
+│   │   ├── PgBlacklistRepository.ts
+│   │   └── PgRepositoryContainer.ts
+│   │
+│   └── db/prisma/                        ← ADAPTER: Prisma ORM
+│       ├── PrismaMemberRepository.ts
+│       ├── PrismaRoleRepository.ts
+│       ├── PrismaBlacklistRepository.ts
+│       └── PrismaRepositoryContainer.ts
+│
+├── di/
+│   └── RepositoryProvider.ts             ← Dependency Injection
+│       (Selects adapter at runtime)
+│
+└── services/
+    ├── AuthService.ts                    ← Business logic
+    ├── MemberService.ts                  ← Uses IMemberRepository
+    ├── RoleService.ts                    ← Uses IRoleRepository
+    └── BlacklistService.ts               ← Uses IBlacklistRepository
+```
+
+**Step 1: Define Ports (Interfaces)**
+
+```typescript
+// src/ports/repositories/IMemberRepository.ts
+export interface IMemberRepository {
+  findMemberById(id: MemberId): Promise<Member | null>;
+  findMemberByEmail(email: string): Promise<Member | null>;
+  findMemberByOAuth(provider: string, oauthId: string): Promise<Member | null>;
+  createMember(data: CreateMemberInput): Promise<Member>;
+  updateMemberProfile(id: MemberId, data: UpdateMemberInput): Promise<Member>;
+  approveMember(id: MemberId, adminId: MemberId): Promise<Member>;
+  getMemberRoles(id: MemberId): Promise<Array<Role & { scope_id: GeographicUnitId | null }>>;
+  getMemberWithRoles(id: MemberId): Promise<(Member & { roles: Role[] }) | null>;
+  deactivateMember(id: MemberId): Promise<Member>;
+  // ... all repository methods as abstract contract
+}
+```
+
+**Step 2: PgMemberRepository (Keep current implementation)**
+
+```typescript
+// src/adapters/db/pg/PgMemberRepository.ts
+import { IMemberRepository } from '@/ports/repositories/IMemberRepository';
+import { queryOne, queryMany } from '@/core/db';
+// ... Move all current src/core/member.ts methods here
+```
+
+**Step 3: PrismaMemberRepository (Battle-tested alternative)**
+
+```typescript
+// src/adapters/db/prisma/PrismaMemberRepository.ts
+import { IMemberRepository } from '@/ports/repositories/IMemberRepository';
+import { prisma } from '@/core/prisma';
+// ... Implement same interface using Prisma ORM
+```
+
+**Step 4: Dependency Injection**
+
+```typescript
+// src/di/RepositoryProvider.ts
+const DB_ADAPTER = process.env.DB_ADAPTER || 'pg'; // or 'prisma'
+
+export function getRepositoryContainer(): IRepositoryContainer {
+  if (DB_ADAPTER === 'prisma') {
+    return new PrismaRepositoryContainer();
+  }
+  return new PgRepositoryContainer();
+}
+
+// Usage in services
+export async function getCurrentUser(id: MemberId) {
+  const container = getRepositoryContainer();
+  const memberRepo = container.getMemberRepository();
+  return memberRepo.getMemberWithRoles(id);
+}
+```
+
+**Step 5: Update Services to Use Ports**
+
+```typescript
+// src/services/MemberService.ts
+export class MemberService {
+  constructor(private memberRepository: IMemberRepository) {}
+
+  async approveMemberRegistration(
+    memberId: MemberId,
+    adminId: MemberId
+  ): Promise<Member> {
+    const member = await this.memberRepository.findMemberById(memberId);
+    if (!member) throw new Error('Member not found');
+    
+    return this.memberRepository.approveMember(memberId, adminId);
+  }
+}
+```
+
+**Benefits of This Approach:**
+
+✅ **Two Battle-Tested Implementations**
+- PgMemberRepository: Direct pg library + raw SQL
+- PrismaMemberRepository: Prisma ORM (years of battle-testing)
+
+✅ **Selective Usage**
+- Run tests with both adapters
+- Compare performance, nested transactions, optimization
+- Use Prisma where it excels, Pg where lean is needed
+- Switch at environment level (no code changes)
+
+✅ **True Hexagonal Decoupling**
+- Services know about ports (interfaces), never adapters
+- Business logic independent of DB implementation
+- Swap adapters without touching application code
+- Python backend can implement same ports with SQLAlchemy
+
+✅ **Dependency Injection Ready**
+- `IRepositoryContainer` injected at application startup
+- Testing: inject mock repositories
+- Production: inject real implementations
+
+✅ **Gradual Migration Path**
+- Start with Pg (current code)
+- Build Prisma adapters in parallel
+- Run integration tests with both
+- Drop one if unnecessary, or keep for specific use cases
+
+**Implementation Tasks:**
+
+1. Create ports (interfaces) for all repositories
+2. Create `PgRepositoryContainer` wrapping current code
+3. Create `PrismaRepositoryContainer` with Prisma ORM
+4. Add `RepositoryProvider` for dependency injection
+5. Update services to accept repositories via DI
+6. Create test suite comparing both adapters
+7. Document selection criteria (when to use each)
+
+**This maintains:**
+- ✅ Raw SQL migrations (visible, polyglot)
+- ✅ TypeScript type safety (branded IDs)
+- ✅ Zod validation (runtime checks)
+- ✅ Zero ORM lock-in (two parallel implementations)
+- ✅ Future-proof architecture (can add more adapters)
+
 ### COMMIT 4: Registration (Form + OAuth)
 
 Implement registration endpoints with blacklist + duplicate prevention:
