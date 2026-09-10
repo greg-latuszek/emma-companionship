@@ -1,6 +1,8 @@
 /**
  * PgMemberRepository - Pg Adapter
  * Implements IMemberRepository using pg library + raw SQL
+ *
+ * Resource-level operations may touch multiple tables; adapter handles coordination
  */
 
 import { queryOne, queryMany } from '@/infrastructure/db/pg';
@@ -10,6 +12,8 @@ import {
   Role,
   MemberId,
   GeographicUnitId,
+  Couple,
+  CoupleId,
 } from '@/types/auth';
 
 export class PgMemberRepository implements IMemberRepository {
@@ -24,11 +28,11 @@ export class PgMemberRepository implements IMemberRepository {
   }
 
   /**
-   * Find a member by email
+   * Find a member by email (any member type)
    */
   async findMemberByEmail(email: string): Promise<Member | null> {
     return queryOne<Member>(
-      `SELECT * FROM members WHERE email = $1 AND member_type = 'app_user'`,
+      `SELECT * FROM members WHERE email = $1`,
       [email]
     );
   }
@@ -47,13 +51,13 @@ export class PgMemberRepository implements IMemberRepository {
   }
 
   /**
-   * Check if email is already registered
+   * Check if email is already registered (any member type)
    */
   async isEmailRegistered(email: string): Promise<boolean> {
     const result = await queryOne<{ exists: boolean }>(
       `SELECT EXISTS(
         SELECT 1 FROM members 
-        WHERE email = $1 AND member_type = 'app_user'
+        WHERE email = $1
       ) as exists`,
       [email]
     );
@@ -79,27 +83,46 @@ export class PgMemberRepository implements IMemberRepository {
 
   /**
    * Create a new member (registration request)
+   * Fields ordered per schema: identity → contact → images → organization → auth → classification
    */
   async createMember(data: CreateMemberInput): Promise<Member> {
     const result = await queryOne<Member>(
       `INSERT INTO members (
-        first_name, last_name, email, phone, member_type, 
-        password_hash, oauth_provider, oauth_id, profile_picture, 
-        languages, requested_at, created_at, updated_at
+        first_name, last_name, gender, marital_status, date_of_birth, consecrated_status, languages,
+        email, phone,
+        image_url, profile_picture, notes,
+        community_engagement_status, accompanying_readiness,
+        password_hash, oauth_provider, oauth_id,
+        member_type,
+        requested_at, created_at, updated_at
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW(), NOW()
+        $1, $2, $3, $4, $5, $6, $7,
+        $8, $9,
+        $10, $11, $12,
+        $13, $14,
+        $15, $16, $17,
+        $18,
+        NOW(), NOW(), NOW()
       ) RETURNING *`,
       [
         data.first_name,
         data.last_name,
+        data.gender || null,
+        data.marital_status || null,
+        data.date_of_birth || null,
+        data.consecrated_status || null,
+        data.languages ? JSON.stringify(data.languages) : null,
         data.email || null,
         data.phone || null,
-        data.member_type,
+        data.image_url || null,
+        data.profile_picture || null,
+        data.notes || null,
+        data.community_engagement_status || null,
+        data.accompanying_readiness || null,
         data.password_hash || null,
         data.oauth_provider || null,
         data.oauth_id || null,
-        data.profile_picture || null,
-        data.languages ? JSON.stringify(data.languages) : null,
+        data.member_type,
       ]
     );
 
