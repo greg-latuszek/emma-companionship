@@ -80,10 +80,12 @@ export interface UpdateMemberInput {
 }
 
 /**
- * IMemberRepository - Contract for member operations
+ * IMemberRepository - Contract for member resource operations
+ * Adapter implementations may use multiple tables; that's an implementation detail
  * Any implementation (Pg, Prisma, etc.) must satisfy this interface
  */
 export interface IMemberRepository {
+  // CRUD Operations
   findMemberById(id: MemberId): Promise<Member | null>;
   findMemberByEmail(email: string): Promise<Member | null>;
   findMemberByOAuth(provider: string, oauthId: string): Promise<Member | null>;
@@ -95,5 +97,7 @@ export interface IMemberRepository {
   getMemberRoles(memberId: MemberId): Promise<Array<Role & { scope_id: GeographicUnitId | null }>>;
   memberHasRole(memberId: MemberId, roleName: string, roleLevel?: string): Promise<boolean>;
   getMemberWithRoles(memberId: MemberId): Promise<(Member & { roles: Array<Role & { scope_id: GeographicUnitId | null }> }) | null>;
+
+  // Lifecycle
   deactivateMember(memberId: MemberId): Promise<Member>;
 }
