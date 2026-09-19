@@ -1,7 +1,7 @@
 /**
  * Member Repository Port
  * Defines the contract for all member operations
- * Implementations: PgMemberRepository, PrismaMemberRepository
+ * Implementation: PgMemberRepository
  *
  * Field order matches db/migrations/002_members_table.sql for easier verification
  */
@@ -82,7 +82,7 @@ export interface UpdateMemberInput {
 /**
  * IMemberRepository - Contract for member resource operations
  * Adapter implementations may use multiple tables; that's an implementation detail
- * Any implementation (Pg, Prisma, etc.) must satisfy this interface
+ * Any adapter (currently Pg) must satisfy this interface
  */
 export interface IMemberRepository {
   // CRUD Operations

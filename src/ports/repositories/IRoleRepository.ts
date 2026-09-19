@@ -1,7 +1,7 @@
 /**
  * Role Repository Port
  * Defines the contract for all role operations
- * Implementations: PgRoleRepository, PrismaRoleRepository
+ * Implementation: PgRoleRepository
  */
 
 import { Role, RoleAssignment, MemberId, RoleId, RoleAssignmentId, GeographicUnitId } from '@/types/auth';
@@ -14,7 +14,7 @@ export interface RoleMatrixEntry {
 
 /**
  * IRoleRepository - Contract for role operations
- * Any implementation (Pg, Prisma, etc.) must satisfy this interface
+ * Any adapter (currently Pg) must satisfy this interface
  */
 export interface IRoleRepository {
   findRoleById(id: RoleId): Promise<Role | null>;

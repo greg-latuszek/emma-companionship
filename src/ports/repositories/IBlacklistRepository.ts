@@ -1,7 +1,7 @@
 /**
  * Blacklist Repository Port
  * Defines the contract for all blacklist operations
- * Implementations: PgBlacklistRepository, PrismaBlacklistRepository
+ * Implementation: PgBlacklistRepository
  */
 
 import { Blacklist, MemberId } from '@/types/auth';
@@ -16,7 +16,7 @@ export interface BlacklistEntryInput {
 
 /**
  * IBlacklistRepository - Contract for blacklist operations
- * Any implementation (Pg, Prisma, etc.) must satisfy this interface
+ * Any adapter (currently Pg) must satisfy this interface
  */
 export interface IBlacklistRepository {
   isEmailBlacklisted(email: string): Promise<boolean>;

@@ -1,26 +1,22 @@
 /**
  * Repository Provider
  * Dependency Injection for repository container
- * Selects adapter implementation at runtime via environment variable
+ *
+ * Adapter selection is hardcoded for now (pg only).
+ * Keep the switch so a second adapter can be added later without changing callers.
  */
 
 import { IRepositoryContainer } from '@/ports/repositories/IRepositoryContainer';
 import { PgRepositoryContainer } from '@/adapters/db/pg/PgRepositoryContainer';
-// import { PrismaRepositoryContainer } from '@/adapters/db/prisma/PrismaRepositoryContainer'; // Added in COMMIT 4
 
-const DB_ADAPTER = (process.env.DB_ADAPTER || 'pg').toLowerCase();
+const DB_ADAPTER = 'pg';
 
 let container: IRepositoryContainer | null = null;
 
 /**
  * Get the repository container for the configured adapter
- * Environment Variable: DB_ADAPTER
- *   - 'pg' (default): Use Pg adapter (pg library + raw SQL)
- *   - 'prisma': Use Prisma adapter (Prisma ORM)
- *
- * Can be set in .env:
- *   DB_ADAPTER=pg          # Use Pg
- *   DB_ADAPTER=prisma      # Use Prisma
+ * DB_ADAPTER is hardcoded to 'pg' (pg library + raw SQL).
+ * Any other value throws so unknown adapters fail loudly.
  */
 export function getRepositoryContainer(): IRepositoryContainer {
   if (container) {
@@ -28,22 +24,12 @@ export function getRepositoryContainer(): IRepositoryContainer {
   }
 
   switch (DB_ADAPTER) {
-    case 'prisma':
-      // TODO: Implement Prisma adapter in COMMIT 4
-      // container = new PrismaRepositoryContainer();
-      throw new Error('Prisma adapter not yet implemented. Use DB_ADAPTER=pg or wait for COMMIT 4.');
-
     case 'pg':
-    default:
       container = new PgRepositoryContainer();
       break;
+    default:
+      throw new Error(`Unknown database adapter: ${DB_ADAPTER}`);
   }
-
-  if (!container) {
-    throw new Error(`Unknown database adapter: ${DB_ADAPTER}`);
-  }
-
-  console.log(`[DI] Initialized repository container with adapter: ${DB_ADAPTER}`);
 
   return container;
 }

@@ -10,11 +10,9 @@ import { IBlacklistRepository } from './IBlacklistRepository';
 
 /**
  * IRepositoryContainer - Factory for all repository ports
- * Implementations:
- * - PgRepositoryContainer (pg library + raw SQL)
- * - PrismaRepositoryContainer (Prisma ORM)
+ * Implementation: PgRepositoryContainer (pg library + raw SQL)
  *
- * Injected at application startup to switch all adapters at once
+ * Injected at application startup. Add another container here when a second adapter exists.
  */
 export interface IRepositoryContainer {
   getMemberRepository(): IMemberRepository;
