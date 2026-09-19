@@ -10,17 +10,22 @@ import { queryOne } from '@/infrastructure/db/pg';
 import { IMemberRepository, CreateMemberInput } from '@/ports/repositories/IMemberRepository';
 import { Member, MemberId } from '@/types/auth';
 
+const MEMBER_COLUMNS = `
+  id, first_name, last_name, email,
+  oauth_provider, oauth_id, is_active, revoked_at, profile_picture
+`;
+
 export class PgMemberRepository implements IMemberRepository {
   async findMemberById(id: MemberId): Promise<Member | null> {
     return queryOne<Member>(
-      `SELECT * FROM members WHERE id = $1 AND member_type = 'app_user'`,
+      `SELECT ${MEMBER_COLUMNS} FROM members WHERE id = $1 AND member_type = 'app_user'`,
       [id]
     );
   }
 
   async findMemberByEmail(email: string): Promise<Member | null> {
     return queryOne<Member>(
-      `SELECT * FROM members WHERE email = $1 AND member_type = 'app_user'`,
+      `SELECT ${MEMBER_COLUMNS} FROM members WHERE email = $1 AND member_type = 'app_user'`,
       [email]
     );
   }
@@ -30,7 +35,7 @@ export class PgMemberRepository implements IMemberRepository {
     oauthId: string
   ): Promise<Member | null> {
     return queryOne<Member>(
-      `SELECT * FROM members
+      `SELECT ${MEMBER_COLUMNS} FROM members
        WHERE oauth_provider = $1 AND oauth_id = $2 AND member_type = 'app_user'`,
       [provider, oauthId]
     );
@@ -52,7 +57,7 @@ export class PgMemberRepository implements IMemberRepository {
         $5, $6,
         'app_user',
         NOW(), NOW(), NOW()
-      ) RETURNING *`,
+      ) RETURNING ${MEMBER_COLUMNS}`,
       [
         data.first_name,
         data.last_name,
