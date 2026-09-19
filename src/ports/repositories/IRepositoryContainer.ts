@@ -1,21 +1,18 @@
 /**
  * Repository Container Port
- * Factory interface for all repositories
+ * Factory interface for repository ports
  * Allows swapping entire adapter implementations via dependency injection
  */
 
 import { IMemberRepository } from './IMemberRepository';
-import { IRoleRepository } from './IRoleRepository';
-import { IBlacklistRepository } from './IBlacklistRepository';
 
 /**
- * IRepositoryContainer - Factory for all repository ports
+ * IRepositoryContainer - Factory for live repository ports
  * Implementation: PgRepositoryContainer (pg library + raw SQL)
  *
- * Injected at application startup. Add another container here when a second adapter exists.
+ * Google OAuth only needs the member repository.
+ * Add getters here when a second port is on the live path again.
  */
 export interface IRepositoryContainer {
   getMemberRepository(): IMemberRepository;
-  getRoleRepository(): IRoleRepository;
-  getBlacklistRepository(): IBlacklistRepository;
 }
