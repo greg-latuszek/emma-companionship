@@ -4,6 +4,9 @@ import { motion } from 'motion/react';
 import Link from 'next/link';
 import type { JSX } from 'react';
 
+export const semiTransparentControlClassName =
+  'inline-block px-8 sm:px-12 py-3 sm:py-4 rounded-full bg-white/15 hover:bg-white/25 border border-white/35 text-white font-sans font-medium text-sm sm:text-base uppercase tracking-widest transition-all duration-300 backdrop-blur-md shadow-lg hover:shadow-xl';
+
 interface SemiTransparentButtonProps {
   href: string;
   children: React.ReactNode;
@@ -30,7 +33,7 @@ export function SemiTransparentButton({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 1, delay, ease: 'easeOut' }}
-      className={`inline-block px-8 sm:px-12 py-3 sm:py-4 rounded-full bg-white/15 hover:bg-white/25 border border-white/35 text-white font-sans font-medium text-sm sm:text-base uppercase tracking-widest transition-all duration-300 backdrop-blur-md shadow-lg hover:shadow-xl ${className}`}
+      className={`${semiTransparentControlClassName} ${className}`}
     >
       {children}
     </motion.a>
@@ -58,7 +61,7 @@ export function SemiTransparentLink({
     >
       <Link
         href={href}
-        className={`inline-block px-8 sm:px-12 py-3 sm:py-4 rounded-full bg-white/15 hover:bg-white/25 border border-white/35 text-white font-sans font-medium text-sm sm:text-base uppercase tracking-widest transition-all duration-300 backdrop-blur-md shadow-lg hover:shadow-xl ${className}`}
+        className={`${semiTransparentControlClassName} ${className}`}
       >
         {children}
       </Link>

@@ -5,7 +5,7 @@ import { useState } from 'react';
 import type { JSX } from 'react';
 import { PageBackground } from '@/components/PageBackground';
 import { Navbar } from '@/components/Navbar';
-import { SemiTransparentLink } from '@/components/SemiTransparentButton';
+import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 import { PageTitle } from '@/components/PageTitle';
 
 export default function Home(): JSX.Element {
@@ -26,9 +26,7 @@ export default function Home(): JSX.Element {
       <div className="absolute top-0 left-0 right-0 z-40">
         <Navbar
           rightContent={
-            <SemiTransparentLink href="/app/companionship-panel" delay={0.5}>
-              Zaloguj się
-            </SemiTransparentLink>
+            <GoogleSignInButton delay={0.5} />
           }
         />
       </div>
