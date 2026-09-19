@@ -16,3 +16,10 @@ declare module 'next-auth/jwt' {
     is_active?: boolean;
   }
 }
+
+declare module '@auth/core/jwt' {
+  interface JWT {
+    memberId?: MemberId;
+    is_active?: boolean;
+  }
+}

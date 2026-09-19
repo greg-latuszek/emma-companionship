@@ -1,11 +1,11 @@
 import NextAuth from 'next-auth';
 import Google from 'next-auth/providers/google';
+import {
+  findOrCreateGoogleMember,
+  memberMayUseApp,
+  parseGoogleProfile,
+} from '@/lib/google-member';
 
-/**
- * Auth.js v5 — Google only.
- * memberId / is_active are reserved on the session; they are filled when
- * Google sign-in is wired to the members table.
- */
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
   providers: [
@@ -15,10 +15,44 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    jwt({ token }) {
+    async signIn({ account, profile }) {
+      if (account?.provider !== 'google') {
+        return false;
+      }
+
+      const parsed = parseGoogleProfile({
+        id: account.providerAccountId,
+        name: profile?.name,
+        email: profile?.email,
+        image: typeof profile?.picture === 'string' ? profile.picture : null,
+      });
+
+      return parsed !== null && Boolean(parsed.email);
+    },
+    async jwt({ token, account, profile }) {
+      if (account?.provider === 'google' && profile) {
+        const parsed = parseGoogleProfile({
+          id: account.providerAccountId,
+          name: profile.name,
+          email: profile.email,
+          image: typeof profile.picture === 'string' ? profile.picture : null,
+        });
+        if (!parsed) {
+          return token;
+        }
+
+        const member = await findOrCreateGoogleMember(parsed);
+        if (member) {
+          token.memberId = member.id;
+          token.is_active = memberMayUseApp(member);
+        }
+      }
+
       return token;
     },
-    session({ session }) {
+    session({ session, token }) {
+      session.user.memberId = token.memberId;
+      session.user.is_active = token.is_active;
       return session;
     },
   },
