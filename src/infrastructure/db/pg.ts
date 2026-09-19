@@ -17,7 +17,7 @@ export function initializePool(
   port: number = parseInt(process.env.DB_PORT || '5432', 10),
   database: string = process.env.DB_NAME || 'emma_companionship_dev',
   user: string = process.env.DB_USER || 'devuser',
-  password: string = process.env.DB_PASSWORD || 'devpass'
+  password: string = process.env.DB_PASSWORD || 'devpassword'
 ): Pool {
   if (pool) {
     return pool;
