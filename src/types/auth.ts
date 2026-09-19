@@ -52,6 +52,7 @@ export interface Member {
   password_hash: string | null;
   oauth_provider: string | null;
   oauth_id: string | null;
+  is_active: boolean;
   profile_picture: string | null;
   geographic_unit_id: GeographicUnitId | null;
   requested_at: Date;
