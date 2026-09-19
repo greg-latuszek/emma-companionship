@@ -25,6 +25,8 @@
   "dependencies": {
     "motion": "^13.2.0",
     "next": "16.3.4",
+    "next-auth": "^5.0.0-beta.32",
+    "pg": "^8.23.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "zod": "^3.22.4"
@@ -41,7 +43,6 @@
     "eslint-config-next": "16.3.4",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.6",
-    "pg": "^8.11.3",
     "prettier": "^3.9.6",
     "tailwindcss": "^4",
     "typescript": "^5",
