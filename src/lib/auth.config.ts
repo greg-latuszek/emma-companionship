@@ -1,0 +1,22 @@
+import Google from 'next-auth/providers/google';
+import type { NextAuthConfig } from 'next-auth';
+
+/**
+ * Edge-safe Auth.js config (no Postgres). The JWT already carries memberId / is_active.
+ */
+export const authConfig = {
+  trustHost: true,
+  providers: [
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    }),
+  ],
+  callbacks: {
+    session({ session, token }) {
+      session.user.memberId = token.memberId;
+      session.user.is_active = token.is_active;
+      return session;
+    },
+  },
+} satisfies NextAuthConfig;

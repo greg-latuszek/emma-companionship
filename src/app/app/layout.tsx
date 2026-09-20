@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
+import { decideWhereAnAppVisitorMustGo } from '@/lib/app-visit';
 
 export default async function AppSectionLayout({
   children,
@@ -7,9 +8,10 @@ export default async function AppSectionLayout({
   children: React.ReactNode;
 }) {
   const session = await auth();
+  const destination = decideWhereAnAppVisitorMustGo(session);
 
-  if (!session?.user) {
-    redirect('/');
+  if (destination) {
+    redirect(destination);
   }
 
   return children;

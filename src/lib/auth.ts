@@ -1,14 +1,14 @@
 import NextAuth from 'next-auth';
-import Google from 'next-auth/providers/google';
 import {
   findOrCreateGoogleMember,
   memberMayUseApp,
   parseGoogleProfile,
 } from '@/lib/google-member';
+import { authConfig } from '@/lib/auth.config';
 import { reportAuthJsFailure } from '@/lib/unavailable-database';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  trustHost: true,
+  ...authConfig,
   pages: {
     error: '/auth/error',
   },
@@ -17,13 +17,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       reportAuthJsFailure(error);
     },
   },
-  providers: [
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    }),
-  ],
   callbacks: {
+    ...authConfig.callbacks,
     async signIn({ account, profile }) {
       if (account?.provider !== 'google') {
         return false;
@@ -58,11 +53,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
 
       return token;
-    },
-    session({ session, token }) {
-      session.user.memberId = token.memberId;
-      session.user.is_active = token.is_active;
-      return session;
     },
   },
 });
