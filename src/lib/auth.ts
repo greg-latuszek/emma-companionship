@@ -5,9 +5,18 @@ import {
   memberMayUseApp,
   parseGoogleProfile,
 } from '@/lib/google-member';
+import { reportAuthJsFailure } from '@/lib/unavailable-database';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
+  pages: {
+    error: '/auth/error',
+  },
+  logger: {
+    error(error) {
+      reportAuthJsFailure(error);
+    },
+  },
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,

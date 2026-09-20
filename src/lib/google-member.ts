@@ -1,7 +1,13 @@
 import { startDatabasePool } from '@/infrastructure/db/startup';
 import { getRepositoryContainer } from '@/di/RepositoryProvider';
+import type { IMemberRepository } from '@/ports/repositories/IMemberRepository';
 import { oauthProfileSchema, type OAuthProfile } from '@/schemas/auth';
 import type { Member } from '@/types/auth';
+import {
+  isUnavailableDatabase,
+  reportFailedGoogleMemberLookup,
+  UnavailableDatabase,
+} from '@/lib/unavailable-database';
 
 function splitDisplayName(name: string | undefined): {
   first_name: string;
@@ -42,37 +48,47 @@ export function parseGoogleProfile(input: {
   return withoutImage.success ? withoutImage.data : null;
 }
 
-/**
- * Find an existing Google app_user, or create a pending one.
- * is_active on the returned member is the SQL column; callers apply revoked_at.
- */
-export async function findOrCreateGoogleMember(profile: OAuthProfile): Promise<Member | null> {
+function currentMemberRepository(): IMemberRepository {
+  startDatabasePool();
+  return getRepositoryContainer().getMemberRepository();
+}
+
+/** Find an existing Google app_user, or create a pending one. */
+export async function findOrCreateGoogleMember(
+  profile: OAuthProfile,
+  members: IMemberRepository = currentMemberRepository()
+): Promise<Member | null> {
   if (!profile.email) {
     return null;
   }
 
-  startDatabasePool();
-  const members = getRepositoryContainer().getMemberRepository();
+  try {
+    const byOAuth = await members.findMemberByOAuth('google', profile.id);
+    if (byOAuth) {
+      return byOAuth;
+    }
 
-  const byOAuth = await members.findMemberByOAuth('google', profile.id);
-  if (byOAuth) {
-    return byOAuth;
+    const byEmail = await members.findMemberByEmail(profile.email);
+    if (byEmail) {
+      return byEmail;
+    }
+
+    const { first_name, last_name } = splitDisplayName(profile.name);
+    return await members.createMember({
+      first_name,
+      last_name,
+      email: profile.email,
+      oauth_provider: 'google',
+      oauth_id: profile.id,
+      profile_picture: profile.image,
+    });
+  } catch (error) {
+    reportFailedGoogleMemberLookup(error);
+    if (isUnavailableDatabase(error)) {
+      throw new UnavailableDatabase(error);
+    }
+    throw error;
   }
-
-  const byEmail = await members.findMemberByEmail(profile.email);
-  if (byEmail) {
-    return byEmail;
-  }
-
-  const { first_name, last_name } = splitDisplayName(profile.name);
-  return members.createMember({
-    first_name,
-    last_name,
-    email: profile.email,
-    oauth_provider: 'google',
-    oauth_id: profile.id,
-    profile_picture: profile.image,
-  });
 }
 
 export function memberMayUseApp(member: Member): boolean {
