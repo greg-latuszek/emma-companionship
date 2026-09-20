@@ -1,3 +1,15 @@
+# Current status
+
+This file is the **domain vision** for emmaCompanionship — terminology, constraints, personas, and Phase-1 workflows. Almost none of it is implemented yet.
+
+**Built today:** a closed Google OAuth gate and an empty companionship panel. First sign-in creates a pending `app_user`; an operator flips `is_active`; an approved member reaches `/app/companionship-panel`.
+
+**Not built:** member/couple registry as working product, companionship or supervision relations, graphs, import, health views, roles UI, admin approval UI, password or Facebook login.
+
+For the stack, hexagon, auth flow, page frame, and how to run the app, read [`current-architecture.md`](./current-architecture.md). Start from [`README.md`](./README.md). Do not treat the workflows below as a current backlog unless a story says so.
+
+---
+
 # Problem description
 
 I want to build relations tracking application called "emmaCompanionship" that helps people responsible for maintaining relationships and dialogue between people (community members) in these relationships. 
