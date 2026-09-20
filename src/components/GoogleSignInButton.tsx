@@ -3,7 +3,7 @@
 import { motion } from 'motion/react';
 import { signIn } from 'next-auth/react';
 import type { JSX } from 'react';
-import { semiTransparentControlClassName } from '@/components/SemiTransparentButton';
+import { semiTransparentControlSurfaceClassName } from '@/components/SemiTransparentButton';
 
 interface GoogleSignInButtonProps {
   delay?: number;
@@ -48,10 +48,10 @@ export function GoogleSignInButton({ delay = 0.5 }: GoogleSignInButtonProps): JS
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 1, delay, ease: 'easeOut' }}
-      className={`${semiTransparentControlClassName} inline-flex items-center gap-3 px-5 sm:px-8`}
+      className={`${semiTransparentControlSurfaceClassName} inline-flex shrink-0 items-center justify-center gap-3 p-2.5 sm:px-8 sm:py-4`}
     >
       <GoogleMark />
-      <span className="flex flex-col items-start leading-tight text-left">
+      <span className="hidden sm:flex flex-col items-start leading-tight text-left">
         <span className="uppercase tracking-widest">Zaloguj się</span>
         <span className="normal-case tracking-wide text-[11px] sm:text-xs font-normal text-white/80">
           przez Google

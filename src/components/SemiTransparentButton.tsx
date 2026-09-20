@@ -4,8 +4,11 @@ import { motion } from 'motion/react';
 import Link from 'next/link';
 import type { JSX } from 'react';
 
+export const semiTransparentControlSurfaceClassName =
+  'rounded-full bg-white/15 hover:bg-white/25 border border-white/35 text-white font-sans font-medium text-sm sm:text-base uppercase tracking-widest transition-all duration-300 backdrop-blur-md shadow-lg hover:shadow-xl';
+
 export const semiTransparentControlClassName =
-  'inline-block px-8 sm:px-12 py-3 sm:py-4 rounded-full bg-white/15 hover:bg-white/25 border border-white/35 text-white font-sans font-medium text-sm sm:text-base uppercase tracking-widest transition-all duration-300 backdrop-blur-md shadow-lg hover:shadow-xl';
+  `inline-block px-8 sm:px-12 py-3 sm:py-4 ${semiTransparentControlSurfaceClassName}`;
 
 interface SemiTransparentButtonProps {
   href: string;

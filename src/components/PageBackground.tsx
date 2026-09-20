@@ -1,29 +1,30 @@
-'use client';
-
 import Image from 'next/image';
 import type { JSX } from 'react';
+import { decorativeFrame } from '@/components/decorative-frame';
 
 interface PageBackgroundProps {
   imageSource: string;
   imageAlt: string;
+  children: React.ReactNode;
+  id?: string;
 }
 
 /**
- * Reusable background component with:
- * - Full-screen background image
- * - Dark gradient overlay
- * - Decorative border
- *
- * Used on both home page and companionship panel for consistency
+ * Full-screen photograph plus the decorative outer frame.
+ * Page chrome belongs in AppArea, which sits inside this frame.
  */
 export function PageBackground({
   imageSource,
   imageAlt,
+  children,
+  id,
 }: PageBackgroundProps): JSX.Element {
   return (
-    <>
-      {/* Background Image - Full screen */}
-      <div className="absolute inset-0 w-full h-full z-0 pointer-events-none">
+    <div
+      id={id}
+      className="relative min-h-screen w-full overflow-hidden text-white font-serif select-none"
+    >
+      <div className="absolute inset-0 z-0 pointer-events-none">
         <Image
           src={imageSource}
           alt={imageAlt}
@@ -34,11 +35,11 @@ export function PageBackground({
         />
       </div>
 
-      {/* Dark Overlay with gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/60 z-10 pointer-events-none" />
+      <div
+        className={`absolute inset-0 z-20 pointer-events-none ${decorativeFrame.borderClassName} border-white/15`}
+      />
 
-      {/* Decorative Outer Border */}
-      <div className="absolute inset-0 pointer-events-none border-[16px] sm:border-[32px] border-white/15 z-30" />
-    </>
+      {children}
+    </div>
   );
 }

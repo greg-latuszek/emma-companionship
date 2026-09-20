@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { motion } from 'motion/react';
 import { useSession } from 'next-auth/react';
 import type { JSX } from 'react';
+import { decorativeFrame } from '@/components/decorative-frame';
 
 interface NavbarProps {
   rightContent?: React.ReactNode;
@@ -17,7 +18,7 @@ function UnsignedInLogo(): JSX.Element {
         src="/docs/img/logo_emmanuel_en-1.png"
         alt="Emmanuel Community"
         fill
-        className="object-contain"
+        className="object-contain object-left object-top"
         quality={90}
       />
     </div>
@@ -61,13 +62,13 @@ export function Navbar({
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: logoDelay }}
-      className="w-full px-6 sm:px-12 py-6 sm:py-8 flex items-center justify-between"
+      className={`${decorativeFrame.paddingClassName} relative w-full shrink-0`}
     >
       <motion.div
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.8, ease: 'easeOut', delay: logoDelay + 0.1 }}
-        className="flex items-center"
+        className="flex items-start pr-14 sm:pr-0"
       >
         {isSignedIn ? <SignedInLogo /> : <UnsignedInLogo />}
       </motion.div>
@@ -77,6 +78,7 @@ export function Navbar({
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8, ease: 'easeOut', delay: logoDelay + 0.2 }}
+          className={`absolute ${decorativeFrame.topRightClassName}`}
         >
           {rightContent}
         </motion.div>
