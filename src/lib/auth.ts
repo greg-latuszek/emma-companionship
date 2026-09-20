@@ -49,6 +49,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (member) {
           token.memberId = member.id;
           token.is_active = memberMayUseApp(member);
+          if (member.profile_picture) {
+            token.picture = member.profile_picture;
+          }
         }
       }
 

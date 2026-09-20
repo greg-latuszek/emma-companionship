@@ -5,6 +5,7 @@ export type SignedInMember = {
   name: string;
   email: string;
   memberId?: MemberId;
+  profilePicture: string | null;
 };
 
 export function signedInMemberFrom(session: Session): SignedInMember {
@@ -14,5 +15,6 @@ export function signedInMemberFrom(session: Session): SignedInMember {
     name: session.user.name ?? email,
     email,
     memberId: session.user.memberId,
+    profilePicture: session.user.image ?? null,
   };
 }

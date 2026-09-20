@@ -20,8 +20,8 @@ export function CompanionshipPanel({ member }: { member: SignedInMember }): JSX.
         <Navbar
           rightContent={
             <LogoutButton
-              userName={member.name}
-              userEmail={member.email}
+              profilePicture={member.profilePicture}
+              email={member.email}
               delay={0.3}
             />
           }

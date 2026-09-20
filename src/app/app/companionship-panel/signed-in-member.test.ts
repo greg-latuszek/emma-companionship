@@ -26,6 +26,7 @@ describe('signedInMemberFrom', () => {
       name: 'Ada Lovelace',
       email: 'ada@example.com',
       memberId,
+      profilePicture: null,
     });
   });
 
@@ -39,5 +40,19 @@ describe('signedInMemberFrom', () => {
 
     expect(member.name).toBe('ada@example.com');
     expect(member.email).toBe('ada@example.com');
+    expect(member.profilePicture).toBeNull();
+  });
+
+  it('signedInMemberFrom copies the session image as the profile picture', () => {
+    const member = signedInMemberFrom(
+      aSession({
+        name: 'Ada Lovelace',
+        email: 'ada@example.com',
+        image: 'https://example.com/ada.jpg',
+        memberId,
+      })
+    );
+
+    expect(member.profilePicture).toBe('https://example.com/ada.jpg');
   });
 });

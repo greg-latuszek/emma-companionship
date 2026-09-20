@@ -16,6 +16,7 @@ export const authConfig = {
     session({ session, token }) {
       session.user.memberId = token.memberId;
       session.user.is_active = token.is_active;
+      session.user.image = token.picture;
       return session;
     },
   },
