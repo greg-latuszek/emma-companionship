@@ -14,7 +14,7 @@ export function GoogleSignInButton({ delay = 0.5 }: GoogleSignInButtonProps): JS
     <motion.button
       type="button"
       onClick={() => {
-        void signIn('google');
+        void signIn('google', { callbackUrl: '/auth/continue' });
       }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
