@@ -68,16 +68,16 @@ export function describeUnavailableDatabase(error: unknown): string {
   return `Postgres is unreachable at ${address}. Start it with npm run db:start.`;
 }
 
-export function reportFailedGoogleMemberLookup(error: unknown): void {
+export function reportFailedOAuthMemberRecognition(error: unknown): void {
   const failure = rootCause(error);
 
   if (isUnavailableDatabase(failure) || isUnavailableDatabase(error)) {
-    console.error(`${OPERATOR_PREFIX} Google sign-in cannot find or create the member. ${describeUnavailableDatabase(failure)}`);
+    console.error(`${OPERATOR_PREFIX} OAuth sign-in cannot find or create the member. ${describeUnavailableDatabase(failure)}`);
     return;
   }
 
   console.error(
-    `${OPERATOR_PREFIX} Google sign-in failed while finding or creating the member.`,
+    `${OPERATOR_PREFIX} OAuth sign-in failed while finding or creating the member.`,
     error
   );
 }

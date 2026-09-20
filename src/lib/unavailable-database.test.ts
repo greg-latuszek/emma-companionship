@@ -4,7 +4,7 @@ import {
   isUnavailableDatabase,
   operatorHintsAreEnabled,
   reportAuthJsFailure,
-  reportFailedGoogleMemberLookup,
+  reportFailedOAuthMemberRecognition,
   signInFailureCopy,
   UnavailableDatabase,
 } from '@/lib/unavailable-database';
@@ -49,14 +49,14 @@ describe('unavailable database', () => {
     expect(description).toContain('npm run db:start');
   });
 
-  it('reportFailedGoogleMemberLookup writes the operator sentence when Postgres refuses the connection', () => {
+  it('reportFailedOAuthMemberRecognition writes the operator sentence when Postgres refuses the connection', () => {
     const error = givenARefusedPostgresConnection();
     const logs = capturingConsoleError();
 
-    reportFailedGoogleMemberLookup(error);
+    reportFailedOAuthMemberRecognition(error);
 
     expect(logs).toHaveBeenCalledWith(
-      expect.stringContaining('Google sign-in cannot find or create the member')
+      expect.stringContaining('OAuth sign-in cannot find or create the member')
     );
     expect(logs.mock.calls[0]?.[0]).toContain('npm run db:start');
   });

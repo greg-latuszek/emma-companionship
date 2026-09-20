@@ -1,5 +1,5 @@
 /**
- * Types for the live Google OAuth path.
+ * Types for the live OAuth path.
  * Member is the login identity, not the full community registry row.
  */
 

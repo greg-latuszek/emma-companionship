@@ -1,6 +1,6 @@
 /**
  * Member Repository Port
- * Live contract for Google OAuth: look up an app_user, or create a pending one.
+ * Live contract for OAuth: look up an app_user, or create a pending one.
  * Implementation: PgMemberRepository
  */
 
@@ -16,7 +16,7 @@ export interface CreateMemberInput {
 }
 
 /**
- * IMemberRepository - Contract for member operations used by Google OAuth
+ * IMemberRepository - Contract for member operations used by OAuth recognition
  */
 export interface IMemberRepository {
   findMemberById(id: MemberId): Promise<Member | null>;

@@ -2,7 +2,8 @@ import Google from 'next-auth/providers/google';
 import type { NextAuthConfig } from 'next-auth';
 
 /**
- * Edge-safe Auth.js config (no Postgres). The JWT already carries memberId / is_active.
+ * Edge-safe Auth.js inbound adapter (no Postgres).
+ * Google is the OAuth provider wired today. The JWT already carries memberId / is_active.
  */
 export const authConfig = {
   trustHost: true,

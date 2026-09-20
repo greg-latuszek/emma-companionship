@@ -1,14 +1,15 @@
 /**
- * Runtime validation for the Google OAuth profile Auth.js hands us.
+ * Identity an OAuth provider confirmed. Google, GitHub, etc. all map to this.
  */
 
 import { z } from 'zod';
 
-export const oauthProfileSchema = z.object({
-  id: z.string(),
-  name: z.string().optional(),
+export const oauthIdentitySchema = z.object({
+  provider: z.string().min(1),
+  subject: z.string().min(1),
+  displayName: z.string().optional(),
   email: z.string().email().optional(),
-  image: z.string().url().optional().nullable(),
+  picture: z.string().url().optional().nullable(),
 });
 
-export type OAuthProfile = z.infer<typeof oauthProfileSchema>;
+export type OAuthIdentity = z.infer<typeof oauthIdentitySchema>;
