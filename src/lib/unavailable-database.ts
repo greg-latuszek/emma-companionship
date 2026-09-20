@@ -93,9 +93,17 @@ export function reportAuthJsFailure(error: Error): void {
   console.error(`${OPERATOR_PREFIX} Auth.js failed.`, error);
 }
 
-export function signInFailureCopy(errorCode: string | undefined): string {
-  if (errorCode === 'Configuration') {
-    return 'Nie udało się dokończyć logowania. Jeśli uruchamiasz serwis lokalnie, uruchom bazę poleceniem npm run db:start i spróbuj ponownie.';
+export function operatorHintsAreEnabled(
+  env: NodeJS.ProcessEnv = process.env
+): boolean {
+  return env.OPERATOR_HINTS === '1' || env.NODE_ENV === 'development';
+}
+
+export function signInFailureCopy(
+  env: NodeJS.ProcessEnv = process.env
+): string {
+  if (operatorHintsAreEnabled(env)) {
+    return 'Nie udało się dokończyć logowania. Serwis uruchomiony lokalnie — sprawdź logi serwera.';
   }
 
   return 'Nie udało się dokończyć logowania. Spróbuj ponownie.';

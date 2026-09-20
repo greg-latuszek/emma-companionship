@@ -4,14 +4,7 @@ import { PageTitle } from '@/components/PageTitle';
 import { SemiTransparentLink } from '@/components/SemiTransparentButton';
 import { signInFailureCopy } from '@/lib/unavailable-database';
 
-export default async function SignInErrorPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ error?: string | string[] }>;
-}) {
-  const params = await searchParams;
-  const errorCode = Array.isArray(params.error) ? params.error[0] : params.error;
-
+export default function SignInErrorPage() {
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center text-white font-serif select-none overflow-hidden relative">
       <PageBackground
@@ -28,7 +21,7 @@ export default async function SignInErrorPage({
           <PageTitle delay={0.3}>emmaCompanionship</PageTitle>
           <div className="w-20 h-px bg-gradient-to-r from-white/0 via-white/40 to-white/0 mb-8 md:mb-10" />
           <p className="max-w-xl text-base sm:text-lg md:text-xl leading-relaxed text-white/85 font-sans font-light tracking-wide drop-shadow-md mb-10">
-            {signInFailureCopy(errorCode)}
+            {signInFailureCopy()}
           </p>
           <SemiTransparentLink href="/" delay={0.6}>
             Wróć

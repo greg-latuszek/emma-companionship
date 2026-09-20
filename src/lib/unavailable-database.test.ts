@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   describeUnavailableDatabase,
   isUnavailableDatabase,
+  operatorHintsAreEnabled,
   reportAuthJsFailure,
   reportFailedGoogleMemberLookup,
   signInFailureCopy,
@@ -71,10 +72,31 @@ describe('unavailable database', () => {
     expect(logs.mock.calls[0]?.[0]).toContain('npm run db:start');
   });
 
-  it('signInFailureCopy tells a local operator to start the database when Auth.js reports Configuration', () => {
-    const copy = signInFailureCopy('Configuration');
+  it('operatorHintsAreEnabled is true when OPERATOR_HINTS is 1 even in production', () => {
+    expect(
+      operatorHintsAreEnabled({ NODE_ENV: 'production', OPERATOR_HINTS: '1' })
+    ).toBe(true);
+  });
 
-    expect(copy).toContain('npm run db:start');
-    expect(copy).not.toMatch(/server configuration/i);
+  it('operatorHintsAreEnabled is true when NODE_ENV is development', () => {
+    expect(operatorHintsAreEnabled({ NODE_ENV: 'development' })).toBe(true);
+  });
+
+  it('operatorHintsAreEnabled is false when the process is production and OPERATOR_HINTS is unset', () => {
+    expect(operatorHintsAreEnabled({ NODE_ENV: 'production' })).toBe(false);
+  });
+
+  it('signInFailureCopy tells a local operator to read the server log when operator hints are on', () => {
+    const copy = signInFailureCopy({ NODE_ENV: 'development' });
+
+    expect(copy).toBe('Nie udało się dokończyć logowania. Serwis uruchomiony lokalnie — sprawdź logi serwera.');
+    expect(copy).not.toMatch(/npm|postgres|baz[aę]/i);
+  });
+
+  it('signInFailureCopy hides how the server runs when operator hints are off', () => {
+    const copy = signInFailureCopy({ NODE_ENV: 'production' });
+
+    expect(copy).toBe('Nie udało się dokończyć logowania. Spróbuj ponownie.');
+    expect(copy).not.toMatch(/npm|logi serwera|lokalnie/i);
   });
 });
