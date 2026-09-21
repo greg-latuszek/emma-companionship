@@ -1,6 +1,6 @@
 /**
  * Community member registry port.
- * List and load people in members. Login stays on IMemberRepository.
+ * List, load, write, and remove people in members. Login stays on IMemberRepository.
  * Implementation: PgCommunityMemberRepository
  */
 
@@ -17,4 +17,5 @@ export interface ICommunityMemberRepository {
     id: MemberId,
     write: CommunityMemberWriteWithDefaults
   ): Promise<CommunityMember | null>;
+  removeCommunityMember(id: MemberId): Promise<boolean>;
 }

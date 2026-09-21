@@ -33,6 +33,7 @@ function aCommunityMemberRepository(
     findCommunityMemberByEmail: vi.fn(),
     addCommunityMember: vi.fn(),
     updateCommunityMember: vi.fn(),
+    removeCommunityMember: vi.fn(),
     ...stubs,
   };
 }

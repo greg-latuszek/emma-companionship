@@ -7,9 +7,17 @@ import {
   CommunityMemberNotFound,
   updateCommunityMember,
 } from '@/application/update-community-member';
+import {
+  CannotRemoveCommunityMemberWhoCanSignIn,
+  removeCommunityMember,
+} from '@/application/remove-community-member';
 import { MemberId } from '@/types/auth';
 import { redirect } from 'next/navigation';
-import { submitCommunityMemberEdits, submitNewCommunityMember } from './actions';
+import {
+  submitCommunityMemberEdits,
+  submitCommunityMemberRemoval,
+  submitNewCommunityMember,
+} from './actions';
 
 vi.mock('@/application/add-community-member', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/application/add-community-member')>();
@@ -24,6 +32,14 @@ vi.mock('@/application/update-community-member', async (importOriginal) => {
   return {
     ...actual,
     updateCommunityMember: vi.fn(),
+  };
+});
+
+vi.mock('@/application/remove-community-member', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/application/remove-community-member')>();
+  return {
+    ...actual,
+    removeCommunityMember: vi.fn(),
   };
 });
 
@@ -134,6 +150,39 @@ describe('submitCommunityMemberEdits', () => {
       MemberId('member-1'),
       expect.objectContaining({ last_name: 'Byron' })
     );
+    expect(redirect).toHaveBeenCalledWith('/app/members');
+  });
+});
+
+describe('submitCommunityMemberRemoval', () => {
+  beforeEach(() => {
+    vi.mocked(removeCommunityMember).mockReset();
+    vi.mocked(redirect).mockReset();
+  });
+
+  it('submitCommunityMemberRemoval tells the Delegate they cannot drop a person who can sign in', async () => {
+    vi.mocked(removeCommunityMember).mockRejectedValue(
+      new CannotRemoveCommunityMemberWhoCanSignIn(MemberId('member-1'))
+    );
+
+    const state = await submitCommunityMemberRemoval(
+      'member-1',
+      undefined,
+      new FormData()
+    );
+
+    expect(state.formError).toBe(
+      'Nie można usunąć osoby, która loguje się do aplikacji.'
+    );
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it('submitCommunityMemberRemoval sends the Delegate to the list after a successful removal', async () => {
+    vi.mocked(removeCommunityMember).mockResolvedValue(undefined);
+
+    await submitCommunityMemberRemoval('member-1', undefined, new FormData());
+
+    expect(removeCommunityMember).toHaveBeenCalledWith(MemberId('member-1'));
     expect(redirect).toHaveBeenCalledWith('/app/members');
   });
 });

@@ -54,6 +54,7 @@ function aCommunityMemberRepository(
     findCommunityMemberByEmail: vi.fn().mockResolvedValue(null),
     addCommunityMember: vi.fn().mockResolvedValue(aCommunityMember()),
     updateCommunityMember: vi.fn(),
+    removeCommunityMember: vi.fn(),
     ...stubs,
   };
 }

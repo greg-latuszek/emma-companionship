@@ -9,6 +9,7 @@ import { PageTitle } from '@/components/PageTitle';
 import { signedInMemberFrom } from '@/app/app/companionship-panel/signed-in-member';
 import { MemberId } from '@/types/auth';
 import { CommunityMemberForm } from '../../CommunityMemberForm';
+import { RemoveCommunityMemberButton } from '../../RemoveCommunityMemberButton';
 import { submitCommunityMemberEdits } from '../../actions';
 import { communityMemberFormValuesFromMember } from '../../community-member-form-state';
 
@@ -64,6 +65,14 @@ export default async function EditCommunityMemberPage({
                   : undefined
               }
             />
+            {!person.hasLoginIdentity ? (
+              <div className="mt-6 border-t border-gray-200 pt-4">
+                <RemoveCommunityMemberButton
+                  memberId={person.id}
+                  memberName={`${person.first_name} ${person.last_name}`}
+                />
+              </div>
+            ) : null}
           </div>
         </div>
       </AppArea>

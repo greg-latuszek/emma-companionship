@@ -3,7 +3,7 @@
  * Reads every members row. oauth_id only sets hasLoginIdentity.
  */
 
-import { queryMany, queryOne } from '@/infrastructure/db/pg';
+import { query, queryMany, queryOne } from '@/infrastructure/db/pg';
 import type { ICommunityMemberRepository } from '@/ports/repositories/ICommunityMemberRepository';
 import type { CommunityMemberWriteWithDefaults } from '@/schemas/community-member';
 import { MemberId } from '@/types/auth';
@@ -147,5 +147,10 @@ export class PgCommunityMemberRepository implements ICommunityMemberRepository {
     );
 
     return row ? communityMemberFromRow(row) : null;
+  }
+
+  async removeCommunityMember(id: MemberId): Promise<boolean> {
+    const result = await query('DELETE FROM members WHERE id = $1', [id]);
+    return (result.rowCount ?? 0) > 0;
   }
 }

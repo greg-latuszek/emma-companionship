@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { JSX } from 'react';
 import type { CommunityMember } from '@/types/community-member';
+import { RemoveCommunityMemberButton } from './RemoveCommunityMemberButton';
 
 function communityMemberName(member: CommunityMember): string {
   return `${member.first_name} ${member.last_name}`;
@@ -30,12 +31,20 @@ export function CommunityMemberList({
               <span className="text-sm text-gray-500 break-all">{member.email}</span>
             ) : null}
           </div>
-          <Link
-            href={`/app/members/${member.id}/edit`}
-            className="shrink-0 text-sm font-medium text-gray-800 underline-offset-4 hover:underline"
-          >
-            Edytuj
-          </Link>
+          <div className="flex shrink-0 items-center gap-4">
+            <Link
+              href={`/app/members/${member.id}/edit`}
+              className="text-sm font-medium text-gray-800 underline-offset-4 hover:underline"
+            >
+              Edytuj
+            </Link>
+            {!member.hasLoginIdentity ? (
+              <RemoveCommunityMemberButton
+                memberId={member.id}
+                memberName={communityMemberName(member)}
+              />
+            ) : null}
+          </div>
         </li>
       ))}
     </ul>

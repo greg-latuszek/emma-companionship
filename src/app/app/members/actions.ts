@@ -10,6 +10,11 @@ import {
   isCommunityMemberNotFound,
   updateCommunityMember,
 } from '@/application/update-community-member';
+import {
+  isCannotRemoveCommunityMemberLinkedToOtherData,
+  isCannotRemoveCommunityMemberWhoCanSignIn,
+  removeCommunityMember,
+} from '@/application/remove-community-member';
 import { MemberId } from '@/types/auth';
 import {
   communityMemberFormValuesFromForm,
@@ -85,6 +90,43 @@ export async function submitCommunityMemberEdits(
     return {
       values,
       formError: 'Nie udało się zapisać osoby. Spróbuj ponownie.',
+    };
+  }
+
+  redirect('/app/members');
+}
+
+export async function submitCommunityMemberRemoval(
+  memberId: string,
+  previous: { formError?: string } | undefined,
+  formData: FormData
+): Promise<{ formError?: string }> {
+  void previous;
+  void formData;
+
+  try {
+    await removeCommunityMember(MemberId(memberId));
+  } catch (error) {
+    if (isCannotRemoveCommunityMemberWhoCanSignIn(error)) {
+      return {
+        formError: 'Nie można usunąć osoby, która loguje się do aplikacji.',
+      };
+    }
+
+    if (isCannotRemoveCommunityMemberLinkedToOtherData(error)) {
+      return {
+        formError: 'Nie można usunąć, bo osoba jest powiązana z innymi danymi.',
+      };
+    }
+
+    if (isCommunityMemberNotFound(error)) {
+      return {
+        formError: 'Nie znaleziono tej osoby.',
+      };
+    }
+
+    return {
+      formError: 'Nie udało się usunąć osoby. Spróbuj ponownie.',
     };
   }
 
