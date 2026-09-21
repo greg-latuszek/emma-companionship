@@ -24,6 +24,7 @@ function aCommunityMember(
     email: null,
     phone: null,
     notes: null,
+    profile_picture: null,
     hasLoginIdentity: false,
     ...overrides,
   };

@@ -40,6 +40,7 @@ function aCommunityMember(
     email: null,
     phone: null,
     notes: null,
+    profile_picture: null,
     hasLoginIdentity: false,
     ...overrides,
   };
@@ -81,6 +82,7 @@ describe('addCommunityMember', () => {
     expect(stored).not.toHaveProperty('oauth_provider');
     expect(stored).not.toHaveProperty('oauth_id');
     expect(stored).not.toHaveProperty('is_active');
+    expect(stored).not.toHaveProperty('profile_picture');
   });
 
   it('addCommunityMember refuses an email another member already has', async () => {

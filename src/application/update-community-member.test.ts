@@ -41,6 +41,7 @@ function aCommunityMember(
     email: null,
     phone: null,
     notes: 'Met last spring',
+    profile_picture: null,
     hasLoginIdentity: false,
     ...overrides,
   };
@@ -79,6 +80,7 @@ describe('updateCommunityMember', () => {
     expect(stored).not.toHaveProperty('oauth_id');
     expect(stored).not.toHaveProperty('is_active');
     expect(stored).not.toHaveProperty('member_type');
+    expect(stored).not.toHaveProperty('profile_picture');
   });
 
   it('updateCommunityMember tells the Delegate when the person is not in the registry', async () => {

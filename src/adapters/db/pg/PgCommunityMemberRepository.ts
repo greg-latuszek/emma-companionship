@@ -1,6 +1,7 @@
 /**
  * PgCommunityMemberRepository — registry adapter.
  * Reads every members row. oauth_id only sets hasLoginIdentity.
+ * profile_picture is the Google photo URL; writes never set it.
  */
 
 import { query, queryMany, queryOne } from '@/infrastructure/db/pg';
@@ -19,7 +20,7 @@ import type {
 const COMMUNITY_MEMBER_COLUMNS = `
   id, first_name, last_name, gender, marital_status, consecrated_status,
   community_engagement_status, accompanying_readiness, email, phone, notes,
-  oauth_provider, oauth_id
+  profile_picture, oauth_provider, oauth_id
 `;
 
 type CommunityMemberRow = {
@@ -34,6 +35,7 @@ type CommunityMemberRow = {
   email: string | null;
   phone: string | null;
   notes: string | null;
+  profile_picture: string | null;
   oauth_provider: string | null;
   oauth_id: string | null;
 };
@@ -51,6 +53,7 @@ function communityMemberFromRow(row: CommunityMemberRow): CommunityMember {
     email: row.email,
     phone: row.phone,
     notes: row.notes,
+    profile_picture: row.profile_picture,
     hasLoginIdentity: row.oauth_id != null,
   };
 }

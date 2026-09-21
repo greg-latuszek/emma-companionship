@@ -2,6 +2,7 @@
  * Community member as a registry person, not a login identity.
  * SQL column names stay as the members table named them.
  * hasLoginIdentity is derived later from oauth_id; it is not a column.
+ * profile_picture is the Google photo URL; the registry reads it and does not write it.
  */
 
 import type { MemberId } from '@/types/auth';
@@ -57,5 +58,6 @@ export interface CommunityMember {
   email: string | null;
   phone: string | null;
   notes: string | null;
+  profile_picture: string | null;
   hasLoginIdentity: boolean;
 }

@@ -49,6 +49,18 @@ describe('community member write', () => {
     expect(parsed.success).toBe(false);
   });
 
+  it('the community member schema drops a Google profile picture URL so the registry cannot write it', () => {
+    const parsed = communityMemberWriteSchema.safeParse({
+      ...aCommunityMemberWrite(),
+      profile_picture: 'https://lh3.googleusercontent.com/ada',
+    });
+
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data).not.toHaveProperty('profile_picture');
+    }
+  });
+
   it('the community member schema stores a blank email as no email', () => {
     const write = aCommunityMemberWrite({ email: '   ' });
 

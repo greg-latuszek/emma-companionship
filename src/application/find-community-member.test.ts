@@ -19,6 +19,7 @@ function aCommunityMember(
     email: 'ada@example.com',
     phone: null,
     notes: null,
+    profile_picture: null,
     hasLoginIdentity: false,
     ...overrides,
   };
@@ -59,5 +60,18 @@ describe('findCommunityMemberById', () => {
 
     expect(members.findCommunityMemberById).toHaveBeenCalledWith(ada.id);
     expect(found).toEqual(ada);
+  });
+
+  it('findCommunityMemberById keeps the Google profile picture URL the registry already has', async () => {
+    const ada = aCommunityMember({
+      profile_picture: 'https://lh3.googleusercontent.com/ada',
+    });
+    const members = aCommunityMemberRepository({
+      findCommunityMemberById: vi.fn().mockResolvedValue(ada),
+    });
+
+    const found = await findCommunityMemberById(ada.id, members);
+
+    expect(found?.profile_picture).toBe('https://lh3.googleusercontent.com/ada');
   });
 });
