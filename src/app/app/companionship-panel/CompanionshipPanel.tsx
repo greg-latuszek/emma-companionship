@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
 import type { JSX } from 'react';
 import type { SignedInMember } from './signed-in-member';
+import { semiTransparentPanelClassName } from '@/components/SemiTransparentButton';
 import { communityMembersPanelCard } from './community-members-panel-card';
 
 export function CompanionshipPanel({ member }: { member: SignedInMember }): JSX.Element {
@@ -44,14 +45,14 @@ export function CompanionshipPanel({ member }: { member: SignedInMember }): JSX.
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
-                className="bg-white rounded-lg shadow-lg p-6 max-w-md mx-auto mt-8 text-gray-800"
+                className={`${semiTransparentPanelClassName} p-6 max-w-md mx-auto mt-8`}
               >
-                <p className="text-gray-600 text-sm mb-2">Zalogowany użytkownik:</p>
-                <p className="text-2xl font-bold mb-1">{member.name}</p>
-                <p className="text-gray-500 mb-6">{member.email}</p>
+                <p className="mb-2 text-sm text-white/80">Zalogowany użytkownik:</p>
+                <p className="mb-1 text-2xl font-bold">{member.name}</p>
+                <p className="mb-6 text-white/70">{member.email}</p>
 
                 {member.memberId ? (
-                  <div className="border-t pt-4 text-sm text-gray-600">
+                  <div className="border-t border-white/25 pt-4 text-sm text-white/80">
                     <p>ID: {member.memberId}</p>
                   </div>
                 ) : null}
@@ -68,26 +69,26 @@ export function CompanionshipPanel({ member }: { member: SignedInMember }): JSX.
             >
               <Link
                 href={communityMembers.href}
-                className="bg-white rounded-lg shadow p-6 text-gray-800 block hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-700"
+                className={`${semiTransparentPanelClassName} block p-6 hover:bg-white/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white`}
               >
-                <h3 className="text-lg font-bold mb-2">
+                <h3 className="mb-2 text-lg font-bold">
                   {communityMembers.title}
                 </h3>
-                <p className="text-gray-600 text-sm">
+                <p className="text-sm text-white/80">
                   Osoby wpisane do rejestru wspólnoty
                 </p>
               </Link>
 
-              <div className="bg-white rounded-lg shadow p-6 text-gray-800">
-                <h3 className="text-lg font-bold mb-2">Health Dashboard</h3>
-                <p className="text-gray-600 text-sm">
+              <div className={`${semiTransparentPanelClassName} p-6`}>
+                <h3 className="mb-2 text-lg font-bold">Health Dashboard</h3>
+                <p className="text-sm text-white/80">
                   View relationship health status
                 </p>
               </div>
 
-              <div className="bg-white rounded-lg shadow p-6 text-gray-800">
-                <h3 className="text-lg font-bold mb-2">Settings</h3>
-                <p className="text-gray-600 text-sm">
+              <div className={`${semiTransparentPanelClassName} p-6`}>
+                <h3 className="mb-2 text-lg font-bold">Settings</h3>
+                <p className="text-sm text-white/80">
                   Manage your account settings
                 </p>
               </div>
