@@ -53,6 +53,7 @@ function aCommunityMemberRepository(
     findCommunityMemberById: vi.fn(),
     findCommunityMemberByEmail: vi.fn().mockResolvedValue(null),
     addCommunityMember: vi.fn().mockResolvedValue(aCommunityMember()),
+    updateCommunityMember: vi.fn(),
     ...stubs,
   };
 }

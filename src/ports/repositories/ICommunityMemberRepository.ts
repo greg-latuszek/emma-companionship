@@ -13,4 +13,8 @@ export interface ICommunityMemberRepository {
   findCommunityMemberById(id: MemberId): Promise<CommunityMember | null>;
   findCommunityMemberByEmail(email: string): Promise<CommunityMember | null>;
   addCommunityMember(write: CommunityMemberWriteWithDefaults): Promise<CommunityMember>;
+  updateCommunityMember(
+    id: MemberId,
+    write: CommunityMemberWriteWithDefaults
+  ): Promise<CommunityMember | null>;
 }

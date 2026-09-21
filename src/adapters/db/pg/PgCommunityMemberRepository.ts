@@ -111,4 +111,41 @@ export class PgCommunityMemberRepository implements ICommunityMemberRepository {
 
     return communityMemberFromRow(row);
   }
+
+  async updateCommunityMember(
+    id: MemberId,
+    write: CommunityMemberWriteWithDefaults
+  ): Promise<CommunityMember | null> {
+    const row = await queryOne<CommunityMemberRow>(
+      `UPDATE members SET
+        first_name = $2,
+        last_name = $3,
+        gender = $4,
+        marital_status = $5,
+        consecrated_status = $6,
+        community_engagement_status = $7,
+        accompanying_readiness = $8,
+        email = $9,
+        phone = $10,
+        notes = $11,
+        updated_at = NOW()
+      WHERE id = $1
+      RETURNING ${COMMUNITY_MEMBER_COLUMNS}`,
+      [
+        id,
+        write.first_name,
+        write.last_name,
+        write.gender,
+        write.marital_status,
+        write.consecrated_status,
+        write.community_engagement_status,
+        write.accompanying_readiness,
+        write.email,
+        write.phone,
+        write.notes,
+      ]
+    );
+
+    return row ? communityMemberFromRow(row) : null;
+  }
 }
