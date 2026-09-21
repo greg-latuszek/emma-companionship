@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { JSX } from 'react';
 import type { CommunityMember } from '@/types/community-member';
 
@@ -21,12 +22,20 @@ export function CommunityMemberList({
       {members.map((member) => (
         <li
           key={member.id}
-          className="flex flex-col gap-1 py-4 sm:flex-row sm:items-baseline sm:justify-between"
+          className="flex flex-col gap-2 py-4 sm:flex-row sm:items-center sm:justify-between"
         >
-          <span className="font-medium text-gray-900">{communityMemberName(member)}</span>
-          {member.email ? (
-            <span className="text-sm text-gray-500 break-all">{member.email}</span>
-          ) : null}
+          <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-4">
+            <span className="font-medium text-gray-900">{communityMemberName(member)}</span>
+            {member.email ? (
+              <span className="text-sm text-gray-500 break-all">{member.email}</span>
+            ) : null}
+          </div>
+          <Link
+            href={`/app/members/${member.id}/edit`}
+            className="shrink-0 text-sm font-medium text-gray-800 underline-offset-4 hover:underline"
+          >
+            Edytuj
+          </Link>
         </li>
       ))}
     </ul>

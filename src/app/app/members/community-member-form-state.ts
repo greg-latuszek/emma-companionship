@@ -1,3 +1,5 @@
+import type { CommunityMember } from '@/types/community-member';
+
 export type CommunityMemberFormValues = {
   first_name: string;
   last_name: string;
@@ -37,6 +39,35 @@ function formText(formData: FormData, name: string): string {
 
 export function maritalStatusIsConsecrated(maritalStatus: string): boolean {
   return maritalStatus === 'consecrated';
+}
+
+export function communityMemberFormValuesFromMember(
+  member: Pick<
+    CommunityMember,
+    | 'first_name'
+    | 'last_name'
+    | 'gender'
+    | 'marital_status'
+    | 'consecrated_status'
+    | 'community_engagement_status'
+    | 'accompanying_readiness'
+    | 'email'
+    | 'phone'
+    | 'notes'
+  >
+): CommunityMemberFormValues {
+  return {
+    first_name: member.first_name,
+    last_name: member.last_name,
+    gender: member.gender ?? '',
+    marital_status: member.marital_status ?? '',
+    consecrated_status: member.consecrated_status ?? '',
+    community_engagement_status: member.community_engagement_status ?? '',
+    accompanying_readiness: member.accompanying_readiness ?? 'Not Candidate',
+    email: member.email ?? '',
+    phone: member.phone ?? '',
+    notes: member.notes ?? '',
+  };
 }
 
 export function communityMemberFormValuesFromForm(

@@ -86,15 +86,25 @@ function FieldError({ message }: { message?: string }): JSX.Element | null {
 
 export function CommunityMemberForm({
   action,
+  initialValues,
+  loginHint,
 }: {
   action: CommunityMemberFormAction;
+  initialValues?: CommunityMemberFormValues;
+  loginHint?: string;
 }): JSX.Element {
   const [state, formAction] = useActionState(action, undefined);
-  const values = state?.values ?? emptyFormValues;
+  const values = state?.values ?? initialValues ?? emptyFormValues;
   const [maritalStatus, setMaritalStatus] = useState(values.marital_status);
 
   return (
     <form action={formAction} className="flex flex-col gap-4 text-left">
+      {loginHint ? (
+        <p className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700">
+          {loginHint}
+        </p>
+      ) : null}
+
       {state?.formError ? (
         <p className="rounded border border-red-200 bg-red-50 px-3 py-2 text-red-800">
           {state.formError}

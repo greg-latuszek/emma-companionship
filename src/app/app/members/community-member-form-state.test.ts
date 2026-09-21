@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { communityMemberFormValuesFromForm } from './community-member-form-state';
+import {
+  communityMemberFormValuesFromForm,
+  communityMemberFormValuesFromMember,
+} from './community-member-form-state';
 
 function aMemberForm(overrides: Record<string, string> = {}): FormData {
   const form = new FormData();
@@ -34,5 +37,26 @@ describe('communityMemberFormValuesFromForm', () => {
     );
 
     expect(values.consecrated_status).toBe('');
+  });
+});
+
+describe('communityMemberFormValuesFromMember', () => {
+  it('communityMemberFormValuesFromMember prefills blank optional fields when the person has none', () => {
+    const values = communityMemberFormValuesFromMember({
+      first_name: 'Ada',
+      last_name: 'Lovelace',
+      gender: null,
+      marital_status: null,
+      consecrated_status: null,
+      community_engagement_status: null,
+      accompanying_readiness: null,
+      email: null,
+      phone: null,
+      notes: null,
+    });
+
+    expect(values.first_name).toBe('Ada');
+    expect(values.gender).toBe('');
+    expect(values.accompanying_readiness).toBe('Not Candidate');
   });
 });
