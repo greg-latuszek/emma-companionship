@@ -56,7 +56,7 @@ export default async function CommunityMembersPage() {
             </div>
           </div>
 
-          <SemiTransparentPanel className="mx-auto mt-8 w-full max-w-3xl p-6 lg:max-w-6xl">
+          <SemiTransparentPanel className="mx-auto mt-8 w-full max-w-3xl p-6 lg:max-w-none">
             <CommunityMemberList members={members} />
           </SemiTransparentPanel>
         </div>

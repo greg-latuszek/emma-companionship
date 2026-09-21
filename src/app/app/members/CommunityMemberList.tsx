@@ -264,14 +264,14 @@ export function CommunityMemberList({
                 <td className={`${stickyCellClassName} sticky left-0 z-10 px-2 py-3`}>
                   <CommunityMemberFace member={member} />
                 </td>
-                <td className={`${stickyCellClassName} sticky left-12 z-10 px-3 py-3 font-medium text-white`}>
+                <td className={`${stickyCellClassName} sticky left-12 z-10 whitespace-nowrap px-3 py-3 font-medium text-white`}>
                   {member.first_name}
                 </td>
-                <td className={`${stickyCellClassName} sticky left-40 z-10 px-3 py-3 font-medium text-white`}>
+                <td className={`${stickyCellClassName} sticky left-40 z-10 whitespace-nowrap px-3 py-3 font-medium text-white`}>
                   {member.last_name}
                 </td>
                 {extraFields.map((field) => (
-                  <td key={field} className="px-3 py-3 text-white/80 break-all">
+                  <td key={field} className="whitespace-nowrap px-3 py-3 text-white/80">
                     {communityMemberFieldText(member, field)}
                   </td>
                 ))}
