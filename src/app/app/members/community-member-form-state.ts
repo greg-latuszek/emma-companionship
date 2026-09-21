@@ -35,15 +35,23 @@ function formText(formData: FormData, name: string): string {
   return typeof value === 'string' ? value : '';
 }
 
+export function maritalStatusIsConsecrated(maritalStatus: string): boolean {
+  return maritalStatus === 'consecrated';
+}
+
 export function communityMemberFormValuesFromForm(
   formData: FormData
 ): CommunityMemberFormValues {
+  const marital_status = formText(formData, 'marital_status');
+
   return {
     first_name: formText(formData, 'first_name'),
     last_name: formText(formData, 'last_name'),
     gender: formText(formData, 'gender'),
-    marital_status: formText(formData, 'marital_status'),
-    consecrated_status: formText(formData, 'consecrated_status'),
+    marital_status,
+    consecrated_status: maritalStatusIsConsecrated(marital_status)
+      ? formText(formData, 'consecrated_status')
+      : '',
     community_engagement_status: formText(formData, 'community_engagement_status'),
     accompanying_readiness: formText(formData, 'accompanying_readiness'),
     email: formText(formData, 'email'),
