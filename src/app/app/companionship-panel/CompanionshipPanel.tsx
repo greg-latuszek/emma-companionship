@@ -5,11 +5,15 @@ import { AppArea } from '@/components/AppArea';
 import { Navbar } from '@/components/Navbar';
 import { LogoutButton } from '@/components/LogoutButton';
 import { PageTitle } from '@/components/PageTitle';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
 import type { JSX } from 'react';
 import type { SignedInMember } from './signed-in-member';
+import { communityMembersPanelCard } from './community-members-panel-card';
 
 export function CompanionshipPanel({ member }: { member: SignedInMember }): JSX.Element {
+  const communityMembers = communityMembersPanelCard();
+
   return (
     <PageBackground
       imageSource="/docs/img/Christ_and_st_Menas.webp"
@@ -62,12 +66,17 @@ export function CompanionshipPanel({ member }: { member: SignedInMember }): JSX.
               transition={{ duration: 0.8, delay: 0.6 }}
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
             >
-              <div className="bg-white rounded-lg shadow p-6 text-gray-800">
-                <h3 className="text-lg font-bold mb-2">Companionship Relations</h3>
+              <Link
+                href={communityMembers.href}
+                className="bg-white rounded-lg shadow p-6 text-gray-800 block hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-700"
+              >
+                <h3 className="text-lg font-bold mb-2">
+                  {communityMembers.title}
+                </h3>
                 <p className="text-gray-600 text-sm">
-                  Manage your companionship relationships
+                  Osoby wpisane do rejestru wspólnoty
                 </p>
-              </div>
+              </Link>
 
               <div className="bg-white rounded-lg shadow p-6 text-gray-800">
                 <h3 className="text-lg font-bold mb-2">Health Dashboard</h3>
