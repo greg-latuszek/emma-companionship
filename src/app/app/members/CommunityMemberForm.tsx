@@ -11,53 +11,17 @@ import {
   maritalStatuses,
 } from '@/types/community-member';
 import {
+  accompanyingReadinessLabels,
+  communityEngagementLabels,
+  consecratedStatusLabels,
+  genderLabels,
+  maritalStatusLabels,
+} from './community-member-labels';
+import {
   maritalStatusIsConsecrated,
   type CommunityMemberFormState,
   type CommunityMemberFormValues,
 } from './community-member-form-state';
-
-const genderLabels: Record<(typeof genders)[number], string> = {
-  male: 'mężczyzna',
-  female: 'kobieta',
-};
-
-const maritalStatusLabels: Record<(typeof maritalStatuses)[number], string> = {
-  single: 'osoba stanu wolnego',
-  married: 'w małżeństwie',
-  widowed: 'wdowa / wdowiec',
-  consecrated: 'osoba konsekrowana lub seminarzysta',
-};
-
-const consecratedStatusLabels: Record<(typeof consecratedStatuses)[number], string> = {
-  priest: 'kapłan',
-  deacon: 'diakon',
-  seminarian: 'seminarzysta',
-  sister: 'siostra konsekrowana',
-  brother: 'brat konsekrowany',
-};
-
-const communityEngagementLabels: Record<
-  (typeof communityEngagementStatuses)[number],
-  string
-> = {
-  'Looker-On': 'Przyglądający(a) się',
-  'In-Probation': 'Na etapie przyjęcia i rozeznania',
-  Commited: 'Zaangażowany(a)',
-  'In-Fraternity-Probation': 'W okresie próbnym Bractwa Jezusowego',
-  Fraternity: 'Konsekrowany(a) w Bractwie Jezusowym',
-};
-
-const accompanyingReadinessLabels: Record<
-  (typeof accompanyingReadinesses)[number],
-  string
-> = {
-  'Not Candidate': 'Nie jest kandydatem',
-  Candidate: 'Kandydat',
-  Ready: 'Gotowy',
-  Active: 'Aktywny',
-  Overwhelmed: 'Przeciążony',
-  Deactivated: 'Dezaktywowany',
-};
 
 const emptyFormValues: CommunityMemberFormValues = {
   first_name: '',
