@@ -37,6 +37,7 @@ export function LogoutButton({
           <img
             src={profilePicture ?? undefined}
             alt=""
+            referrerPolicy="no-referrer"
             className="h-full w-full object-cover"
             onError={() => {
               setPictureFailed(true);
