@@ -32,6 +32,8 @@ export const communityMemberListSortFields = [
 export type CommunityMemberListSortField =
   (typeof communityMemberListSortFields)[number];
 
+export type CommunityMemberListSortDirection = 'asc' | 'desc';
+
 export const communityMemberListFieldLabels: Record<
   CommunityMemberListSortField,
   string
@@ -102,7 +104,8 @@ function communityMemberSortKey(
 export function compareCommunityMembers(
   left: CommunityMember,
   right: CommunityMember,
-  sortField: CommunityMemberListSortField
+  sortField: CommunityMemberListSortField,
+  direction: CommunityMemberListSortDirection = 'asc'
 ): number {
   const leftKey = communityMemberSortKey(left, sortField);
   const rightKey = communityMemberSortKey(right, sortField);
@@ -115,8 +118,9 @@ export function compareCommunityMembers(
   }
 
   const byField = leftKey.localeCompare(rightKey, 'pl');
-  if (byField !== 0) {
-    return byField;
+  const directed = direction === 'desc' ? -byField : byField;
+  if (directed !== 0) {
+    return directed;
   }
 
   return communityMemberName(left).localeCompare(communityMemberName(right), 'pl');
@@ -124,11 +128,30 @@ export function compareCommunityMembers(
 
 export function sortCommunityMembers(
   members: CommunityMember[],
-  sortField: CommunityMemberListSortField
+  sortField: CommunityMemberListSortField,
+  direction: CommunityMemberListSortDirection = 'asc'
 ): CommunityMember[] {
   return [...members].sort((left, right) =>
-    compareCommunityMembers(left, right, sortField)
+    compareCommunityMembers(left, right, sortField, direction)
   );
+}
+
+export function nextCommunityMemberListSort(
+  currentField: CommunityMemberListSortField,
+  currentDirection: CommunityMemberListSortDirection,
+  nextField: CommunityMemberListSortField
+): {
+  sortField: CommunityMemberListSortField;
+  sortDirection: CommunityMemberListSortDirection;
+} {
+  if (currentField === nextField) {
+    return {
+      sortField: currentField,
+      sortDirection: currentDirection === 'asc' ? 'desc' : 'asc',
+    };
+  }
+
+  return { sortField: nextField, sortDirection: 'asc' };
 }
 
 export function toggleCommunityMemberListExtraField(

@@ -4,6 +4,7 @@ import type { CommunityMember } from '@/types/community-member';
 import {
   communityMemberListExtraFields,
   communityMemberThumbnail,
+  nextCommunityMemberListSort,
   sortCommunityMembers,
   toggleCommunityMemberListExtraField,
 } from './community-member-list-state';
@@ -81,5 +82,28 @@ describe('community member list state', () => {
 
   it('toggleCommunityMemberListExtraField hides email when it is already shown', () => {
     expect(toggleCommunityMemberListExtraField(['email'], 'email')).toEqual([]);
+  });
+
+  it('sortCommunityMembers reverses last names when the Delegate sorts nazwisko descending', () => {
+    const ada = aCommunityMember({ last_name: 'Lovelace' });
+    const charles = aCommunityMember({
+      id: MemberId('member-2'),
+      first_name: 'Charles',
+      last_name: 'Babbage',
+    });
+
+    const sorted = sortCommunityMembers([ada, charles], 'last_name', 'desc');
+
+    expect(sorted.map((member) => member.last_name)).toEqual([
+      'Lovelace',
+      'Babbage',
+    ]);
+  });
+
+  it('nextCommunityMemberListSort reverses direction when the Delegate clicks the same header again', () => {
+    expect(nextCommunityMemberListSort('last_name', 'asc', 'last_name')).toEqual({
+      sortField: 'last_name',
+      sortDirection: 'desc',
+    });
   });
 });
