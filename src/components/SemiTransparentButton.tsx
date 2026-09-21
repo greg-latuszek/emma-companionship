@@ -10,6 +10,19 @@ export const semiTransparentControlSurfaceClassName =
 export const semiTransparentControlClassName =
   `inline-block px-8 sm:px-12 py-3 sm:py-4 ${semiTransparentControlSurfaceClassName}`;
 
+export const semiTransparentPanelClassName =
+  'rounded-lg bg-white/15 border border-white/35 text-white backdrop-blur-md shadow-lg';
+
+export function SemiTransparentPanel({
+  children,
+  className = '',
+}: {
+  children: React.ReactNode;
+  className?: string;
+}): JSX.Element {
+  return <div className={`${semiTransparentPanelClassName} ${className}`}>{children}</div>;
+}
+
 interface SemiTransparentButtonProps {
   href: string;
   children: React.ReactNode;

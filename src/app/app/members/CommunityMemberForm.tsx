@@ -77,11 +77,16 @@ type CommunityMemberFormAction = (
   formData: FormData
 ) => Promise<CommunityMemberFormState>;
 
+const fieldControlClassName =
+  'rounded border border-white/35 bg-white/15 px-3 py-2 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/40';
+
+const selectOptionClassName = 'bg-white text-gray-900';
+
 function FieldError({ message }: { message?: string }): JSX.Element | null {
   if (!message) {
     return null;
   }
-  return <p className="text-sm text-red-700">{message}</p>;
+  return <p className="text-sm text-red-200">{message}</p>;
 }
 
 export function CommunityMemberForm({
@@ -100,13 +105,13 @@ export function CommunityMemberForm({
   return (
     <form action={formAction} className="flex flex-col gap-4 text-left">
       {loginHint ? (
-        <p className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700">
+        <p className="rounded border border-white/25 bg-white/10 px-3 py-2 text-sm text-white/90">
           {loginHint}
         </p>
       ) : null}
 
       {state?.formError ? (
-        <p className="rounded border border-red-200 bg-red-50 px-3 py-2 text-red-800">
+        <p className="rounded border border-red-300/50 bg-red-500/20 px-3 py-2 text-red-50">
           {state.formError}
         </p>
       ) : null}
@@ -116,7 +121,7 @@ export function CommunityMemberForm({
         <input
           name="first_name"
           defaultValue={values.first_name}
-          className="rounded border border-gray-300 px-3 py-2"
+          className={fieldControlClassName}
           required
         />
         <FieldError message={state?.fieldErrors?.first_name} />
@@ -127,7 +132,7 @@ export function CommunityMemberForm({
         <input
           name="last_name"
           defaultValue={values.last_name}
-          className="rounded border border-gray-300 px-3 py-2"
+          className={fieldControlClassName}
           required
         />
         <FieldError message={state?.fieldErrors?.last_name} />
@@ -138,11 +143,13 @@ export function CommunityMemberForm({
         <select
           name="gender"
           defaultValue={values.gender}
-          className="rounded border border-gray-300 px-3 py-2"
+          className={fieldControlClassName}
         >
-          <option value="">nie wybrano</option>
+          <option value="" className={selectOptionClassName}>
+            nie wybrano
+          </option>
           {genders.map((gender) => (
-            <option key={gender} value={gender}>
+            <option key={gender} value={gender} className={selectOptionClassName}>
               {genderLabels[gender]}
             </option>
           ))}
@@ -156,11 +163,13 @@ export function CommunityMemberForm({
           name="marital_status"
           value={maritalStatus}
           onChange={(event) => setMaritalStatus(event.target.value)}
-          className="rounded border border-gray-300 px-3 py-2"
+          className={fieldControlClassName}
         >
-          <option value="">nie wybrano</option>
+          <option value="" className={selectOptionClassName}>
+            nie wybrano
+          </option>
           {maritalStatuses.map((status) => (
-            <option key={status} value={status}>
+            <option key={status} value={status} className={selectOptionClassName}>
               {maritalStatusLabels[status]}
             </option>
           ))}
@@ -174,11 +183,13 @@ export function CommunityMemberForm({
           <select
             name="consecrated_status"
             defaultValue={values.consecrated_status}
-            className="rounded border border-gray-300 px-3 py-2"
+            className={fieldControlClassName}
           >
-            <option value="">nie wybrano</option>
+            <option value="" className={selectOptionClassName}>
+            nie wybrano
+          </option>
             {consecratedStatuses.map((status) => (
-              <option key={status} value={status}>
+              <option key={status} value={status} className={selectOptionClassName}>
                 {consecratedStatusLabels[status]}
               </option>
             ))}
@@ -192,11 +203,13 @@ export function CommunityMemberForm({
         <select
           name="community_engagement_status"
           defaultValue={values.community_engagement_status}
-          className="rounded border border-gray-300 px-3 py-2"
+          className={fieldControlClassName}
         >
-          <option value="">nie wybrano</option>
+          <option value="" className={selectOptionClassName}>
+            nie wybrano
+          </option>
           {communityEngagementStatuses.map((status) => (
-            <option key={status} value={status}>
+            <option key={status} value={status} className={selectOptionClassName}>
               {communityEngagementLabels[status]}
             </option>
           ))}
@@ -209,10 +222,10 @@ export function CommunityMemberForm({
         <select
           name="accompanying_readiness"
           defaultValue={values.accompanying_readiness}
-          className="rounded border border-gray-300 px-3 py-2"
+          className={fieldControlClassName}
         >
           {accompanyingReadinesses.map((readiness) => (
-            <option key={readiness} value={readiness}>
+            <option key={readiness} value={readiness} className={selectOptionClassName}>
               {accompanyingReadinessLabels[readiness]}
             </option>
           ))}
@@ -226,7 +239,7 @@ export function CommunityMemberForm({
           name="email"
           type="email"
           defaultValue={values.email}
-          className="rounded border border-gray-300 px-3 py-2"
+          className={fieldControlClassName}
         />
         <FieldError message={state?.fieldErrors?.email} />
       </label>
@@ -236,7 +249,7 @@ export function CommunityMemberForm({
         <input
           name="phone"
           defaultValue={values.phone}
-          className="rounded border border-gray-300 px-3 py-2"
+          className={fieldControlClassName}
         />
         <FieldError message={state?.fieldErrors?.phone} />
       </label>
@@ -247,7 +260,7 @@ export function CommunityMemberForm({
           name="notes"
           defaultValue={values.notes}
           rows={4}
-          className="rounded border border-gray-300 px-3 py-2"
+          className={fieldControlClassName}
         />
         <FieldError message={state?.fieldErrors?.notes} />
       </label>
@@ -255,13 +268,13 @@ export function CommunityMemberForm({
       <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:justify-end">
         <Link
           href="/app/members"
-          className="rounded border border-gray-300 px-4 py-2 text-center text-gray-800"
+          className="rounded-full border border-white/35 bg-white/10 px-4 py-2 text-center text-white backdrop-blur-md hover:bg-white/20"
         >
           Anuluj
         </Link>
         <button
           type="submit"
-          className="rounded bg-gray-900 px-4 py-2 text-white"
+          className="rounded-full border border-white/35 bg-white/25 px-4 py-2 text-white backdrop-blur-md hover:bg-white/35"
         >
           Zapisz
         </button>

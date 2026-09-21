@@ -6,6 +6,7 @@ import { Navbar } from '@/components/Navbar';
 import { LogoutButton } from '@/components/LogoutButton';
 import { PageTitle } from '@/components/PageTitle';
 import { signedInMemberFrom } from '@/app/app/companionship-panel/signed-in-member';
+import { SemiTransparentPanel } from '@/components/SemiTransparentButton';
 import { CommunityMemberForm } from '../CommunityMemberForm';
 import { submitNewCommunityMember } from '../actions';
 
@@ -39,9 +40,9 @@ export default async function AddCommunityMemberPage() {
             <PageTitle delay={0.2}>Dodaj osobę</PageTitle>
           </div>
 
-          <div className="bg-white rounded-lg shadow-lg p-6 max-w-3xl mx-auto mt-8 w-full text-gray-800">
+          <SemiTransparentPanel className="p-6 max-w-3xl mx-auto mt-8 w-full">
             <CommunityMemberForm action={submitNewCommunityMember} />
-          </div>
+          </SemiTransparentPanel>
         </div>
       </AppArea>
     </PageBackground>

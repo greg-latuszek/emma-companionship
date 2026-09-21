@@ -8,6 +8,7 @@ import { LogoutButton } from '@/components/LogoutButton';
 import { PageTitle } from '@/components/PageTitle';
 import { signedInMemberFrom } from '@/app/app/companionship-panel/signed-in-member';
 import { MemberId } from '@/types/auth';
+import { SemiTransparentPanel } from '@/components/SemiTransparentButton';
 import { CommunityMemberForm } from '../../CommunityMemberForm';
 import { RemoveCommunityMemberButton } from '../../RemoveCommunityMemberButton';
 import { submitCommunityMemberEdits } from '../../actions';
@@ -55,7 +56,7 @@ export default async function EditCommunityMemberPage({
             <PageTitle delay={0.2}>Edytuj osobę</PageTitle>
           </div>
 
-          <div className="bg-white rounded-lg shadow-lg p-6 max-w-3xl mx-auto mt-8 w-full text-gray-800">
+          <SemiTransparentPanel className="p-6 max-w-3xl mx-auto mt-8 w-full">
             <CommunityMemberForm
               action={saveEdits}
               initialValues={communityMemberFormValuesFromMember(person)}
@@ -66,14 +67,14 @@ export default async function EditCommunityMemberPage({
               }
             />
             {!person.hasLoginIdentity ? (
-              <div className="mt-6 border-t border-gray-200 pt-4">
+              <div className="mt-6 border-t border-white/25 pt-4">
                 <RemoveCommunityMemberButton
                   memberId={person.id}
                   memberName={`${person.first_name} ${person.last_name}`}
                 />
               </div>
             ) : null}
-          </div>
+          </SemiTransparentPanel>
         </div>
       </AppArea>
     </PageBackground>

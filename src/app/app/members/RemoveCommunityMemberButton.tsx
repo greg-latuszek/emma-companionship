@@ -25,11 +25,11 @@ export function RemoveCommunityMemberButton({
       className="flex flex-col items-start gap-1"
     >
       {state?.formError ? (
-        <p className="text-sm text-red-700">{state.formError}</p>
+        <p className="text-sm text-red-200">{state.formError}</p>
       ) : null}
       <button
         type="submit"
-        className="text-sm font-medium text-red-800 underline-offset-4 hover:underline"
+        className="text-sm font-medium text-red-200 underline-offset-4 hover:underline"
       >
         Usuń
       </button>
