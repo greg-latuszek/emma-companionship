@@ -5,6 +5,7 @@
 
 import { queryMany, queryOne } from '@/infrastructure/db/pg';
 import type { ICommunityMemberRepository } from '@/ports/repositories/ICommunityMemberRepository';
+import type { CommunityMemberWriteWithDefaults } from '@/schemas/community-member';
 import { MemberId } from '@/types/auth';
 import type {
   AccompanyingReadiness,
@@ -69,5 +70,45 @@ export class PgCommunityMemberRepository implements ICommunityMemberRepository {
       [id]
     );
     return row ? communityMemberFromRow(row) : null;
+  }
+
+  async findCommunityMemberByEmail(email: string): Promise<CommunityMember | null> {
+    const row = await queryOne<CommunityMemberRow>(
+      `SELECT ${COMMUNITY_MEMBER_COLUMNS} FROM members WHERE email = $1`,
+      [email]
+    );
+    return row ? communityMemberFromRow(row) : null;
+  }
+
+  async addCommunityMember(
+    write: CommunityMemberWriteWithDefaults
+  ): Promise<CommunityMember> {
+    const row = await queryOne<CommunityMemberRow>(
+      `INSERT INTO members (
+        first_name, last_name, gender, marital_status, consecrated_status,
+        community_engagement_status, accompanying_readiness, email, phone, notes
+      ) VALUES (
+        $1, $2, $3, $4, $5,
+        $6, $7, $8, $9, $10
+      ) RETURNING ${COMMUNITY_MEMBER_COLUMNS}`,
+      [
+        write.first_name,
+        write.last_name,
+        write.gender,
+        write.marital_status,
+        write.consecrated_status,
+        write.community_engagement_status,
+        write.accompanying_readiness,
+        write.email,
+        write.phone,
+        write.notes,
+      ]
+    );
+
+    if (!row) {
+      throw new Error('Failed to add community member');
+    }
+
+    return communityMemberFromRow(row);
   }
 }

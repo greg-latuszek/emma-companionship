@@ -30,6 +30,8 @@ function aCommunityMemberRepository(
   return {
     listCommunityMembers: vi.fn(),
     findCommunityMemberById: vi.fn(),
+    findCommunityMemberByEmail: vi.fn(),
+    addCommunityMember: vi.fn(),
     ...stubs,
   };
 }
