@@ -17,7 +17,7 @@ export default async function CommunityMembersPage() {
     redirect('/');
   }
 
-  const member = signedInMemberFrom(session);
+  const member = await signedInMemberFrom(session);
   const members = await listCommunityMembers();
 
   return (

@@ -16,7 +16,7 @@ export default async function AddCommunityMemberPage() {
     redirect('/');
   }
 
-  const member = signedInMemberFrom(session);
+  const member = await signedInMemberFrom(session);
 
   return (
     <PageBackground

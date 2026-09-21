@@ -10,5 +10,5 @@ export default async function CompanionshipPanelPage() {
     redirect('/');
   }
 
-  return <CompanionshipPanel member={signedInMemberFrom(session)} />;
+  return <CompanionshipPanel member={await signedInMemberFrom(session)} />;
 }
