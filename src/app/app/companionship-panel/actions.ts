@@ -1,6 +1,6 @@
 'use server';
 
-import { redirect } from 'next/navigation';
+import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
 import {
   isLoginMemberNotFound,
@@ -39,5 +39,6 @@ export async function submitMemberVisualStyle(
     return { formError: 'Nie udało się zapisać wyglądu. Spróbuj ponownie.' };
   }
 
-  redirect('/app/companionship-panel');
+  revalidatePath('/app', 'layout');
+  return {};
 }

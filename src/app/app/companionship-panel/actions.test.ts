@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { redirect } from 'next/navigation';
+import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
 import {
   LoginMemberNotFound,
@@ -21,8 +21,8 @@ vi.mock('@/application/update-member-visual-style', async (importOriginal) => {
   };
 });
 
-vi.mock('next/navigation', () => ({
-  redirect: vi.fn(),
+vi.mock('next/cache', () => ({
+  revalidatePath: vi.fn(),
 }));
 
 const memberId = MemberId('member-1');
@@ -44,7 +44,7 @@ describe('submitMemberVisualStyle', () => {
   beforeEach(() => {
     vi.mocked(auth).mockReset();
     vi.mocked(updateMemberVisualStyle).mockReset();
-    vi.mocked(redirect).mockReset();
+    vi.mocked(revalidatePath).mockReset();
   });
 
   it('submitMemberVisualStyle stores high-contrast for the signed-in login member', async () => {
@@ -54,7 +54,7 @@ describe('submitMemberVisualStyle', () => {
     await submitMemberVisualStyle(undefined, aVisualStyleForm('high-contrast'));
 
     expect(updateMemberVisualStyle).toHaveBeenCalledWith(memberId, 'high-contrast');
-    expect(redirect).toHaveBeenCalledWith('/app/companionship-panel');
+    expect(revalidatePath).toHaveBeenCalledWith('/app', 'layout');
   });
 
   it('submitMemberVisualStyle stores an empty visual_style when they choose the default', async () => {
@@ -64,7 +64,7 @@ describe('submitMemberVisualStyle', () => {
     await submitMemberVisualStyle(undefined, aVisualStyleForm('semi-transparent'));
 
     expect(updateMemberVisualStyle).toHaveBeenCalledWith(memberId, null);
-    expect(redirect).toHaveBeenCalledWith('/app/companionship-panel');
+    expect(revalidatePath).toHaveBeenCalledWith('/app', 'layout');
   });
 
   it('submitMemberVisualStyle asks them to choose a visual style the form offers', async () => {
@@ -77,7 +77,7 @@ describe('submitMemberVisualStyle', () => {
 
     expect(state.formError).toBe('Wybierz wygląd.');
     expect(updateMemberVisualStyle).not.toHaveBeenCalled();
-    expect(redirect).not.toHaveBeenCalled();
+    expect(revalidatePath).not.toHaveBeenCalled();
   });
 
   it('submitMemberVisualStyle asks them to sign in again when the session has no login member', async () => {
@@ -107,6 +107,6 @@ describe('submitMemberVisualStyle', () => {
     );
 
     expect(state.formError).toBe('Zaloguj się ponownie, aby zmienić wygląd.');
-    expect(redirect).not.toHaveBeenCalled();
+    expect(revalidatePath).not.toHaveBeenCalled();
   });
 });

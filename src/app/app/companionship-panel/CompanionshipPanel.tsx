@@ -91,7 +91,7 @@ export function CompanionshipPanel({ member }: { member: SignedInMember }): JSX.
 
               <div className={`${surfaces.panel} p-6`}>
                 {member.memberId ? (
-                  <VisualStyleSettings visualStyle={member.visualStyle} />
+                  <VisualStyleSettings />
                 ) : (
                   <>
                     <h3 className="mb-2 text-lg font-bold">Ustawienia aplikacji</h3>

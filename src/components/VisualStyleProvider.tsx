@@ -1,25 +1,39 @@
 'use client';
 
-import { createContext, useContext } from 'react';
+import { createContext, useContext, useState } from 'react';
 import type { JSX, ReactNode } from 'react';
 import { defaultVisualStyle, type VisualStyle } from '@/types/auth';
 
-const VisualStyleContext = createContext<VisualStyle>(defaultVisualStyle);
+type VisualStyleChoice = {
+  visualStyle: VisualStyle;
+  applyVisualStyle: (visualStyle: VisualStyle) => void;
+};
+
+const VisualStyleContext = createContext<VisualStyleChoice>({
+  visualStyle: defaultVisualStyle,
+  applyVisualStyle: () => {},
+});
 
 export function VisualStyleProvider({
-  visualStyle,
+  visualStyle: storedVisualStyle,
   children,
 }: {
   visualStyle: VisualStyle;
   children: ReactNode;
 }): JSX.Element {
+  const [visualStyle, applyVisualStyle] = useState(storedVisualStyle);
+
   return (
-    <VisualStyleContext.Provider value={visualStyle}>
+    <VisualStyleContext.Provider value={{ visualStyle, applyVisualStyle }}>
       {children}
     </VisualStyleContext.Provider>
   );
 }
 
 export function useVisualStyle(): VisualStyle {
-  return useContext(VisualStyleContext);
+  return useContext(VisualStyleContext).visualStyle;
+}
+
+export function useApplyVisualStyle(): (visualStyle: VisualStyle) => void {
+  return useContext(VisualStyleContext).applyVisualStyle;
 }
