@@ -11,6 +11,7 @@ import type { JSX } from 'react';
 import type { SignedInMember } from './signed-in-member';
 import { semiTransparentPanelClassName } from '@/components/SemiTransparentButton';
 import { communityMembersPanelCard } from './community-members-panel-card';
+import { VisualStyleSettings } from './VisualStyleSettings';
 
 export function CompanionshipPanel({ member }: { member: SignedInMember }): JSX.Element {
   const communityMembers = communityMembersPanelCard();
@@ -87,10 +88,16 @@ export function CompanionshipPanel({ member }: { member: SignedInMember }): JSX.
               </div>
 
               <div className={`${semiTransparentPanelClassName} p-6`}>
-                <h3 className="mb-2 text-lg font-bold">Settings</h3>
-                <p className="text-sm text-white/80">
-                  Manage your account settings
-                </p>
+                {member.memberId ? (
+                  <VisualStyleSettings visualStyle={member.visualStyle} />
+                ) : (
+                  <>
+                    <h3 className="mb-2 text-lg font-bold">Ustawienia aplikacji</h3>
+                    <p className="text-sm text-white/80">
+                      Zaloguj się ponownie, aby zmienić wygląd.
+                    </p>
+                  </>
+                )}
               </div>
             </motion.div>
           </div>

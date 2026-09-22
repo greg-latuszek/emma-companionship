@@ -58,6 +58,7 @@ describe('signedInMemberFrom', () => {
       email: 'ada@example.com',
       memberId,
       profilePicture: null,
+      visualStyle: 'semi-transparent',
     });
   });
 
@@ -89,7 +90,8 @@ describe('signedInMemberFrom', () => {
     );
 
     expect(member.profilePicture).toBe('https://example.com/ada.jpg');
-    expect(members.findMemberById).not.toHaveBeenCalled();
+    expect(member.visualStyle).toBe('semi-transparent');
+    expect(members.findMemberById).toHaveBeenCalledWith(memberId);
   });
 
   it('signedInMemberFrom uses the stored profile picture when the session has no image', async () => {
@@ -110,5 +112,42 @@ describe('signedInMemberFrom', () => {
 
     expect(members.findMemberById).toHaveBeenCalledWith(memberId);
     expect(member.profilePicture).toBe('https://example.com/stored-ada.jpg');
+    expect(member.visualStyle).toBe('semi-transparent');
+  });
+
+  it('signedInMemberFrom uses the stored visual style when the login member chose high-contrast', async () => {
+    const members = aMemberRepository({
+      findMemberById: vi.fn().mockResolvedValue(
+        aStoredMember({ visual_style: 'high-contrast' })
+      ),
+    });
+
+    const member = await signedInMemberFrom(
+      aSession({
+        name: 'Ada Lovelace',
+        email: 'ada@example.com',
+        memberId,
+      }),
+      members
+    );
+
+    expect(member.visualStyle).toBe('high-contrast');
+  });
+
+  it('signedInMemberFrom treats an empty stored visual style as the semi-transparent default', async () => {
+    const members = aMemberRepository({
+      findMemberById: vi.fn().mockResolvedValue(aStoredMember({ visual_style: null })),
+    });
+
+    const member = await signedInMemberFrom(
+      aSession({
+        name: 'Ada Lovelace',
+        email: 'ada@example.com',
+        memberId,
+      }),
+      members
+    );
+
+    expect(member.visualStyle).toBe('semi-transparent');
   });
 });

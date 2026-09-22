@@ -19,6 +19,15 @@ export function visualStyleOrDefault(
   return defaultVisualStyle;
 }
 
+export function visualStyleToStore(
+  visualStyle: VisualStyle
+): VisualStyle | null {
+  if (visualStyle === defaultVisualStyle) {
+    return null;
+  }
+  return visualStyle;
+}
+
 export interface Member {
   id: MemberId;
   first_name: string;
