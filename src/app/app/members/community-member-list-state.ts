@@ -34,6 +34,16 @@ export type CommunityMemberListSortField =
 
 export type CommunityMemberListSortDirection = 'asc' | 'desc';
 
+export type CommunityMemberListSort = {
+  sortField: CommunityMemberListSortField;
+  sortDirection: CommunityMemberListSortDirection;
+};
+
+export const defaultCommunityMemberListSort: CommunityMemberListSort = {
+  sortField: 'last_name',
+  sortDirection: 'asc',
+};
+
 export const communityMemberListFieldLabels: Record<
   CommunityMemberListSortField,
   string
@@ -162,4 +172,114 @@ export function toggleCommunityMemberListExtraField(
     return extras.filter((extra) => extra !== field);
   }
   return [...extras, field];
+}
+
+export const communityMemberListExtraFieldsStorageKey =
+  'emma.community-member-list.extra-fields';
+
+export function communityMemberListExtraFieldsFromStoredValue(
+  stored: string | null
+): CommunityMemberListExtraField[] {
+  if (stored == null) {
+    return defaultCommunityMemberListExtraFields;
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(stored);
+    if (!Array.isArray(parsed)) {
+      return defaultCommunityMemberListExtraFields;
+    }
+
+    const extras = parsed.filter((field): field is CommunityMemberListExtraField =>
+      (communityMemberListExtraFields as readonly string[]).includes(field)
+    );
+
+    if (parsed.length > 0 && extras.length === 0) {
+      return defaultCommunityMemberListExtraFields;
+    }
+
+    return extras;
+  } catch {
+    return defaultCommunityMemberListExtraFields;
+  }
+}
+
+export function readStoredCommunityMemberListExtraFields(
+  storage: Pick<Storage, 'getItem'> | null
+): CommunityMemberListExtraField[] {
+  if (!storage) {
+    return defaultCommunityMemberListExtraFields;
+  }
+
+  return communityMemberListExtraFieldsFromStoredValue(
+    storage.getItem(communityMemberListExtraFieldsStorageKey)
+  );
+}
+
+export function storeCommunityMemberListExtraFields(
+  extras: CommunityMemberListExtraField[],
+  storage: Pick<Storage, 'setItem'> | null
+): void {
+  storage?.setItem(
+    communityMemberListExtraFieldsStorageKey,
+    JSON.stringify(extras)
+  );
+}
+
+export const communityMemberListSortStorageKey =
+  'emma.community-member-list.sort';
+
+export function communityMemberListSortFromStoredValue(
+  stored: string | null
+): CommunityMemberListSort {
+  if (stored == null) {
+    return defaultCommunityMemberListSort;
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(stored);
+    if (!parsed || typeof parsed !== 'object') {
+      return defaultCommunityMemberListSort;
+    }
+
+    const { sortField, sortDirection } = parsed as {
+      sortField?: unknown;
+      sortDirection?: unknown;
+    };
+    const fieldIsKnown = (communityMemberListSortFields as readonly string[]).includes(
+      sortField as string
+    );
+    const directionIsKnown =
+      sortDirection === 'asc' || sortDirection === 'desc';
+
+    if (!fieldIsKnown || !directionIsKnown) {
+      return defaultCommunityMemberListSort;
+    }
+
+    return {
+      sortField: sortField as CommunityMemberListSortField,
+      sortDirection,
+    };
+  } catch {
+    return defaultCommunityMemberListSort;
+  }
+}
+
+export function readStoredCommunityMemberListSort(
+  storage: Pick<Storage, 'getItem'> | null
+): CommunityMemberListSort {
+  if (!storage) {
+    return defaultCommunityMemberListSort;
+  }
+
+  return communityMemberListSortFromStoredValue(
+    storage.getItem(communityMemberListSortStorageKey)
+  );
+}
+
+export function storeCommunityMemberListSort(
+  sort: CommunityMemberListSort,
+  storage: Pick<Storage, 'setItem'> | null
+): void {
+  storage?.setItem(communityMemberListSortStorageKey, JSON.stringify(sort));
 }

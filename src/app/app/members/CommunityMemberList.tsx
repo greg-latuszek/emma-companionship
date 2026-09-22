@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { JSX } from 'react';
 import { useVisualStyle } from '@/components/VisualStyleProvider';
 import { visualSurfaces } from '@/components/visual-style-surfaces';
@@ -16,7 +16,11 @@ import {
   communityMemberThumbnail,
   defaultCommunityMemberListExtraFields,
   nextCommunityMemberListSort,
+  readStoredCommunityMemberListExtraFields,
+  readStoredCommunityMemberListSort,
   sortCommunityMembers,
+  storeCommunityMemberListExtraFields,
+  storeCommunityMemberListSort,
   toggleCommunityMemberListExtraField,
   type CommunityMemberListExtraField,
   type CommunityMemberListSortDirection,
@@ -124,6 +128,13 @@ export function CommunityMemberList({
   );
   const surfaces = visualSurfaces(useVisualStyle());
 
+  useEffect(() => {
+    const storedSort = readStoredCommunityMemberListSort(window.localStorage);
+    setSortField(storedSort.sortField);
+    setSortDirection(storedSort.sortDirection);
+    setExtraFields(readStoredCommunityMemberListExtraFields(window.localStorage));
+  }, []);
+
   if (members.length === 0) {
     return (
       <p className={`text-center ${surfaces.mutedText}`}>Nie ma jeszcze osób w rejestrze.</p>
@@ -132,10 +143,21 @@ export function CommunityMemberList({
 
   const sortedMembers = sortCommunityMembers(members, sortField, sortDirection);
 
+  function rememberSort(
+    field: CommunityMemberListSortField,
+    direction: CommunityMemberListSortDirection
+  ): void {
+    setSortField(field);
+    setSortDirection(direction);
+    storeCommunityMemberListSort(
+      { sortField: field, sortDirection: direction },
+      window.localStorage
+    );
+  }
+
   function sortBy(field: CommunityMemberListSortField): void {
     const next = nextCommunityMemberListSort(sortField, sortDirection, field);
-    setSortField(next.sortField);
-    setSortDirection(next.sortDirection);
+    rememberSort(next.sortField, next.sortDirection);
   }
 
   return (
@@ -146,8 +168,10 @@ export function CommunityMemberList({
           <select
             value={sortField}
             onChange={(event) => {
-              setSortField(event.target.value as CommunityMemberListSortField);
-              setSortDirection('asc');
+              rememberSort(
+                event.target.value as CommunityMemberListSortField,
+                'asc'
+              );
             }}
             className={surfaces.field}
           >
@@ -168,9 +192,17 @@ export function CommunityMemberList({
                   type="checkbox"
                   checked={extraFields.includes(field)}
                   onChange={() => {
-                    setExtraFields((current) =>
-                      toggleCommunityMemberListExtraField(current, field)
-                    );
+                    setExtraFields((current) => {
+                      const extras = toggleCommunityMemberListExtraField(
+                        current,
+                        field
+                      );
+                      storeCommunityMemberListExtraFields(
+                        extras,
+                        window.localStorage
+                      );
+                      return extras;
+                    });
                   }}
                 />
                 <span>{communityMemberListFieldLabels[field]}</span>

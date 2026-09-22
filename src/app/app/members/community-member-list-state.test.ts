@@ -3,11 +3,29 @@ import { MemberId } from '@/types/auth';
 import type { CommunityMember } from '@/types/community-member';
 import {
   communityMemberListExtraFields,
+  communityMemberListExtraFieldsFromStoredValue,
+  communityMemberListSortFromStoredValue,
   communityMemberThumbnail,
   nextCommunityMemberListSort,
+  readStoredCommunityMemberListExtraFields,
+  readStoredCommunityMemberListSort,
   sortCommunityMembers,
+  storeCommunityMemberListExtraFields,
+  storeCommunityMemberListSort,
   toggleCommunityMemberListExtraField,
 } from './community-member-list-state';
+
+function aMemoryStorage() {
+  const values = new Map<string, string>();
+  return {
+    getItem(key: string) {
+      return values.get(key) ?? null;
+    },
+    setItem(key: string, value: string) {
+      values.set(key, value);
+    },
+  };
+}
 
 function aCommunityMember(
   overrides: Partial<CommunityMember> = {}
@@ -104,6 +122,81 @@ describe('community member list state', () => {
     expect(nextCommunityMemberListSort('last_name', 'asc', 'last_name')).toEqual({
       sortField: 'last_name',
       sortDirection: 'desc',
+    });
+  });
+
+  it('communityMemberListExtraFieldsFromStoredValue restores the fields the Delegate chose to show', () => {
+    expect(
+      communityMemberListExtraFieldsFromStoredValue(
+        JSON.stringify(['phone', 'gender'])
+      )
+    ).toEqual(['phone', 'gender']);
+  });
+
+  it('communityMemberListExtraFieldsFromStoredValue keeps an empty choice so only names stay visible', () => {
+    expect(communityMemberListExtraFieldsFromStoredValue('[]')).toEqual([]);
+  });
+
+  it('communityMemberListExtraFieldsFromStoredValue falls back to email when the stored value is not a field list', () => {
+    expect(communityMemberListExtraFieldsFromStoredValue('not-json')).toEqual([
+      'email',
+    ]);
+    expect(
+      communityMemberListExtraFieldsFromStoredValue(JSON.stringify(['notes']))
+    ).toEqual(['email']);
+  });
+
+  it('storeCommunityMemberListExtraFields writes the shown fields so a later visit can restore them', () => {
+    const storage = aMemoryStorage();
+
+    storeCommunityMemberListExtraFields(['phone'], storage);
+
+    expect(readStoredCommunityMemberListExtraFields(storage)).toEqual(['phone']);
+  });
+
+  it('communityMemberListSortFromStoredValue restores the field and direction the Delegate sorted by', () => {
+    expect(
+      communityMemberListSortFromStoredValue(
+        JSON.stringify({
+          sortField: 'community_engagement_status',
+          sortDirection: 'desc',
+        })
+      )
+    ).toEqual({
+      sortField: 'community_engagement_status',
+      sortDirection: 'desc',
+    });
+  });
+
+  it('communityMemberListSortFromStoredValue falls back to last name when the stored sort is unknown', () => {
+    expect(communityMemberListSortFromStoredValue('not-json')).toEqual({
+      sortField: 'last_name',
+      sortDirection: 'asc',
+    });
+    expect(
+      communityMemberListSortFromStoredValue(
+        JSON.stringify({ sortField: 'notes', sortDirection: 'asc' })
+      )
+    ).toEqual({
+      sortField: 'last_name',
+      sortDirection: 'asc',
+    });
+  });
+
+  it('storeCommunityMemberListSort writes the sort so a later visit can restore the row order', () => {
+    const storage = aMemoryStorage();
+
+    storeCommunityMemberListSort(
+      {
+        sortField: 'community_engagement_status',
+        sortDirection: 'asc',
+      },
+      storage
+    );
+
+    expect(readStoredCommunityMemberListSort(storage)).toEqual({
+      sortField: 'community_engagement_status',
+      sortDirection: 'asc',
     });
   });
 });
