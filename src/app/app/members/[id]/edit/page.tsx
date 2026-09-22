@@ -9,6 +9,7 @@ import { PageTitle } from '@/components/PageTitle';
 import { signedInMemberFrom } from '@/app/app/companionship-panel/signed-in-member';
 import { MemberId } from '@/types/auth';
 import { SemiTransparentPanel } from '@/components/SemiTransparentButton';
+import { visualSurfaces } from '@/components/visual-style-surfaces';
 import { CommunityMemberForm } from '../../CommunityMemberForm';
 import { RemoveCommunityMemberButton } from '../../RemoveCommunityMemberButton';
 import { submitCommunityMemberEdits } from '../../actions';
@@ -34,6 +35,7 @@ export default async function EditCommunityMemberPage({
 
   const member = await signedInMemberFrom(session);
   const saveEdits = submitCommunityMemberEdits.bind(null, person.id);
+  const surfaces = visualSurfaces(member.visualStyle);
 
   return (
     <PageBackground
@@ -67,7 +69,7 @@ export default async function EditCommunityMemberPage({
               }
             />
             {!person.hasLoginIdentity ? (
-              <div className="mt-6 border-t border-white/25 pt-4">
+              <div className={`mt-6 border-t ${surfaces.hairline} pt-4`}>
                 <RemoveCommunityMemberButton
                   memberId={person.id}
                   memberName={`${person.first_name} ${person.last_name}`}

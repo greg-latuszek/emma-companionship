@@ -17,6 +17,8 @@ import {
   genderLabels,
   maritalStatusLabels,
 } from './community-member-labels';
+import { useVisualStyle } from '@/components/VisualStyleProvider';
+import { visualSurfaces } from '@/components/visual-style-surfaces';
 import {
   maritalStatusIsConsecrated,
   type CommunityMemberFormState,
@@ -41,16 +43,19 @@ type CommunityMemberFormAction = (
   formData: FormData
 ) => Promise<CommunityMemberFormState>;
 
-const fieldControlClassName =
-  'rounded border border-white/35 bg-white/15 px-3 py-2 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/40';
-
 const selectOptionClassName = 'bg-white text-gray-900';
 
-function FieldError({ message }: { message?: string }): JSX.Element | null {
+function FieldError({
+  message,
+  className,
+}: {
+  message?: string;
+  className: string;
+}): JSX.Element | null {
   if (!message) {
     return null;
   }
-  return <p className="text-sm text-red-200">{message}</p>;
+  return <p className={`text-sm ${className}`}>{message}</p>;
 }
 
 export function CommunityMemberForm({
@@ -65,17 +70,19 @@ export function CommunityMemberForm({
   const [state, formAction] = useActionState(action, undefined);
   const values = state?.values ?? initialValues ?? emptyFormValues;
   const [maritalStatus, setMaritalStatus] = useState(values.marital_status);
+  const surfaces = visualSurfaces(useVisualStyle());
+  const fieldControlClassName = surfaces.field;
 
   return (
     <form action={formAction} className="flex flex-col gap-4 text-left">
       {loginHint ? (
-        <p className="rounded border border-white/25 bg-white/10 px-3 py-2 text-sm text-white/90">
+        <p className={surfaces.hint}>
           {loginHint}
         </p>
       ) : null}
 
       {state?.formError ? (
-        <p className="rounded border border-red-300/50 bg-red-500/20 px-3 py-2 text-red-50">
+        <p className={surfaces.formError}>
           {state.formError}
         </p>
       ) : null}
@@ -88,7 +95,7 @@ export function CommunityMemberForm({
           className={fieldControlClassName}
           required
         />
-        <FieldError message={state?.fieldErrors?.first_name} />
+        <FieldError message={state?.fieldErrors?.first_name} className={surfaces.dangerText} />
       </label>
 
       <label className="flex flex-col gap-1">
@@ -99,7 +106,7 @@ export function CommunityMemberForm({
           className={fieldControlClassName}
           required
         />
-        <FieldError message={state?.fieldErrors?.last_name} />
+        <FieldError message={state?.fieldErrors?.last_name} className={surfaces.dangerText} />
       </label>
 
       <label className="flex flex-col gap-1">
@@ -118,7 +125,7 @@ export function CommunityMemberForm({
             </option>
           ))}
         </select>
-        <FieldError message={state?.fieldErrors?.gender} />
+        <FieldError message={state?.fieldErrors?.gender} className={surfaces.dangerText} />
       </label>
 
       <label className="flex flex-col gap-1">
@@ -138,7 +145,7 @@ export function CommunityMemberForm({
             </option>
           ))}
         </select>
-        <FieldError message={state?.fieldErrors?.marital_status} />
+        <FieldError message={state?.fieldErrors?.marital_status} className={surfaces.dangerText} />
       </label>
 
       {maritalStatusIsConsecrated(maritalStatus) ? (
@@ -158,7 +165,7 @@ export function CommunityMemberForm({
               </option>
             ))}
           </select>
-          <FieldError message={state?.fieldErrors?.consecrated_status} />
+          <FieldError message={state?.fieldErrors?.consecrated_status} className={surfaces.dangerText} />
         </label>
       ) : null}
 
@@ -178,7 +185,7 @@ export function CommunityMemberForm({
             </option>
           ))}
         </select>
-        <FieldError message={state?.fieldErrors?.community_engagement_status} />
+        <FieldError message={state?.fieldErrors?.community_engagement_status} className={surfaces.dangerText} />
       </label>
 
       <label className="flex flex-col gap-1">
@@ -194,7 +201,7 @@ export function CommunityMemberForm({
             </option>
           ))}
         </select>
-        <FieldError message={state?.fieldErrors?.accompanying_readiness} />
+        <FieldError message={state?.fieldErrors?.accompanying_readiness} className={surfaces.dangerText} />
       </label>
 
       <label className="flex flex-col gap-1">
@@ -205,7 +212,7 @@ export function CommunityMemberForm({
           defaultValue={values.email}
           className={fieldControlClassName}
         />
-        <FieldError message={state?.fieldErrors?.email} />
+        <FieldError message={state?.fieldErrors?.email} className={surfaces.dangerText} />
       </label>
 
       <label className="flex flex-col gap-1">
@@ -215,7 +222,7 @@ export function CommunityMemberForm({
           defaultValue={values.phone}
           className={fieldControlClassName}
         />
-        <FieldError message={state?.fieldErrors?.phone} />
+        <FieldError message={state?.fieldErrors?.phone} className={surfaces.dangerText} />
       </label>
 
       <label className="flex flex-col gap-1">
@@ -226,19 +233,19 @@ export function CommunityMemberForm({
           rows={4}
           className={fieldControlClassName}
         />
-        <FieldError message={state?.fieldErrors?.notes} />
+        <FieldError message={state?.fieldErrors?.notes} className={surfaces.dangerText} />
       </label>
 
       <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:justify-end">
         <Link
           href="/app/members"
-          className="rounded-full border border-white/35 bg-white/10 px-4 py-2 text-center text-white backdrop-blur-md hover:bg-white/20"
+          className={surfaces.secondaryButton}
         >
           Anuluj
         </Link>
         <button
           type="submit"
-          className="rounded-full border border-white/35 bg-white/25 px-4 py-2 text-white backdrop-blur-md hover:bg-white/35"
+          className={surfaces.primaryButton}
         >
           Zapisz
         </button>

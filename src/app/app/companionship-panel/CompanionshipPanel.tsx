@@ -9,12 +9,14 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
 import type { JSX } from 'react';
 import type { SignedInMember } from './signed-in-member';
-import { semiTransparentPanelClassName } from '@/components/SemiTransparentButton';
+import { useVisualStyle } from '@/components/VisualStyleProvider';
+import { visualSurfaces } from '@/components/visual-style-surfaces';
 import { communityMembersPanelCard } from './community-members-panel-card';
 import { VisualStyleSettings } from './VisualStyleSettings';
 
 export function CompanionshipPanel({ member }: { member: SignedInMember }): JSX.Element {
   const communityMembers = communityMembersPanelCard();
+  const surfaces = visualSurfaces(useVisualStyle());
 
   return (
     <PageBackground
@@ -46,14 +48,14 @@ export function CompanionshipPanel({ member }: { member: SignedInMember }): JSX.
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
-                className={`${semiTransparentPanelClassName} p-6 max-w-md mx-auto mt-8`}
+                className={`${surfaces.panel} p-6 max-w-md mx-auto mt-8`}
               >
-                <p className="mb-2 text-sm text-white/80">Zalogowany użytkownik:</p>
+                <p className={`mb-2 text-sm ${surfaces.mutedText}`}>Zalogowany użytkownik:</p>
                 <p className="mb-1 text-2xl font-bold">{member.name}</p>
-                <p className="mb-6 text-white/70">{member.email}</p>
+                <p className={`mb-6 ${surfaces.secondaryText}`}>{member.email}</p>
 
                 {member.memberId ? (
-                  <div className="border-t border-white/25 pt-4 text-sm text-white/80">
+                  <div className={`border-t ${surfaces.hairline} pt-4 text-sm ${surfaces.mutedText}`}>
                     <p>ID: {member.memberId}</p>
                   </div>
                 ) : null}
@@ -70,30 +72,30 @@ export function CompanionshipPanel({ member }: { member: SignedInMember }): JSX.
             >
               <Link
                 href={communityMembers.href}
-                className={`${semiTransparentPanelClassName} block p-6 hover:bg-white/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white`}
+                className={`${surfaces.panel} block p-6 ${surfaces.panelHover} ${surfaces.focusOutline}`}
               >
                 <h3 className="mb-2 text-lg font-bold">
                   {communityMembers.title}
                 </h3>
-                <p className="text-sm text-white/80">
+                <p className={`text-sm ${surfaces.mutedText}`}>
                   Osoby wpisane do rejestru wspólnoty
                 </p>
               </Link>
 
-              <div className={`${semiTransparentPanelClassName} p-6`}>
+              <div className={`${surfaces.panel} p-6`}>
                 <h3 className="mb-2 text-lg font-bold">Health Dashboard</h3>
-                <p className="text-sm text-white/80">
+                <p className={`text-sm ${surfaces.mutedText}`}>
                   View relationship health status
                 </p>
               </div>
 
-              <div className={`${semiTransparentPanelClassName} p-6`}>
+              <div className={`${surfaces.panel} p-6`}>
                 {member.memberId ? (
                   <VisualStyleSettings visualStyle={member.visualStyle} />
                 ) : (
                   <>
                     <h3 className="mb-2 text-lg font-bold">Ustawienia aplikacji</h3>
-                    <p className="text-sm text-white/80">
+                    <p className={`text-sm ${surfaces.mutedText}`}>
                       Zaloguj się ponownie, aby zmienić wygląd.
                     </p>
                   </>

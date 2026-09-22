@@ -4,7 +4,8 @@ import { motion } from 'motion/react';
 import { signOut } from 'next-auth/react';
 import { useState } from 'react';
 import type { JSX } from 'react';
-import { semiTransparentControlClassName } from '@/components/SemiTransparentButton';
+import { useVisualStyle } from '@/components/VisualStyleProvider';
+import { visualSurfaces } from '@/components/visual-style-surfaces';
 
 interface LogoutButtonProps {
   profilePicture?: string | null;
@@ -19,6 +20,7 @@ export function LogoutButton({
 }: LogoutButtonProps): JSX.Element {
   const [pictureFailed, setPictureFailed] = useState(false);
   const showPicture = Boolean(profilePicture) && !pictureFailed;
+  const surfaces = visualSurfaces(useVisualStyle());
 
   return (
     <motion.button
@@ -30,10 +32,10 @@ export function LogoutButton({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 1, delay, ease: 'easeOut' }}
-      className={`${semiTransparentControlClassName} inline-flex items-center gap-3 px-4 sm:px-6`}
+      className={`${surfaces.control} inline-flex items-center gap-3 px-4 sm:px-6`}
     >
       {showPicture ? (
-        <span className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-white/20 ring-1 ring-white/40">
+        <span className={surfaces.face}>
           <img
             src={profilePicture ?? undefined}
             alt=""

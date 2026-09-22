@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { decideWhereAnAppVisitorMustGo } from '@/lib/app-visit';
+import { VisualStyleProvider } from '@/components/VisualStyleProvider';
+import { signedInMemberFrom } from './companionship-panel/signed-in-member';
 
 export default async function AppSectionLayout({
   children,
@@ -10,9 +12,15 @@ export default async function AppSectionLayout({
   const session = await auth();
   const destination = decideWhereAnAppVisitorMustGo(session);
 
-  if (destination) {
-    redirect(destination);
+  if (destination || !session) {
+    redirect(destination ?? '/');
   }
 
-  return children;
+  const member = await signedInMemberFrom(session);
+
+  return (
+    <VisualStyleProvider visualStyle={member.visualStyle}>
+      {children}
+    </VisualStyleProvider>
+  );
 }

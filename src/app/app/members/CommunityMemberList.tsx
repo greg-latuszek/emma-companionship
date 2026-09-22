@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import type { JSX } from 'react';
+import { useVisualStyle } from '@/components/VisualStyleProvider';
+import { visualSurfaces } from '@/components/visual-style-surfaces';
 import type { CommunityMember } from '@/types/community-member';
 import { RemoveCommunityMemberButton } from './RemoveCommunityMemberButton';
 import {
@@ -29,9 +31,10 @@ function CommunityMemberFace({
   const [pictureFailed, setPictureFailed] = useState(false);
   const pictureUrl = communityMemberThumbnail(member);
   const showPicture = Boolean(pictureUrl) && !pictureFailed;
+  const surfaces = visualSurfaces(useVisualStyle());
 
   return (
-    <span className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-white/20 ring-1 ring-white/40">
+    <span className={surfaces.face}>
       {showPicture ? (
         <img
           src={pictureUrl ?? undefined}
@@ -52,11 +55,13 @@ function CommunityMemberRowActions({
 }: {
   member: CommunityMember;
 }): JSX.Element {
+  const surfaces = visualSurfaces(useVisualStyle());
+
   return (
     <div className="flex shrink-0 items-center gap-4">
       <Link
         href={`/app/members/${member.id}/edit`}
-        className="text-sm font-medium text-white underline-offset-4 hover:underline"
+        className={`text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
       >
         Edytuj
       </Link>
@@ -69,11 +74,6 @@ function CommunityMemberRowActions({
     </div>
   );
 }
-
-const fieldControlClassName =
-  'rounded border border-white/35 bg-white/15 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-white/40';
-
-const stickyCellClassName = 'bg-black/35 backdrop-blur-sm';
 
 function sortAria(field: CommunityMemberListSortField, sortField: CommunityMemberListSortField, sortDirection: CommunityMemberListSortDirection) {
   if (sortField !== field) {
@@ -94,6 +94,7 @@ function SortHeader({
   onSort: (field: CommunityMemberListSortField) => void;
 }): JSX.Element {
   const active = sortField === field;
+  const surfaces = visualSurfaces(useVisualStyle());
 
   return (
     <button
@@ -101,7 +102,7 @@ function SortHeader({
       onClick={() => {
         onSort(field);
       }}
-      className="inline-flex items-center gap-1 text-left font-medium text-white underline-offset-4 hover:underline"
+      className={`inline-flex items-center gap-1 text-left font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
     >
       {communityMemberListFieldLabels[field]}
       {active ? <span aria-hidden="true">{sortDirection === 'asc' ? '↑' : '↓'}</span> : null}
@@ -121,10 +122,11 @@ export function CommunityMemberList({
   const [extraFields, setExtraFields] = useState<CommunityMemberListExtraField[]>(
     defaultCommunityMemberListExtraFields
   );
+  const surfaces = visualSurfaces(useVisualStyle());
 
   if (members.length === 0) {
     return (
-      <p className="text-center text-white/80">Nie ma jeszcze osób w rejestrze.</p>
+      <p className={`text-center ${surfaces.mutedText}`}>Nie ma jeszcze osób w rejestrze.</p>
     );
   }
 
@@ -147,7 +149,7 @@ export function CommunityMemberList({
               setSortField(event.target.value as CommunityMemberListSortField);
               setSortDirection('asc');
             }}
-            className={fieldControlClassName}
+            className={surfaces.field}
           >
             {communityMemberListSortFields.map((field) => (
               <option key={field} value={field} className="bg-white text-gray-900">
@@ -178,7 +180,7 @@ export function CommunityMemberList({
         </fieldset>
       </div>
 
-      <ul className="divide-y divide-white/20 text-left lg:hidden">
+      <ul className={`divide-y ${surfaces.rowDivider} text-left lg:hidden`}>
         {sortedMembers.map((member) => (
           <li
             key={member.id}
@@ -187,7 +189,7 @@ export function CommunityMemberList({
             <div className="flex min-w-0 items-start gap-3">
               <CommunityMemberFace member={member} />
               <div className="flex min-w-0 flex-col gap-1">
-                <span className="font-medium text-white">
+                <span className={`font-medium ${surfaces.strongText}`}>
                   {communityMemberName(member)}
                 </span>
                 {extraFields.map((field) => {
@@ -196,7 +198,7 @@ export function CommunityMemberList({
                     return null;
                   }
                   return (
-                    <span key={field} className="text-sm text-white/70 break-all">
+                    <span key={field} className={`text-sm ${surfaces.secondaryText} break-all`}>
                       {text}
                     </span>
                   );
@@ -213,13 +215,13 @@ export function CommunityMemberList({
       <div className="hidden overflow-x-auto lg:block">
         <table className="w-full min-w-[40rem] border-collapse text-left text-sm">
           <thead>
-            <tr className="border-b border-white/20">
-              <th className={`${stickyCellClassName} sticky left-0 z-10 w-12 px-2 py-3`}>
+            <tr className={`border-b ${surfaces.hairline}`}>
+              <th className={`${surfaces.stickyCell} sticky left-0 z-10 w-12 px-2 py-3`}>
                 <span className="sr-only">Zdjęcie</span>
               </th>
               <th
                 aria-sort={sortAria('first_name', sortField, sortDirection)}
-                className={`${stickyCellClassName} sticky left-12 z-10 min-w-[7rem] px-3 py-3`}
+                className={`${surfaces.stickyCell} sticky left-12 z-10 min-w-[7rem] px-3 py-3`}
               >
                 <SortHeader
                   field="first_name"
@@ -230,7 +232,7 @@ export function CommunityMemberList({
               </th>
               <th
                 aria-sort={sortAria('last_name', sortField, sortDirection)}
-                className={`${stickyCellClassName} sticky left-40 z-10 min-w-[7rem] px-3 py-3`}
+                className={`${surfaces.stickyCell} sticky left-40 z-10 min-w-[7rem] px-3 py-3`}
               >
                 <SortHeader
                   field="last_name"
@@ -258,20 +260,20 @@ export function CommunityMemberList({
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/20">
+          <tbody className={`divide-y ${surfaces.rowDivider}`}>
             {sortedMembers.map((member) => (
               <tr key={member.id}>
-                <td className={`${stickyCellClassName} sticky left-0 z-10 px-2 py-3`}>
+                <td className={`${surfaces.stickyCell} sticky left-0 z-10 px-2 py-3`}>
                   <CommunityMemberFace member={member} />
                 </td>
-                <td className={`${stickyCellClassName} sticky left-12 z-10 whitespace-nowrap px-3 py-3 font-medium text-white`}>
+                <td className={`${surfaces.stickyCell} sticky left-12 z-10 whitespace-nowrap px-3 py-3 font-medium ${surfaces.strongText}`}>
                   {member.first_name}
                 </td>
-                <td className={`${stickyCellClassName} sticky left-40 z-10 whitespace-nowrap px-3 py-3 font-medium text-white`}>
+                <td className={`${surfaces.stickyCell} sticky left-40 z-10 whitespace-nowrap px-3 py-3 font-medium ${surfaces.strongText}`}>
                   {member.last_name}
                 </td>
                 {extraFields.map((field) => (
-                  <td key={field} className="whitespace-nowrap px-3 py-3 text-white/80">
+                  <td key={field} className={`whitespace-nowrap px-3 py-3 ${surfaces.mutedText}`}>
                     {communityMemberFieldText(member, field)}
                   </td>
                 ))}

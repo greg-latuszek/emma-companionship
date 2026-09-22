@@ -2,6 +2,8 @@
 
 import { useActionState } from 'react';
 import type { JSX } from 'react';
+import { useVisualStyle } from '@/components/VisualStyleProvider';
+import { visualSurfaces } from '@/components/visual-style-surfaces';
 import { visualStyles, type VisualStyle } from '@/types/auth';
 import { submitMemberVisualStyle } from './actions';
 import { visualStyleLabels } from './visual-style-form-state';
@@ -12,12 +14,13 @@ export function VisualStyleSettings({
   visualStyle: VisualStyle;
 }): JSX.Element {
   const [state, formAction] = useActionState(submitMemberVisualStyle, undefined);
+  const surfaces = visualSurfaces(useVisualStyle());
 
   return (
     <form action={formAction}>
       <h3 className="mb-2 text-lg font-bold">Ustawienia aplikacji</h3>
       <fieldset>
-        <legend className="mb-3 text-sm text-white/80">Wygląd</legend>
+        <legend className={`mb-3 text-sm ${surfaces.mutedText}`}>Wygląd</legend>
         <div className="flex flex-col gap-2">
           {visualStyles.map((style) => {
             const isSelected = style === visualStyle;
@@ -28,11 +31,7 @@ export function VisualStyleSettings({
                 name="visual_style"
                 value={style}
                 aria-pressed={isSelected}
-                className={`rounded-md border px-3 py-2 text-left text-sm transition-colors ${
-                  isSelected
-                    ? 'border-white/60 bg-white/30'
-                    : 'border-white/25 bg-white/10 hover:bg-white/20'
-                }`}
+                className={`rounded-md border px-3 py-2 text-left text-sm transition-colors ${surfaces.choice(isSelected)}`}
               >
                 {visualStyleLabels[style]}
               </button>
@@ -41,7 +40,7 @@ export function VisualStyleSettings({
         </div>
       </fieldset>
       {state?.formError ? (
-        <p className="mt-3 text-sm text-red-200" role="alert">
+        <p className={`mt-3 text-sm ${surfaces.dangerText}`} role="alert">
           {state.formError}
         </p>
       ) : null}
