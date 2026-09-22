@@ -24,6 +24,7 @@ function aStoredMember(overrides: Partial<Member> = {}): Member {
     is_active: true,
     revoked_at: null,
     profile_picture: null,
+    visual_style: null,
     ...overrides,
   };
 }
@@ -36,6 +37,7 @@ function aMemberRepository(
     findMemberByEmail: vi.fn(),
     findMemberByOAuth: vi.fn(),
     createMember: vi.fn(),
+    updateMemberVisualStyle: vi.fn(),
     ...stubs,
   };
 }
