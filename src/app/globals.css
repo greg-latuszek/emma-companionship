@@ -50,3 +50,25 @@ html {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* The landing photograph hides scrollbars. Wide member tables need one. */
+.horizontal-scroll {
+  overflow-x: auto;
+  -ms-overflow-style: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(107 114 128) rgb(229 231 235);
+}
+
+.horizontal-scroll::-webkit-scrollbar {
+  display: block;
+  height: 0.75rem;
+}
+
+.horizontal-scroll::-webkit-scrollbar-thumb {
+  background: rgb(107 114 128);
+  border-radius: 9999px;
+}
+
+.horizontal-scroll::-webkit-scrollbar-track {
+  background: rgb(229 231 235);
+}

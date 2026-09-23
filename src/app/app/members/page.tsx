@@ -37,7 +37,7 @@ export default async function CommunityMembersPage() {
           }
         />
 
-        <div className="flex flex-1 flex-col px-4 pb-16">
+        <div className="flex min-w-0 flex-1 flex-col px-4 pb-16">
           <div className="pt-4 text-center">
             <PageTitle delay={0.2}>Członkowie wspólnoty</PageTitle>
             <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
@@ -56,7 +56,7 @@ export default async function CommunityMembersPage() {
             </div>
           </div>
 
-          <SemiTransparentPanel className="mx-auto mt-8 w-full max-w-3xl p-6 lg:max-w-none">
+          <SemiTransparentPanel className="mx-auto mt-8 w-full min-w-0 max-w-3xl p-6 lg:max-w-none">
             <CommunityMemberList members={members} />
           </SemiTransparentPanel>
         </div>

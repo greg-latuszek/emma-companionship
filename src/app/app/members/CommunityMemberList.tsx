@@ -161,7 +161,7 @@ export function CommunityMemberList({
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex min-w-0 flex-col gap-6">
       <div className="flex flex-col gap-4 text-left">
         <label className="flex flex-col gap-1 text-sm lg:hidden">
           <span>Sortuj według</span>
@@ -244,8 +244,8 @@ export function CommunityMemberList({
         ))}
       </ul>
 
-      <div className="hidden overflow-x-auto lg:block">
-        <table className="w-full min-w-[40rem] border-collapse text-left text-sm">
+      <div className="horizontal-scroll hidden min-w-0 max-w-full lg:block">
+        <table className="w-max min-w-full border-collapse text-left text-sm">
           <thead>
             <tr className={`border-b ${surfaces.hairline}`}>
               <th className={`${surfaces.stickyCell} sticky left-0 z-10 w-12 px-2 py-3`}>
@@ -287,7 +287,7 @@ export function CommunityMemberList({
                   />
                 </th>
               ))}
-              <th className="px-3 py-3">
+              <th className="px-3 py-3 whitespace-nowrap">
                 <span className="sr-only">Działania</span>
               </th>
             </tr>
@@ -309,7 +309,7 @@ export function CommunityMemberList({
                     {communityMemberFieldText(member, field)}
                   </td>
                 ))}
-                <td className="px-3 py-3">
+                <td className="px-3 py-3 whitespace-nowrap">
                   <CommunityMemberRowActions member={member} />
                 </td>
               </tr>
