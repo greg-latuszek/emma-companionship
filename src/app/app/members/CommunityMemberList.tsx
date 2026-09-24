@@ -26,6 +26,7 @@ import {
   type CommunityMemberListSortDirection,
   type CommunityMemberListSortField,
 } from './community-member-list-state';
+import { MirroredHorizontalScroll } from './MirroredHorizontalScroll';
 
 function CommunityMemberFace({
   member,
@@ -91,11 +92,13 @@ function SortHeader({
   sortField,
   sortDirection,
   onSort,
+  textClassName,
 }: {
   field: CommunityMemberListSortField;
   sortField: CommunityMemberListSortField;
   sortDirection: CommunityMemberListSortDirection;
   onSort: (field: CommunityMemberListSortField) => void;
+  textClassName?: string;
 }): JSX.Element {
   const active = sortField === field;
   const surfaces = visualSurfaces(useVisualStyle());
@@ -106,7 +109,7 @@ function SortHeader({
       onClick={() => {
         onSort(field);
       }}
-      className={`inline-flex items-center gap-1 text-left font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
+      className={`inline-flex items-center gap-1 text-left font-medium ${textClassName ?? surfaces.strongText} underline-offset-4 hover:underline`}
     >
       {communityMemberListFieldLabels[field]}
       {active ? <span aria-hidden="true">{sortDirection === 'asc' ? '↑' : '↓'}</span> : null}
@@ -244,7 +247,8 @@ export function CommunityMemberList({
         ))}
       </ul>
 
-      <div className="horizontal-scroll hidden min-w-0 max-w-full lg:block">
+      <div className="hidden min-w-0 max-w-full lg:block">
+        <MirroredHorizontalScroll>
         <table className="w-max min-w-full border-collapse text-left text-sm">
           <thead>
             <tr className={`border-b ${surfaces.hairline}`}>
@@ -260,6 +264,7 @@ export function CommunityMemberList({
                   sortField={sortField}
                   sortDirection={sortDirection}
                   onSort={sortBy}
+                  textClassName="font-bold text-yellow-300"
                 />
               </th>
               <th
@@ -271,6 +276,7 @@ export function CommunityMemberList({
                   sortField={sortField}
                   sortDirection={sortDirection}
                   onSort={sortBy}
+                  textClassName="font-bold text-yellow-300"
                 />
               </th>
               {extraFields.map((field) => (
@@ -298,10 +304,10 @@ export function CommunityMemberList({
                 <td className={`${surfaces.stickyCell} sticky left-0 z-10 px-2 py-3`}>
                   <CommunityMemberFace member={member} />
                 </td>
-                <td className={`${surfaces.stickyCell} sticky left-12 z-10 whitespace-nowrap px-3 py-3 font-medium ${surfaces.strongText}`}>
+                <td className={`${surfaces.stickyCell} sticky left-12 z-10 whitespace-nowrap px-3 py-3 font-bold text-yellow-300`}>
                   {member.first_name}
                 </td>
-                <td className={`${surfaces.stickyCell} sticky left-40 z-10 whitespace-nowrap px-3 py-3 font-medium ${surfaces.strongText}`}>
+                <td className={`${surfaces.stickyCell} sticky left-40 z-10 whitespace-nowrap px-3 py-3 font-bold text-yellow-300`}>
                   {member.last_name}
                 </td>
                 {extraFields.map((field) => (
@@ -316,6 +322,7 @@ export function CommunityMemberList({
             ))}
           </tbody>
         </table>
+        </MirroredHorizontalScroll>
       </div>
     </div>
   );

@@ -72,3 +72,7 @@ html {
 .horizontal-scroll::-webkit-scrollbar-track {
   background: rgb(229 231 235);
 }
+
+.horizontal-scroll-rail {
+  overflow-y: hidden;
+}
