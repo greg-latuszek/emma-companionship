@@ -10,6 +10,7 @@ This repo fell into over-planning **twice** (full architecture / unused auth-DB 
 Full lesson: `docs/organic-growth.md`. Current system: `docs/current-architecture.md`. Domain vision (not a build checklist): `docs/application_idea.md`.
 
 - One slice that runs, then the next. Do not scaffold Nx, Prisma, extra OAuth vendors, admin UI, blacklist, or password login “for later”.
+- When **planning or implementing** a product slice, follow `.cursor/skills/feature-recipe/SKILL.md` (chunks, questions, delete the working plan).
 - Do not treat `_archived_docs/` or deleted implementation plans as the live backlog.
 - Widen a port or migration only when the current story needs it.
 - Before proposing a new layer, provider, or doc set, read `docs/organic-growth.md`.

@@ -27,7 +27,7 @@ Those artifacts felt like progress. They blocked seeing a screen and changing it
 ## How we work instead
 
 1. Read [current-architecture.md](./current-architecture.md) for what exists. Read the idea doc for *what the product is*, not *what to scaffold*.
-2. Implement the smallest slice that a person can click. Then the next.
+2. Implement the smallest slice that a person can click. Then the next. How: `.cursor/skills/feature-recipe/SKILL.md`. After live docs match the running slice, **delete the working plan** — git already has it.
 3. Add a port, table, or provider when that slice needs it — not because an old plan listed it.
 4. Tests for behavior you care about (recognition, visit routing, operator copy). Not a coverage cathedral.
 5. When unsure:
