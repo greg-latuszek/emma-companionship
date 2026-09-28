@@ -80,21 +80,40 @@ Actor: an approved Province Companionship Delegate.
     - `db/tests/db-connection.ts`, `db/tests/schema.test.ts`, `src/app/app/members/MirroredHorizontalScroll.tsx` (pre-existing type/lint fixes needed for build)
   - Verify: `npm run build`, `npm test`, `npm run test:db`
 
-- [ ] **Chunk 4 — Add mutation**
+- [x] **Chunk 4 — Create mutation**
   - Files:
     - `src/application/add-companionship-relation.ts` + tests
     - `src/app/app/companionships/actions.ts` + tests
     - `src/app/app/companionships/new/page.tsx`
+    - `src/app/app/companionships/CompanionshipRelationForm.tsx`
+    - `src/app/app/companionships/companionship-relation-form-state.ts`
     - member-picker component reused from existing patterns
   - Verify: create a relation through the UI, see it in the list.
 
-- [ ] **Chunk 5 — Architecture docs**
+- [ ] **Chunk 5 — Update mutation**
+  - Files:
+    - `src/application/update-companionship-relation.ts` + tests
+    - `src/app/app/companionships/actions.ts` (add update action) + tests
+    - `src/app/app/companionships/[id]/edit/page.tsx`
+    - Update `CompanionshipRelationForm.tsx` to support edit mode
+    - Add `updateCompanionshipRelation` to repository port and adapter
+  - Verify: edit an existing relation through the UI, see changes in the list.
+
+- [ ] **Chunk 6 — Delete mutation**
+  - Files:
+    - `src/application/delete-companionship-relation.ts` + tests
+    - `src/app/app/companionships/actions.ts` (add delete action) + tests
+    - Add delete button/confirmation to list or detail view
+    - Add `deleteCompanionshipRelation` to repository port and adapter
+  - Verify: delete a relation through the UI, see it removed from the list.
+
+- [ ] **Chunk 7 — Architecture docs**
   - Update `docs/current-architecture.md` with the new port and live table.
   - Update `docs/application_idea.md` “built today” section if it would lie.
 
-- [ ] **Chunk 6 — Delete this plan**
+- [ ] **Chunk 8 — Delete this plan**
   - Remove `docs/implementation_plans/store-companionship-binding.md`.
 
 ## Status
 
-Chunks 1–3 completed. Ready for review before Chunk 4 (add mutation).
+Chunks 1–4 completed. Ready for Chunk 5 (update mutation).
