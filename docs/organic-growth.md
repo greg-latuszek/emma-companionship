@@ -4,7 +4,7 @@ This project fell into the same trap **twice**: months of architecture, research
 
 **Domain knowledge is the keeper.** [application_idea.md](./application_idea.md) is solid. The failure was imposing structure, extra providers, and unused tables *before* a slice existed.
 
-**Organic growth is the recovery.** One working vertical (today: Google OAuth → pending/approved → panel shell). Folder layout, ports, and migrations grow when a story needs them. See [current-architecture.md](./current-architecture.md).
+**Organic growth is the recovery.** One working vertical, then the next (today: Google OAuth → pending/approved → panel → community member registry). Folder layout, ports, and migrations grow when a story needs them. See [current-architecture.md](./current-architecture.md).
 
 ```mermaid
 flowchart LR

@@ -1,17 +1,21 @@
 # Basic CRUD for member management - implementation plan
 
+**Live.** Chunks 1–9 are done. The running system is
+[`docs/current-architecture.md`](../current-architecture.md). This file is the
+slice history, not the next backlog.
+
 ## Overview
 
 `db/migrations/002_members_table.sql` already carries the `members` schema.
-This document plans Create / Read / Update / Delete for **community members as
+This document planned Create / Read / Update / Delete for **community members as
 registry entities** — the Phase-1 “Add Person” workflow from
 [`docs/application_idea.md`](../application_idea.md), minus couple, geography,
 roles, and import.
 
-The running app today is only Google OAuth → pending/approved → empty
-companionship panel. This slice is the next vertical a signed-in Delegate can
-click: see people, enter a person, correct a person, remove a mistaken
-registry-only person.
+When this plan started, the running app was only Google OAuth → pending/approved
+→ empty companionship panel. The slice that followed is what a signed-in
+Delegate can click today: see people, enter a person, correct a person, remove a
+mistaken registry-only person.
 
 ## Scope
 

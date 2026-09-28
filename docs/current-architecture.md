@@ -11,7 +11,7 @@ How emmaCompanionship is built **today**, and why. Domain rules live in [applica
 | Persistence | `pg` + raw SQL in `db/migrations/` | No Prisma. SQL stays reusable if another backend appears |
 | Database | PostgreSQL 16 in Docker | Local, scripted via `npm run db:*` |
 | UI | Tailwind CSS 4, motion | Existing look; decorative frame around a dark inner stage |
-| Tests | Vitest | Fast unit tests for recognition, routing, and operator copy |
+| Tests | Vitest | Fast unit tests for recognition, routing, registry writes, and operator copy |
 
 Deliberately **not** in the live path: Nx, Prisma, Jest, Argon2/password login, Facebook, an `IOauthLogin` port wrapping Auth.js.
 
@@ -28,6 +28,7 @@ flowchart TB
     authjs[Auth.js + Google provider]
     jwt[JWT / session]
     proxy["proxy.ts on /app"]
+    membersUi["/app/members pages\nand server actions"]
   end
 
   subgraph inbound["Inbound mapper"]
@@ -38,32 +39,46 @@ flowchart TB
     recognize[recognizeOAuthMember]
     mayUse[memberMayUseApp]
     visit[decideWhereAnAppVisitorMustGo]
+    registry["list / add / update /\nremove community members"]
   end
 
-  subgraph driven["Driven port"]
-    port[IMemberRepository]
+  subgraph driven["Driven ports"]
+    loginPort[IMemberRepository]
+    registryPort[ICommunityMemberRepository]
   end
 
-  subgraph adapter["Driven adapter"]
-    pg[PgMemberRepository]
-    sql[(PostgreSQL)]
+  subgraph adapter["Driven adapters"]
+    pgLogin[PgMemberRepository]
+    pgRegistry[PgCommunityMemberRepository]
+    sql[(PostgreSQL members)]
   end
 
   button --> authjs
   authjs --> map
   map --> recognize
-  recognize --> port
-  port --> pg
-  pg --> sql
+  recognize --> loginPort
+  loginPort --> pgLogin
+  pgLogin --> sql
   recognize --> mayUse
   mayUse --> jwt
   jwt --> visit
   visit --> proxy
+  membersUi --> registry
+  registry --> registryPort
+  registryPort --> pgRegistry
+  pgRegistry --> sql
 ```
 
 **Why there is no `IOauthLogin` port.** Confirming identity at Google, holding cookies, and signing the JWT is delivery. Wrapping Auth.js would be hexagonal theater. A later GitHub or Facebook provider is another mapper branch plus an Auth.js provider — not a second use case.
 
-**Live member port** (`src/ports/repositories/IMemberRepository.ts`): `findMemberById`, `findMemberByEmail`, `findMemberByOAuth`, `createMember`. Lookups are scoped to `member_type = 'app_user'`. Do not widen this port for companionship entities until that slice exists.
+**Two live ports on the same `members` table.** Login is `Member`. Registry is `CommunityMember`. Do not hang list/update/delete on the OAuth port, and do not hang Google recognition on the registry port.
+
+| Port | Type | What it does |
+|---|---|---|
+| `IMemberRepository` | `Member` | `findMemberById` / `findMemberByEmail` / `findMemberByOAuth` / `createMember` (scoped to `member_type = 'app_user'`). Also `updateMemberVisualStyle` for the signed-in person’s look. |
+| `ICommunityMemberRepository` | `CommunityMember` | `listCommunityMembers` / `findCommunityMemberById` / `findCommunityMemberByEmail` / `addCommunityMember` / `updateCommunityMember` / `removeCommunityMember`. Lists **every** row. Writes omit OAuth, password, `is_active`, approval, `member_type`, and `profile_picture`. |
+
+`hasLoginIdentity` is derived from `oauth_id`; it is not a column. Registry inserts leave `member_type` unset so Postgres defaults to `'companion'`. Dropping `member_type` is a later login-identity story, not a form story.
 
 ## Auth behavior
 
@@ -86,6 +101,8 @@ flowchart TD
 
 `recognizeOAuthMember` is provider-agnostic. Google is hardcoded only in `oauthIdentityFromAuthJs`.
 
+The logout control shows the Google face from the JWT `picture`, then the stored `profile_picture` if the token has none. `<img referrerPolicy="no-referrer">` is required for Google avatar URLs.
+
 ### After sign-in, where they go
 
 `/auth/continue` and `src/proxy.ts` (matcher `/app/:path*`) use the same idea: no session → home; `is_active` → stay on `/app` (continue sends approved members to the panel); otherwise awaiting-approval.
@@ -105,13 +122,43 @@ flowchart TD
 | `/auth/continue` | Post-OAuth fork |
 | `/auth/awaiting-approval` | Signed in, not approved |
 | `/auth/error` | Sign-in failed; public copy has no npm/DB details |
-| `/app/companionship-panel` | Approved member; placeholder cards |
+| `/app/companionship-panel` | Approved member; **Członkowie wspólnoty**, Health Dashboard stub, **Ustawienia aplikacji** |
+| `/app/members` | Community registry list |
+| `/app/members/new` | **Dodaj osobę** |
+| `/app/members/[id]/edit` | **Edytuj**; missing id → 404 |
 
 **Approval today** is not an admin screen. Create happens pending. An operator sets `members.is_active = true` (e.g. DBeaver). JWT fields are set at sign-in, so the member **must sign in again** after the flip (and after a `profile_picture` change).
 
 **Errors.** `[emma]` logs may say `npm run db:start`. The public page does not. Local extra sentence when `OPERATOR_HINTS=1` or `NODE_ENV === 'development'`.
 
 User-facing copy is Polish.
+
+## Community registry
+
+An approved member opens **Członkowie wspólnoty** and works people as registry entities. This slice does not turn them into login users. Google login stays the only way a row becomes an app identity.
+
+```mermaid
+flowchart LR
+  panel[Companionship panel] --> list["/app/members"]
+  list --> add["/app/members/new"]
+  list --> edit["/app/members/id/edit"]
+  add --> register[addCommunityMember]
+  edit --> update[updateCommunityMember]
+  list --> remove[removeCommunityMember]
+  register --> repo[ICommunityMemberRepository]
+  update --> repo
+  remove --> repo
+  list --> listUse[listCommunityMembers]
+  listUse --> repo
+  repo --> pg[(members)]
+```
+
+- Required on write: `first_name`, `last_name`. `accompanying_readiness` defaults to `'Not Candidate'` in application code.
+- Email is optional. If present it must look like an email and be unique across **all** member types (application check; the partial unique index stays `app_user`-only).
+- Enum values match the SQL CHECKs, including the stored spelling `Commited`. Labels are Polish; stored values stay English.
+- Consecrated-type is offered only when marital status is `consecrated`.
+- **Usuń** is a hard `DELETE` and only when `!hasLoginIdentity`. A login row shows a hint, not a delete control. A FK block shows a Polish sentence with no table names.
+- The list loads every in-scope row in one query (no pagination). Cards below the `lg` breakpoint, a table from `lg`. Imię and nazwisko stay visible; other columns are optional. Sort and shown fields live in `localStorage`. The table face is the Google `profile_picture` URL, not `image_url` (unused Base64).
 
 ## UI composition
 
@@ -132,7 +179,9 @@ flowchart TB
   frame --> area
 ```
 
-Controls (logo, login) sit **two** frame-widths from the outer edge: one for the border, one for navbar padding. The login control is a child of `Navbar` (`rightContent`), pinned to the top-right so the Emmanuel mark cannot wrap under it. On small screens the Google control is the mark only (`aria-label` still “Zaloguj się przez Google”).
+Controls (logo, login) sit **two** frame-widths from the outer edge: one for the border, one for navbar padding. The login control is a child of `Navbar` (`rightContent`), pinned to the top-right so the Emmanuel mark cannot wrap under it. On small screens the Google control is the mark only (`aria-label` still “Zaloguj się przez Google”). The landing Google button stays glass even when the signed-in member chose high-contrast.
+
+Signed-in chrome (panel cards, registry, logout) follows `members.visual_style` on the **login** row: `semi-transparent` (Polish **Półprzeźroczysty**, the default when the column is empty) or `high-contrast` (**Kontrastowy**). The panel **Ustawienia aplikacji** card writes it through `updateMemberVisualStyle`. The client applies the choice immediately; the default is stored as `NULL`. The background photograph does not change.
 
 | Session | Logo |
 |---|---|
@@ -142,25 +191,31 @@ Controls (logo, login) sit **two** frame-widths from the outer edge: one for the
 
 ## Database honesty
 
-Migrations `001`–`006` create more tables than the app uses. **Schema ahead of the product is not the live contract.**
+Migrations `001`–`007` create more tables than the app uses. **Schema ahead of the product is not the live contract.** Do not treat [`db/SCHEMA.md`](../db/SCHEMA.md) as current — it describes an unused auth-width plan.
 
 ```mermaid
 flowchart LR
-  subgraph live["Live contract — OAuth uses these"]
-    fields["members: id, names, email,\noauth_provider, oauth_id,\nmember_type app_user,\nis_active, revoked_at,\nprofile_picture"]
+  subgraph loginLive["Live — OAuth / login Member"]
+    loginFields["id, names, email,\noauth_provider, oauth_id,\nmember_type app_user,\nis_active, revoked_at,\nprofile_picture,\nvisual_style"]
+  end
+
+  subgraph registryLive["Live — registry CommunityMember"]
+    registryFields["id, names, gender,\nmarital / consecrated,\nengagement, readiness,\nemail, phone, notes,\nprofile_picture read-only,\nhasLoginIdentity from oauth_id"]
   end
 
   subgraph unused["Present, unused by application code"]
-    extra["password_hash, registry JSON,\ngeographic_units, couples,\nblacklist, security_events,\nroles, 2FA, …"]
+    extra["password_hash, image_url,\ndate_of_birth, languages,\nregistry JSON, geographic_units,\ncouples, blacklist,\nsecurity_events, roles, 2FA, …"]
   end
 
-  app[recognizeOAuthMember] --> live
+  oauth[recognizeOAuthMember] --> loginLive
+  crud[registry use cases] --> registryLive
   unused -.->|do not treat as product| later[Future stories]
 ```
 
-- Unique email / OAuth apply to `app_user` rows only.
+- Unique email / OAuth indexes apply to `app_user` rows only. Registry email uniqueness is enforced in application code.
 - `006_members_revoked_columns.sql` adds `revoked_at` / `revoked_by` on databases created before those columns existed.
-- Do not write features against blacklist, 2FA, or roles until a story asks. The port does not see them.
+- `007_members_visual_style.sql` adds nullable `visual_style` (`semi-transparent` \| `high-contrast`). Empty means the default look.
+- Do not write features against blacklist, 2FA, couples, or roles until a story asks. Neither live port sees them.
 
 ## Local development
 
@@ -197,5 +252,5 @@ npm run type-check
 
 - **Another OAuth provider:** add a branch in `oauthIdentityFromAuthJs` and an Auth.js provider. Do not fork `recognizeOAuthMember`.
 - **Password / Facebook / blacklist / admin UI:** not in the live product. Do not rebuild them from archived plans.
-- **Companionship features:** new ports and tables as that slice needs them; do not hang them on `IMemberRepository` “while we are here”.
-- **Docs:** update this file when the running system changes. Put product rules in `application_idea.md`. Do not revive `_archived_docs/` as current architecture.
+- **Companionship relations / graphs / couples / geo:** new ports and tables as that slice needs them. The person registry already has `ICommunityMemberRepository`. Do not hang the next slice on `IMemberRepository` “while we are here”.
+- **Docs:** update this file when the running system changes. Put product rules in `application_idea.md`. Do not revive `_archived_docs/` or [`db/SCHEMA.md`](../db/SCHEMA.md) as current architecture.
