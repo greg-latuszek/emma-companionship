@@ -1,7 +1,7 @@
 // db/tests/db-connection.ts
 // Shared database connection utility for integration tests
 
-import { Pool, QueryResult } from 'pg';
+import { Pool, QueryResult, QueryResultRow } from 'pg';
 
 // Use test database for tests
 const DB_USER = process.env.DB_USER || 'devuser';
@@ -31,12 +31,12 @@ export function getPool(): Pool {
 /**
  * Execute a raw SQL query
  */
-export async function query<T = any>(
+export async function query<T extends QueryResultRow = QueryResultRow>(
   sql: string,
-  values?: any[]
+  values?: unknown[]
 ): Promise<QueryResult<T>> {
   const client = getPool();
-  return client.query(sql, values);
+  return client.query<T>(sql, values);
 }
 
 /**

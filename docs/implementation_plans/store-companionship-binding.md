@@ -62,7 +62,7 @@ Actor: an approved Province Companionship Delegate.
   - Verify: `npm run db:migrate:test && npm run test:db`
   - Commit message: `Add companionship_relations contract`
 
-- [ ] **Chunk 2 — Read persistence**
+- [x] **Chunk 2 — Read persistence**
   - Files:
     - `src/ports/repositories/ICompanionshipRelationRepository.ts`
     - `src/adapters/db/pg/PgCompanionshipRelationRepository.ts`
@@ -70,11 +70,15 @@ Actor: an approved Province Companionship Delegate.
     - `src/di/RepositoryProvider.ts` and `src/adapters/db/pg/PgRepositoryContainer.ts`
   - Verify: `npm run test:db` + `npm test`
 
-- [ ] **Chunk 3 — First clickable screen**
+- [x] **Chunk 3 — First clickable screen**
   - Files:
     - `src/app/app/companionships/page.tsx`
-    - new panel card in `src/app/app/companionship-panel/page.tsx`
-  - Verify: open `/app/companionships`, see empty list.
+    - `src/app/app/companionships/CompanionshipRelationList.tsx`
+    - `src/app/app/companionship-panel/companionships-panel-card.ts`
+    - `src/app/app/companionship-panel/CompanionshipPanel.tsx`
+    - `src/types/companionship-relation.ts` and repository/use-case enriched with participant names
+    - `db/tests/db-connection.ts`, `db/tests/schema.test.ts`, `src/app/app/members/MirroredHorizontalScroll.tsx` (pre-existing type/lint fixes needed for build)
+  - Verify: `npm run build`, `npm test`, `npm run test:db`
 
 - [ ] **Chunk 4 — Add mutation**
   - Files:
@@ -93,4 +97,4 @@ Actor: an approved Province Companionship Delegate.
 
 ## Status
 
-Chunk 1 completed. Ready for review before Chunk 2.
+Chunks 1–3 completed. Ready for review before Chunk 4 (add mutation).

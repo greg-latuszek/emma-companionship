@@ -1,5 +1,5 @@
-import type { CompanionshipRelation } from '@/types/companionship-relation';
+import type { CompanionshipRelationListItem } from '@/types/companionship-relation';
 
 export interface ICompanionshipRelationRepository {
-  listCompanionshipRelations(): Promise<CompanionshipRelation[]>;
+  listCompanionshipRelations(): Promise<CompanionshipRelationListItem[]>;
 }

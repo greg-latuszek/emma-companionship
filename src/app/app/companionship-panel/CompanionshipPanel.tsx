@@ -12,10 +12,12 @@ import type { SignedInMember } from './signed-in-member';
 import { useVisualStyle } from '@/components/VisualStyleProvider';
 import { visualSurfaces } from '@/components/visual-style-surfaces';
 import { communityMembersPanelCard } from './community-members-panel-card';
+import { companionshipsPanelCard } from './companionships-panel-card';
 import { VisualStyleSettings } from './VisualStyleSettings';
 
 export function CompanionshipPanel({ member }: { member: SignedInMember }): JSX.Element {
   const communityMembers = communityMembersPanelCard();
+  const companionships = companionshipsPanelCard();
   const surfaces = visualSurfaces(useVisualStyle());
 
   return (
@@ -82,12 +84,17 @@ export function CompanionshipPanel({ member }: { member: SignedInMember }): JSX.
                 </p>
               </Link>
 
-              <div className={`${surfaces.panel} p-6`}>
-                <h3 className="mb-2 text-lg font-bold">Health Dashboard</h3>
+              <Link
+                href={companionships.href}
+                className={`${surfaces.panel} block p-6 ${surfaces.panelHover} ${surfaces.focusOutline}`}
+              >
+                <h3 className="mb-2 text-lg font-bold">
+                  {companionships.title}
+                </h3>
                 <p className={`text-sm ${surfaces.mutedText}`}>
-                  View relationship health status
+                  Kto jest czyim akompaniatorem
                 </p>
-              </div>
+              </Link>
 
               <div className={`${surfaces.panel} p-6`}>
                 {member.memberId ? (

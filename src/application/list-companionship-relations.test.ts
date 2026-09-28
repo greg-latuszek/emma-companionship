@@ -2,15 +2,27 @@ import { describe, expect, it, vi } from 'vitest';
 import { listCompanionshipRelations } from '@/application/list-companionship-relations';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import { MemberId } from '@/types/auth';
-import type { CompanionshipRelation } from '@/types/companionship-relation';
+import type { CompanionshipRelationListItem } from '@/types/companionship-relation';
 
-function aCompanionshipRelation(
-  overrides: Partial<CompanionshipRelation> = {}
-): CompanionshipRelation {
+function aParticipant(
+  id: string,
+  firstName: string,
+  lastName: string
+): CompanionshipRelationListItem['companion'] {
+  return {
+    id: MemberId(id),
+    first_name: firstName,
+    last_name: lastName,
+  };
+}
+
+function aCompanionshipRelationListItem(
+  overrides: Partial<CompanionshipRelationListItem> = {}
+): CompanionshipRelationListItem {
   return {
     id: 'relation-1',
-    companion_id: MemberId('companion-1'),
-    accompanied_id: MemberId('accompanied-1'),
+    companion: aParticipant('companion-1', 'Anna', 'Nowak'),
+    accompanied: aParticipant('accompanied-1', 'Piotr', 'Wiśniewski'),
     status: 'active',
     start_date: '2024-01-10',
     end_date: null,
@@ -30,11 +42,11 @@ function aCompanionshipRelationRepository(
 
 describe('listCompanionshipRelations', () => {
   it('listCompanionshipRelations returns every stored relation', async () => {
-    const first = aCompanionshipRelation();
-    const second = aCompanionshipRelation({
+    const first = aCompanionshipRelationListItem();
+    const second = aCompanionshipRelationListItem({
       id: 'relation-2',
-      companion_id: MemberId('companion-2'),
-      accompanied_id: MemberId('accompanied-2'),
+      companion: aParticipant('companion-2', 'Jan', 'Kowalski'),
+      accompanied: aParticipant('accompanied-2', 'Maria', 'Zielińska'),
     });
     const relations = aCompanionshipRelationRepository({
       listCompanionshipRelations: vi.fn().mockResolvedValue([first, second]),
@@ -46,7 +58,7 @@ describe('listCompanionshipRelations', () => {
   });
 
   it('listCompanionshipRelations preserves archived relations', async () => {
-    const archived = aCompanionshipRelation({ status: 'archived' });
+    const archived = aCompanionshipRelationListItem({ status: 'archived' });
     const relations = aCompanionshipRelationRepository({
       listCompanionshipRelations: vi.fn().mockResolvedValue([archived]),
     });
