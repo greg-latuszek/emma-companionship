@@ -51,6 +51,7 @@ describe('Database Schema Validation', () => {
                'approval_audit',
                'auth_events',
                'two_factor_auth',
+               'companionship_relations',
              ];
 
       const result = await query(`

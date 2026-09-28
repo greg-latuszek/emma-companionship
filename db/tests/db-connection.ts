@@ -60,6 +60,7 @@ export async function truncateAllTables(): Promise<void> {
     'security_events',
     'blacklist',
     'two_factor_auth',
+    'companionship_relations',
     'members',
     'geographic_units',
     'roles',
