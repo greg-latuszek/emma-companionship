@@ -5,8 +5,10 @@
 
 import { IRepositoryContainer } from '@/ports/repositories/IRepositoryContainer';
 import { ICommunityMemberRepository } from '@/ports/repositories/ICommunityMemberRepository';
+import { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import { IMemberRepository } from '@/ports/repositories/IMemberRepository';
 import { PgCommunityMemberRepository } from './PgCommunityMemberRepository';
+import { PgCompanionshipRelationRepository } from './PgCompanionshipRelationRepository';
 import { PgMemberRepository } from './PgMemberRepository';
 
 /**
@@ -15,6 +17,7 @@ import { PgMemberRepository } from './PgMemberRepository';
 export class PgRepositoryContainer implements IRepositoryContainer {
   private memberRepository: IMemberRepository | null = null;
   private communityMemberRepository: ICommunityMemberRepository | null = null;
+  private companionshipRelationRepository: ICompanionshipRelationRepository | null = null;
 
   getMemberRepository(): IMemberRepository {
     if (!this.memberRepository) {
@@ -28,5 +31,12 @@ export class PgRepositoryContainer implements IRepositoryContainer {
       this.communityMemberRepository = new PgCommunityMemberRepository();
     }
     return this.communityMemberRepository;
+  }
+
+  getCompanionshipRelationRepository(): ICompanionshipRelationRepository {
+    if (!this.companionshipRelationRepository) {
+      this.companionshipRelationRepository = new PgCompanionshipRelationRepository();
+    }
+    return this.companionshipRelationRepository;
   }
 }
