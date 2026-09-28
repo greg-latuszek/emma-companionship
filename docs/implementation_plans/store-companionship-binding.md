@@ -90,6 +90,18 @@ Actor: an approved Province Companionship Delegate.
     - member-picker component reused from existing patterns
   - Verify: create a relation through the UI, see it in the list.
 
+- [ ] **Chunk 4.1 — Fix companionship list display and naming**
+  - Issues addressed:
+    - Make list responsive like `CommunityMemberList` (table on desktop, cards on mobile)
+    - Add clear labels distinguishing "Akompaniator" from "Akompaniowany"
+    - Fix naming: "Akompaniujący" → "Akompaniator" throughout codebase
+  - Files:
+    - `src/app/app/companionships/CompanionshipRelationList.tsx` (responsive table/cards)
+    - `src/app/app/companionships/companionship-relation-list-state.ts` (new, similar to `community-member-list-state.ts`)
+    - Update any UI copy using "Akompaniujący" to "Akompaniator"
+    - Update comments/docs if they reference old naming
+  - Verify: list displays correctly on mobile (cards) and desktop (table), roles are clearly labeled.
+
 - [ ] **Chunk 5 — Update mutation**
   - Files:
     - `src/application/update-companionship-relation.ts` + tests
@@ -116,4 +128,4 @@ Actor: an approved Province Companionship Delegate.
 
 ## Status
 
-Chunks 1–4 completed. Ready for Chunk 5 (update mutation).
+Chunks 1–4 completed. Ready for Chunk 4.1 (fix list display and naming).
