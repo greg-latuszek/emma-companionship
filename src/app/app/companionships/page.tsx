@@ -40,15 +40,25 @@ export default async function CompanionshipsPage() {
         <div className="flex min-w-0 flex-1 flex-col px-4 pb-16">
           <div className="pt-4 text-center">
             <PageTitle delay={0.2}>Akompaniamenty</PageTitle>
-            <Link
-              href="/app/companionship-panel"
-              className="inline-block text-white/80 underline-offset-4 hover:underline"
-            >
-              Wróć do panelu
-            </Link>
+            <div className="flex flex-col items-center gap-2">
+              <Link
+                href="/app/companionship-panel"
+                className="inline-block text-white/80 underline-offset-4 hover:underline"
+              >
+                Wróć do panelu
+              </Link>
+            </div>
           </div>
 
           <SemiTransparentPanel className="mx-auto mt-8 w-full min-w-0 max-w-3xl p-6">
+            <div className="mb-4 flex justify-end">
+              <Link
+                href="/app/companionships/new"
+                className="rounded-lg bg-white/20 px-4 py-2 text-white transition-colors hover:bg-white/30"
+              >
+                Dodaj akompaniament
+              </Link>
+            </div>
             <CompanionshipRelationList relations={relations} />
           </SemiTransparentPanel>
         </div>

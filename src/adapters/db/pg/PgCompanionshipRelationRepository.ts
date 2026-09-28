@@ -1,7 +1,9 @@
-import { queryMany } from '@/infrastructure/db/pg';
+import { queryMany, queryOne } from '@/infrastructure/db/pg';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
+import type { CompanionshipRelationWriteWithDefaults } from '@/schemas/companionship-relation';
 import { MemberId } from '@/types/auth';
 import type {
+  CompanionshipRelation,
   CompanionshipRelationListItem,
   CompanionshipRelationParticipant,
   CompanionshipRelationStatus,
@@ -81,5 +83,57 @@ export class PgCompanionshipRelationRepository
       ORDER BY accompanied.last_name, accompanied.first_name, cr.created_at
     `);
     return rows.map(companionshipRelationListItemFromRow);
+  }
+
+  async addCompanionshipRelation(
+    write: CompanionshipRelationWriteWithDefaults
+  ): Promise<CompanionshipRelation> {
+    const row = await queryOne<{
+      id: string;
+      companion_id: string;
+      accompanied_id: string;
+      status: CompanionshipRelationStatus;
+      start_date: string | null;
+      end_date: string | null;
+      notes: string | null;
+    }>(`
+      INSERT INTO companionship_relations (
+        companion_id,
+        accompanied_id,
+        status,
+        start_date,
+        end_date,
+        notes
+      ) VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING
+        id,
+        companion_id,
+        accompanied_id,
+        status,
+        start_date::text,
+        end_date::text,
+        notes
+    `, [
+      write.companion_id,
+      write.accompanied_id,
+      write.status,
+      write.start_date,
+      write.end_date,
+      write.notes,
+    ]);
+
+    if (!row) {
+      throw new Error('Failed to insert companionship relation');
+    }
+
+    return {
+      id: row.id,
+      companion_id: MemberId(row.companion_id),
+      accompanied_id: MemberId(row.accompanied_id),
+      status: row.status,
+      start_date: row.start_date,
+      end_date: row.end_date,
+      notes: row.notes,
+    };
   }
 }
