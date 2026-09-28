@@ -8,7 +8,7 @@ import { decorativeFrame } from '@/components/decorative-frame';
 export function AppArea({ children }: { children: React.ReactNode }): JSX.Element {
   return (
     <div
-      className={`absolute ${decorativeFrame.insetClassName} z-10 flex flex-col overflow-y-auto bg-gradient-to-b from-black/50 via-black/40 to-black/60`}
+      className={`absolute ${decorativeFrame.insetClassName} z-10 flex min-w-0 flex-col overflow-y-auto bg-gradient-to-b from-black/50 via-black/40 to-black/60`}
     >
       {children}
     </div>

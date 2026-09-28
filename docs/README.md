@@ -4,7 +4,7 @@ Start here. These files describe the **current** application plus the **domain d
 
 ## What the app is today
 
-A closed, members-only web app. Google confirms identity. The application recognizes that person as a member (existing or pending). Only an **approved** member (`is_active` and not revoked) may stay under `/app`. The panel is a shell; companionship work is not built yet.
+A closed, members-only web app. Google confirms identity. The application recognizes that person as a member (existing or pending). Only an **approved** member (`is_active` and not revoked) may stay under `/app`. From the panel they can open **Członkowie wspólnoty** and add, correct, or remove people in the community registry. Companionship relations and graphs are not built yet.
 
 ```mermaid
 flowchart LR
@@ -14,11 +14,14 @@ flowchart LR
   recognize --> pending{Approved?}
   pending -->|no| wait["/auth/awaiting-approval"]
   pending -->|yes| panel["/app/companionship-panel"]
+  panel --> members["/app/members"]
+  members --> add["Dodaj osobę"]
+  members --> edit["Edytuj"]
 ```
 
 ## What it is not yet
 
-Companionship graphs, community registry CRUD, Excel/CSV import, health views, role assignment UI, admin approval UI, password login, Facebook (or any second OAuth provider).
+Companionship or supervision relations, couple/geo assignment, Excel/CSV import, health views, role assignment UI, admin approval UI, password login, Facebook (or any second OAuth provider).
 
 ## Read order
 

@@ -1,5 +1,10 @@
 # Database Schema - COMMIT 2
 
+**Stale.** This file is leftover from an unused auth-width plan. The live
+contract is [`docs/current-architecture.md`](../docs/current-architecture.md)
+(migrations `001`–`007`, two ports on `members`). Do not treat the tables and
+“next commits” below as product.
+
 This document summarizes the database schema implemented in COMMIT 2.
 
 ## Tables Overview

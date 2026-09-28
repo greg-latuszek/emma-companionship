@@ -4,11 +4,28 @@ import { motion } from 'motion/react';
 import Link from 'next/link';
 import type { JSX } from 'react';
 
-export const semiTransparentControlSurfaceClassName =
-  'rounded-full bg-white/15 hover:bg-white/25 border border-white/35 text-white font-sans font-medium text-sm sm:text-base uppercase tracking-widest transition-all duration-300 backdrop-blur-md shadow-lg hover:shadow-xl';
+import { useVisualStyle } from '@/components/VisualStyleProvider';
+import {
+  glassControlClassName,
+  glassControlSurfaceClassName,
+  glassPanelClassName,
+  visualSurfaces,
+} from '@/components/visual-style-surfaces';
 
-export const semiTransparentControlClassName =
-  `inline-block px-8 sm:px-12 py-3 sm:py-4 ${semiTransparentControlSurfaceClassName}`;
+export const semiTransparentControlSurfaceClassName = glassControlSurfaceClassName;
+export const semiTransparentControlClassName = glassControlClassName;
+export const semiTransparentPanelClassName = glassPanelClassName;
+
+export function SemiTransparentPanel({
+  children,
+  className = '',
+}: {
+  children: React.ReactNode;
+  className?: string;
+}): JSX.Element {
+  const { panel } = visualSurfaces(useVisualStyle());
+  return <div className={`${panel} ${className}`}>{children}</div>;
+}
 
 interface SemiTransparentButtonProps {
   href: string;

@@ -5,11 +5,19 @@ import { AppArea } from '@/components/AppArea';
 import { Navbar } from '@/components/Navbar';
 import { LogoutButton } from '@/components/LogoutButton';
 import { PageTitle } from '@/components/PageTitle';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
 import type { JSX } from 'react';
 import type { SignedInMember } from './signed-in-member';
+import { useVisualStyle } from '@/components/VisualStyleProvider';
+import { visualSurfaces } from '@/components/visual-style-surfaces';
+import { communityMembersPanelCard } from './community-members-panel-card';
+import { VisualStyleSettings } from './VisualStyleSettings';
 
 export function CompanionshipPanel({ member }: { member: SignedInMember }): JSX.Element {
+  const communityMembers = communityMembersPanelCard();
+  const surfaces = visualSurfaces(useVisualStyle());
+
   return (
     <PageBackground
       imageSource="/docs/img/Christ_and_st_Menas.webp"
@@ -40,14 +48,14 @@ export function CompanionshipPanel({ member }: { member: SignedInMember }): JSX.
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
-                className="bg-white rounded-lg shadow-lg p-6 max-w-md mx-auto mt-8 text-gray-800"
+                className={`${surfaces.panel} p-6 max-w-md mx-auto mt-8`}
               >
-                <p className="text-gray-600 text-sm mb-2">Zalogowany użytkownik:</p>
-                <p className="text-2xl font-bold mb-1">{member.name}</p>
-                <p className="text-gray-500 mb-6">{member.email}</p>
+                <p className={`mb-2 text-sm ${surfaces.mutedText}`}>Zalogowany użytkownik:</p>
+                <p className="mb-1 text-2xl font-bold">{member.name}</p>
+                <p className={`mb-6 ${surfaces.secondaryText}`}>{member.email}</p>
 
                 {member.memberId ? (
-                  <div className="border-t pt-4 text-sm text-gray-600">
+                  <div className={`border-t ${surfaces.hairline} pt-4 text-sm ${surfaces.mutedText}`}>
                     <p>ID: {member.memberId}</p>
                   </div>
                 ) : null}
@@ -62,25 +70,36 @@ export function CompanionshipPanel({ member }: { member: SignedInMember }): JSX.
               transition={{ duration: 0.8, delay: 0.6 }}
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
             >
-              <div className="bg-white rounded-lg shadow p-6 text-gray-800">
-                <h3 className="text-lg font-bold mb-2">Companionship Relations</h3>
-                <p className="text-gray-600 text-sm">
-                  Manage your companionship relationships
+              <Link
+                href={communityMembers.href}
+                className={`${surfaces.panel} block p-6 ${surfaces.panelHover} ${surfaces.focusOutline}`}
+              >
+                <h3 className="mb-2 text-lg font-bold">
+                  {communityMembers.title}
+                </h3>
+                <p className={`text-sm ${surfaces.mutedText}`}>
+                  Osoby wpisane do rejestru wspólnoty
                 </p>
-              </div>
+              </Link>
 
-              <div className="bg-white rounded-lg shadow p-6 text-gray-800">
-                <h3 className="text-lg font-bold mb-2">Health Dashboard</h3>
-                <p className="text-gray-600 text-sm">
+              <div className={`${surfaces.panel} p-6`}>
+                <h3 className="mb-2 text-lg font-bold">Health Dashboard</h3>
+                <p className={`text-sm ${surfaces.mutedText}`}>
                   View relationship health status
                 </p>
               </div>
 
-              <div className="bg-white rounded-lg shadow p-6 text-gray-800">
-                <h3 className="text-lg font-bold mb-2">Settings</h3>
-                <p className="text-gray-600 text-sm">
-                  Manage your account settings
-                </p>
+              <div className={`${surfaces.panel} p-6`}>
+                {member.memberId ? (
+                  <VisualStyleSettings />
+                ) : (
+                  <>
+                    <h3 className="mb-2 text-lg font-bold">Ustawienia aplikacji</h3>
+                    <p className={`text-sm ${surfaces.mutedText}`}>
+                      Zaloguj się ponownie, aby zmienić wygląd.
+                    </p>
+                  </>
+                )}
               </div>
             </motion.div>
           </div>

@@ -8,11 +8,11 @@
 
 import { queryOne } from '@/infrastructure/db/pg';
 import { IMemberRepository, CreateMemberInput } from '@/ports/repositories/IMemberRepository';
-import { Member, MemberId } from '@/types/auth';
+import { Member, MemberId, type VisualStyle } from '@/types/auth';
 
 const MEMBER_COLUMNS = `
   id, first_name, last_name, email,
-  oauth_provider, oauth_id, is_active, revoked_at, profile_picture
+  oauth_provider, oauth_id, is_active, revoked_at, profile_picture, visual_style
 `;
 
 export class PgMemberRepository implements IMemberRepository {
@@ -73,5 +73,17 @@ export class PgMemberRepository implements IMemberRepository {
     }
 
     return result;
+  }
+
+  async updateMemberVisualStyle(
+    id: MemberId,
+    visualStyle: VisualStyle | null
+  ): Promise<Member | null> {
+    return queryOne<Member>(
+      `UPDATE members SET visual_style = $2, updated_at = NOW()
+       WHERE id = $1 AND member_type = 'app_user'
+       RETURNING ${MEMBER_COLUMNS}`,
+      [id, visualStyle]
+    );
   }
 }

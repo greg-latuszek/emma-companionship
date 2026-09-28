@@ -91,6 +91,18 @@ describe('Database Schema Validation', () => {
       expect(columnNames).toContain('requested_at');
       expect(columnNames).toContain('approved_by');
       expect(columnNames).toContain('registry_check_result');
+      expect(columnNames).toContain('visual_style');
+    });
+
+    it('should have visual_style nullable so empty means the default', async () => {
+      const result = await query(`
+        SELECT is_nullable, column_default
+        FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'members' AND column_name = 'visual_style'
+      `);
+
+      expect(result.rows[0].is_nullable).toBe('YES');
+      expect(result.rows[0].column_default).toBeNull();
     });
 
            it('should have email partial unique index for app_users', async () => {
