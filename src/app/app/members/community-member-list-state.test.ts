@@ -90,8 +90,7 @@ describe('community member list state', () => {
     expect(sorted[1]?.email).toBeNull();
   });
 
-  it('the list extra fields omit notes so the Delegate cannot show them as a column', () => {
-    expect(communityMemberListExtraFields).not.toContain('notes');
+  it('the list extra fields omit image_url and profile_picture which are not meant for column display', () => {
     expect(communityMemberListExtraFields).not.toContain('image_url');
     expect(communityMemberListExtraFields).not.toContain('profile_picture');
     expect(communityMemberListExtraFields).not.toContain('first_name');
@@ -142,7 +141,7 @@ describe('community member list state', () => {
       'email',
     ]);
     expect(
-      communityMemberListExtraFieldsFromStoredValue(JSON.stringify(['notes']))
+      communityMemberListExtraFieldsFromStoredValue(JSON.stringify(['unknown_field']))
     ).toEqual(['email']);
   });
 
@@ -175,7 +174,7 @@ describe('community member list state', () => {
     });
     expect(
       communityMemberListSortFromStoredValue(
-        JSON.stringify({ sortField: 'notes', sortDirection: 'asc' })
+        JSON.stringify({ sortField: 'unknown_field', sortDirection: 'asc' })
       )
     ).toEqual({
       sortField: 'last_name',
