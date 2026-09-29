@@ -36,7 +36,9 @@ function aCompanionshipRelationRepository(
 ): ICompanionshipRelationRepository {
   return {
     listCompanionshipRelations: vi.fn(),
+    findCompanionshipRelationById: vi.fn(),
     addCompanionshipRelation: vi.fn(),
+    updateCompanionshipRelation: vi.fn(),
     ...stubs,
   };
 }

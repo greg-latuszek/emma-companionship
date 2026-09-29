@@ -6,7 +6,14 @@ import type { CompanionshipRelationWriteWithDefaults } from '@/schemas/companion
 
 export interface ICompanionshipRelationRepository {
   listCompanionshipRelations(): Promise<CompanionshipRelationListItem[]>;
+  findCompanionshipRelationById(
+    id: string
+  ): Promise<CompanionshipRelation | null>;
   addCompanionshipRelation(
+    write: CompanionshipRelationWriteWithDefaults
+  ): Promise<CompanionshipRelation>;
+  updateCompanionshipRelation(
+    id: string,
     write: CompanionshipRelationWriteWithDefaults
   ): Promise<CompanionshipRelation>;
 }

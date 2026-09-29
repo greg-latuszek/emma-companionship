@@ -102,13 +102,15 @@ Actor: an approved Province Companionship Delegate.
     - Update comments/docs if they reference old naming
   - Verify: list displays correctly on mobile (cards) and desktop (table), roles are clearly labeled.
 
-- [ ] **Chunk 5 — Update mutation**
+- [x] **Chunk 5 — Update mutation**
   - Files:
     - `src/application/update-companionship-relation.ts` + tests
+    - `src/application/find-companionship-relation.ts` (helper)
     - `src/app/app/companionships/actions.ts` (add update action) + tests
     - `src/app/app/companionships/[id]/edit/page.tsx`
-    - Update `CompanionshipRelationForm.tsx` to support edit mode
-    - Add `updateCompanionshipRelation` to repository port and adapter
+    - `CompanionshipRelationForm.tsx` already supported edit mode via initialValues
+    - `CompanionshipRelationList.tsx` (add edit links)
+    - Add `updateCompanionshipRelation` and `findCompanionshipRelationById` to repository port and adapter
   - Verify: edit an existing relation through the UI, see changes in the list.
 
 - [ ] **Chunk 6 — Delete mutation**
@@ -128,4 +130,4 @@ Actor: an approved Province Companionship Delegate.
 
 ## Status
 
-Chunks 1–4 completed. Ready for Chunk 4.1 (fix list display and naming).
+Chunks 1–5 completed. Ready for Chunk 6 (delete mutation).

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import type { JSX } from 'react';
 import { useVisualStyle } from '@/components/VisualStyleProvider';
@@ -184,6 +185,14 @@ export function CompanionshipRelationList({
               ) : null}
               <span>{statusLabel(relation.status)}</span>
             </div>
+            <div className="flex justify-end">
+              <Link
+                href={`/app/companionships/${relation.id}/edit`}
+                className={`text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
+              >
+                Edytuj
+              </Link>
+            </div>
           </li>
         ))}
       </ul>
@@ -239,6 +248,9 @@ export function CompanionshipRelationList({
                     onSort={sortBy}
                   />
                 </th>
+                <th className="px-3 py-3 whitespace-nowrap">
+                  <span className="sr-only">Działania</span>
+                </th>
               </tr>
             </thead>
             <tbody className={`divide-y ${surfaces.rowDivider}`}>
@@ -263,6 +275,14 @@ export function CompanionshipRelationList({
                     className={`whitespace-nowrap px-3 py-3 ${surfaces.mutedText}`}
                   >
                     {statusLabel(relation.status)}
+                  </td>
+                  <td className="px-3 py-3 whitespace-nowrap">
+                    <Link
+                      href={`/app/companionships/${relation.id}/edit`}
+                      className={`text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
+                    >
+                      Edytuj
+                    </Link>
                   </td>
                 </tr>
               ))}

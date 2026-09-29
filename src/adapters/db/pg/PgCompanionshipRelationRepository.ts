@@ -85,6 +85,48 @@ export class PgCompanionshipRelationRepository
     return rows.map(companionshipRelationListItemFromRow);
   }
 
+  async findCompanionshipRelationById(
+    id: string
+  ): Promise<CompanionshipRelation | null> {
+    const row = await queryOne<{
+      id: string;
+      companion_id: string;
+      accompanied_id: string;
+      status: CompanionshipRelationStatus;
+      start_date: string | null;
+      end_date: string | null;
+      notes: string | null;
+    }>(
+      `
+      SELECT
+        id,
+        companion_id,
+        accompanied_id,
+        status,
+        start_date::text,
+        end_date::text,
+        notes
+      FROM companionship_relations
+      WHERE id = $1
+    `,
+      [id]
+    );
+
+    if (!row) {
+      return null;
+    }
+
+    return {
+      id: row.id,
+      companion_id: MemberId(row.companion_id),
+      accompanied_id: MemberId(row.accompanied_id),
+      status: row.status,
+      start_date: row.start_date,
+      end_date: row.end_date,
+      notes: row.notes,
+    };
+  }
+
   async addCompanionshipRelation(
     write: CompanionshipRelationWriteWithDefaults
   ): Promise<CompanionshipRelation> {
@@ -124,6 +166,64 @@ export class PgCompanionshipRelationRepository
 
     if (!row) {
       throw new Error('Failed to insert companionship relation');
+    }
+
+    return {
+      id: row.id,
+      companion_id: MemberId(row.companion_id),
+      accompanied_id: MemberId(row.accompanied_id),
+      status: row.status,
+      start_date: row.start_date,
+      end_date: row.end_date,
+      notes: row.notes,
+    };
+  }
+
+  async updateCompanionshipRelation(
+    id: string,
+    write: CompanionshipRelationWriteWithDefaults
+  ): Promise<CompanionshipRelation> {
+    const row = await queryOne<{
+      id: string;
+      companion_id: string;
+      accompanied_id: string;
+      status: CompanionshipRelationStatus;
+      start_date: string | null;
+      end_date: string | null;
+      notes: string | null;
+    }>(
+      `
+      UPDATE companionship_relations
+      SET
+        companion_id = $2,
+        accompanied_id = $3,
+        status = $4,
+        start_date = $5,
+        end_date = $6,
+        notes = $7
+      WHERE id = $1
+      RETURNING
+        id,
+        companion_id,
+        accompanied_id,
+        status,
+        start_date::text,
+        end_date::text,
+        notes
+    `,
+      [
+        id,
+        write.companion_id,
+        write.accompanied_id,
+        write.status,
+        write.start_date,
+        write.end_date,
+        write.notes,
+      ]
+    );
+
+    if (!row) {
+      throw new Error('Failed to update companionship relation');
     }
 
     return {

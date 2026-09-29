@@ -1,7 +1,8 @@
 import { describe, expect, it, vi, beforeEach, type Mock } from 'vitest';
 import { redirect } from 'next/navigation';
 import * as addCompanionshipRelationModule from '@/application/add-companionship-relation';
-import { submitNewCompanionshipRelation } from './actions';
+import * as updateCompanionshipRelationModule from '@/application/update-companionship-relation';
+import { submitNewCompanionshipRelation, submitEditCompanionshipRelation } from './actions';
 
 vi.mock('next/navigation', () => ({
   redirect: vi.fn(),
@@ -11,6 +12,14 @@ vi.mock('@/application/add-companionship-relation', () => ({
   addCompanionshipRelation: vi.fn(),
   isCompanionAndAccompaniedAreSamePerson: vi.fn(),
   CompanionAndAccompaniedAreSamePerson: class CompanionAndAccompaniedAreSamePerson extends Error {},
+}));
+
+vi.mock('@/application/update-companionship-relation', () => ({
+  updateCompanionshipRelation: vi.fn(),
+  isCompanionAndAccompaniedAreSamePerson: vi.fn(),
+  isCompanionshipRelationNotFound: vi.fn(),
+  CompanionAndAccompaniedAreSamePerson: class CompanionAndAccompaniedAreSamePerson extends Error {},
+  CompanionshipRelationNotFound: class CompanionshipRelationNotFound extends Error {},
 }));
 
 describe('submitNewCompanionshipRelation', () => {
@@ -85,5 +94,93 @@ describe('submitNewCompanionshipRelation', () => {
 
     expect(result.fieldErrors?.start_date).toBeDefined();
     expect(addCompanionshipRelationModule.addCompanionshipRelation).not.toHaveBeenCalled();
+  });
+});
+
+describe('submitEditCompanionshipRelation', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(updateCompanionshipRelationModule.isCompanionAndAccompaniedAreSamePerson).mockReturnValue(false);
+    vi.mocked(updateCompanionshipRelationModule.isCompanionshipRelationNotFound).mockReturnValue(false);
+  });
+
+  it('submitEditCompanionshipRelation accepts valid data and redirects to the list', async () => {
+    const relationId = 'relation-123';
+    const formData = new FormData();
+    formData.set('companion_id', '550e8400-e29b-41d4-a716-446655440000');
+    formData.set('accompanied_id', '550e8400-e29b-41d4-a716-446655440001');
+    formData.set('start_date', '2024-01-15');
+    formData.set('end_date', '');
+    formData.set('notes', 'Updated notes');
+
+    await submitEditCompanionshipRelation(relationId, undefined, formData);
+
+    expect(updateCompanionshipRelationModule.updateCompanionshipRelation).toHaveBeenCalledWith(
+      relationId,
+      {
+        companion_id: '550e8400-e29b-41d4-a716-446655440000',
+        accompanied_id: '550e8400-e29b-41d4-a716-446655440001',
+        start_date: '2024-01-15',
+        end_date: null,
+        notes: 'Updated notes',
+      }
+    );
+    expect(redirect).toHaveBeenCalledWith('/app/companionships');
+  });
+
+  it('submitEditCompanionshipRelation refuses when companion and accompanied are the same', async () => {
+    vi.mocked(updateCompanionshipRelationModule.isCompanionAndAccompaniedAreSamePerson).mockReturnValue(true);
+    (updateCompanionshipRelationModule.updateCompanionshipRelation as Mock).mockRejectedValue(
+      new updateCompanionshipRelationModule.CompanionAndAccompaniedAreSamePerson()
+    );
+
+    const relationId = 'relation-123';
+    const formData = new FormData();
+    const samePerson = '550e8400-e29b-41d4-a716-446655440000';
+    formData.set('companion_id', samePerson);
+    formData.set('accompanied_id', samePerson);
+    formData.set('start_date', '2024-01-15');
+    formData.set('end_date', '');
+    formData.set('notes', '');
+
+    const result = await submitEditCompanionshipRelation(relationId, undefined, formData);
+
+    expect(result.formError).toBe('Akompaniator i akompaniowany nie mogą być tą samą osobą.');
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it('submitEditCompanionshipRelation refuses when relation does not exist', async () => {
+    vi.mocked(updateCompanionshipRelationModule.isCompanionshipRelationNotFound).mockReturnValue(true);
+    (updateCompanionshipRelationModule.updateCompanionshipRelation as Mock).mockRejectedValue(
+      new updateCompanionshipRelationModule.CompanionshipRelationNotFound('relation-123')
+    );
+
+    const relationId = 'relation-123';
+    const formData = new FormData();
+    formData.set('companion_id', '550e8400-e29b-41d4-a716-446655440000');
+    formData.set('accompanied_id', '550e8400-e29b-41d4-a716-446655440001');
+    formData.set('start_date', '2024-01-15');
+    formData.set('end_date', '');
+    formData.set('notes', '');
+
+    const result = await submitEditCompanionshipRelation(relationId, undefined, formData);
+
+    expect(result.formError).toBe('Akompaniament nie został znaleziony.');
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it('submitEditCompanionshipRelation refuses invalid data', async () => {
+    const relationId = 'relation-123';
+    const formData = new FormData();
+    formData.set('companion_id', '');
+    formData.set('accompanied_id', '550e8400-e29b-41d4-a716-446655440001');
+    formData.set('start_date', '2024-01-15');
+    formData.set('end_date', '');
+    formData.set('notes', '');
+
+    const result = await submitEditCompanionshipRelation(relationId, undefined, formData);
+
+    expect(result.fieldErrors?.companion_id).toBeDefined();
+    expect(updateCompanionshipRelationModule.updateCompanionshipRelation).not.toHaveBeenCalled();
   });
 });
