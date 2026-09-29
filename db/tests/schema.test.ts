@@ -2,7 +2,7 @@
 // Integration tests for database schema creation and integrity
 
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
-import { query, closeConnection, truncateAllTables, getPool } from './db-connection';
+import { query, closeConnection, truncateAllTables } from './db-connection';
 
 describe('Database Schema Validation', () => {
   beforeAll(() => {
@@ -51,6 +51,7 @@ describe('Database Schema Validation', () => {
                'approval_audit',
                'auth_events',
                'two_factor_auth',
+               'companionship_relations',
              ];
 
       const result = await query(`

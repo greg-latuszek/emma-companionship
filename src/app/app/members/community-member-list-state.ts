@@ -15,6 +15,7 @@ export const communityMemberListExtraFields = [
   'consecrated_status',
   'community_engagement_status',
   'accompanying_readiness',
+  'notes',
 ] as const;
 
 export type CommunityMemberListExtraField =
@@ -57,6 +58,7 @@ export const communityMemberListFieldLabels: Record<
   consecrated_status: 'Typ osoby konsekrowanej',
   community_engagement_status: 'Zaangażowanie we wspólnocie',
   accompanying_readiness: 'Gotowość do akompaniamentu',
+  notes: 'Notatki',
 };
 
 export function communityMemberThumbnail(

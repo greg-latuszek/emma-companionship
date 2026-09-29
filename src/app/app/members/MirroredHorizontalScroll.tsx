@@ -19,16 +19,17 @@ export function MirroredHorizontalScroll({
     if (!tableBox) {
       return;
     }
+    const box = tableBox;
 
     function rememberContentWidth(): void {
-      const table = tableBox.querySelector('table');
-      setContentWidth(table?.scrollWidth ?? tableBox.scrollWidth);
+      const table = box.querySelector('table');
+      setContentWidth(table?.scrollWidth ?? box.scrollWidth);
     }
 
     rememberContentWidth();
     const observer = new ResizeObserver(rememberContentWidth);
-    observer.observe(tableBox);
-    const table = tableBox.querySelector('table');
+    observer.observe(box);
+    const table = box.querySelector('table');
     if (table) {
       observer.observe(table);
     }

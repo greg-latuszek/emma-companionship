@@ -12,5 +12,6 @@ export default defineConfig({
     globals: true,
     include: ['src/**/*.test.ts', 'db/tests/**/*.test.ts'],
     testTimeout: 30000,
+    fileParallelism: false,
   },
 });
