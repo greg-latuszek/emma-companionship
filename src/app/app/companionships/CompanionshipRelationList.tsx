@@ -223,13 +223,14 @@ export function CompanionshipRelationList({
                 </th>
                 <th
                   aria-sort={sortAria('companion', sortField, sortDirection)}
-                  className="min-w-[14rem] whitespace-nowrap px-3 py-3"
+                  className={`${surfaces.stickyCell} sticky left-[14rem] z-10 min-w-[14rem] whitespace-nowrap px-3 py-3`}
                 >
                   <SortHeader
                     field="companion"
                     sortField={sortField}
                     sortDirection={sortDirection}
                     onSort={sortBy}
+                    textClassName="font-bold text-yellow-300"
                   />
                 </th>
                 <th
@@ -268,7 +269,7 @@ export function CompanionshipRelationList({
                     {accompaniedFullName(relation)}
                   </td>
                   <td
-                    className={`whitespace-nowrap px-3 py-3 ${surfaces.mutedText}`}
+                    className={`${surfaces.stickyCell} sticky left-[14rem] z-10 whitespace-nowrap px-3 py-3 font-bold text-yellow-300`}
                   >
                     {companionFullName(relation)}
                   </td>

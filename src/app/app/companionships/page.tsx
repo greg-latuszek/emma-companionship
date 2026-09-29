@@ -50,7 +50,7 @@ export default async function CompanionshipsPage() {
             </div>
           </div>
 
-          <SemiTransparentPanel className="mx-auto mt-8 w-full min-w-0 max-w-3xl p-6">
+          <SemiTransparentPanel className="mx-auto mt-8 w-full min-w-0 max-w-3xl p-6 lg:max-w-none">
             <div className="mb-4 flex justify-end">
               <Link
                 href="/app/companionships/new"
