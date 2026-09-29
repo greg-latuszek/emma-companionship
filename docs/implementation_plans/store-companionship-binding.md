@@ -122,7 +122,7 @@ Actor: an approved Province Companionship Delegate.
     - Add `deleteCompanionshipRelation` to repository port and adapter
   - Verify: delete a relation through the UI, see it removed from the list.
 
-- [ ] **Chunk 7 — Architecture docs**
+- [x] **Chunk 7 — Architecture docs**
   - Update `docs/current-architecture.md` with the new port and live table.
   - Update `docs/application_idea.md` “built today” section if it would lie.
 
@@ -131,4 +131,4 @@ Actor: an approved Province Companionship Delegate.
 
 ## Status
 
-Chunks 1–6 completed. Ready for Chunk 7 (architecture docs).
+Chunks 1–7 completed. Ready for Chunk 8 (delete this plan).
