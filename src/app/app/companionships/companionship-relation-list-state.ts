@@ -88,14 +88,12 @@ export const companionshipRelationListFieldLabels: Record<
   marital_status: 'Stan cywilny',
   consecrated_status: 'Typ osoby konsekrowanej',
   community_engagement_status: 'Zaangażowanie we wspólnocie',
-  accompanied_marital_status: 'Stan cywilny (Akompaniowany)',
-  accompanied_consecrated_status: 'Typ osoby konsekrowanej (Akompaniowany)',
-  accompanied_community_engagement_status:
-    'Zaangażowanie we wspólnocie (Akompaniowany)',
-  companion_marital_status: 'Stan cywilny (Akompaniator)',
-  companion_consecrated_status: 'Typ osoby konsekrowanej (Akompaniator)',
-  companion_community_engagement_status:
-    'Zaangażowanie we wspólnocie (Akompaniator)',
+  accompanied_marital_status: 'Stan cywilny',
+  accompanied_consecrated_status: 'Typ osoby konsekrowanej',
+  accompanied_community_engagement_status: 'Zaangażowanie we wspólnocie',
+  companion_marital_status: 'Stan cywilny',
+  companion_consecrated_status: 'Typ osoby konsekrowanej',
+  companion_community_engagement_status: 'Zaangażowanie we wspólnocie',
 };
 
 export function accompaniedFullName(
