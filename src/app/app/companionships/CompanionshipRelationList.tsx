@@ -7,6 +7,7 @@ import { useVisualStyle } from '@/components/VisualStyleProvider';
 import { visualSurfaces } from '@/components/visual-style-surfaces';
 import type { CompanionshipRelationListItem } from '@/types/companionship-relation';
 import { MirroredHorizontalScroll } from '../members/MirroredHorizontalScroll';
+import { DeleteCompanionshipRelationButton } from './DeleteCompanionshipRelationButton';
 import {
   accompaniedFullName,
   companionFullName,
@@ -185,13 +186,18 @@ export function CompanionshipRelationList({
               ) : null}
               <span>{statusLabel(relation.status)}</span>
             </div>
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-4">
               <Link
                 href={`/app/companionships/${relation.id}/edit`}
                 className={`text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
               >
                 Edytuj
               </Link>
+              <DeleteCompanionshipRelationButton
+                relationId={relation.id}
+                accompaniedName={accompaniedFullName(relation)}
+                companionName={companionFullName(relation)}
+              />
             </div>
           </li>
         ))}
@@ -277,12 +283,19 @@ export function CompanionshipRelationList({
                     {statusLabel(relation.status)}
                   </td>
                   <td className="px-3 py-3 whitespace-nowrap">
-                    <Link
-                      href={`/app/companionships/${relation.id}/edit`}
-                      className={`text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
-                    >
-                      Edytuj
-                    </Link>
+                    <div className="flex gap-4">
+                      <Link
+                        href={`/app/companionships/${relation.id}/edit`}
+                        className={`text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
+                      >
+                        Edytuj
+                      </Link>
+                      <DeleteCompanionshipRelationButton
+                        relationId={relation.id}
+                        accompaniedName={accompaniedFullName(relation)}
+                        companionName={companionFullName(relation)}
+                      />
+                    </div>
                   </td>
                 </tr>
               ))}

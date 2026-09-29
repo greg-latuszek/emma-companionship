@@ -1,11 +1,21 @@
 import { describe, expect, it, vi, beforeEach, type Mock } from 'vitest';
 import { redirect } from 'next/navigation';
+import { revalidatePath } from 'next/cache';
 import * as addCompanionshipRelationModule from '@/application/add-companionship-relation';
 import * as updateCompanionshipRelationModule from '@/application/update-companionship-relation';
-import { submitNewCompanionshipRelation, submitEditCompanionshipRelation } from './actions';
+import * as deleteCompanionshipRelationModule from '@/application/delete-companionship-relation';
+import {
+  submitNewCompanionshipRelation,
+  submitEditCompanionshipRelation,
+  submitDeleteCompanionshipRelation,
+} from './actions';
 
 vi.mock('next/navigation', () => ({
   redirect: vi.fn(),
+}));
+
+vi.mock('next/cache', () => ({
+  revalidatePath: vi.fn(),
 }));
 
 vi.mock('@/application/add-companionship-relation', () => ({
@@ -19,6 +29,12 @@ vi.mock('@/application/update-companionship-relation', () => ({
   isCompanionAndAccompaniedAreSamePerson: vi.fn(),
   isCompanionshipRelationNotFound: vi.fn(),
   CompanionAndAccompaniedAreSamePerson: class CompanionAndAccompaniedAreSamePerson extends Error {},
+  CompanionshipRelationNotFound: class CompanionshipRelationNotFound extends Error {},
+}));
+
+vi.mock('@/application/delete-companionship-relation', () => ({
+  deleteCompanionshipRelation: vi.fn(),
+  isCompanionshipRelationNotFound: vi.fn(),
   CompanionshipRelationNotFound: class CompanionshipRelationNotFound extends Error {},
 }));
 
@@ -182,5 +198,49 @@ describe('submitEditCompanionshipRelation', () => {
 
     expect(result.fieldErrors?.companion_id).toBeDefined();
     expect(updateCompanionshipRelationModule.updateCompanionshipRelation).not.toHaveBeenCalled();
+  });
+});
+
+describe('submitDeleteCompanionshipRelation', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(deleteCompanionshipRelationModule.isCompanionshipRelationNotFound).mockReturnValue(false);
+  });
+
+  it('submitDeleteCompanionshipRelation deletes the relation and revalidates', async () => {
+    const relationId = 'relation-123';
+
+    const result = await submitDeleteCompanionshipRelation(relationId);
+
+    expect(result.success).toBe(true);
+    expect(deleteCompanionshipRelationModule.deleteCompanionshipRelation).toHaveBeenCalledWith(relationId);
+    expect(revalidatePath).toHaveBeenCalledWith('/app/companionships');
+  });
+
+  it('submitDeleteCompanionshipRelation returns error when relation does not exist', async () => {
+    vi.mocked(deleteCompanionshipRelationModule.isCompanionshipRelationNotFound).mockReturnValue(true);
+    (deleteCompanionshipRelationModule.deleteCompanionshipRelation as Mock).mockRejectedValue(
+      new deleteCompanionshipRelationModule.CompanionshipRelationNotFound('relation-123')
+    );
+
+    const relationId = 'relation-123';
+
+    const result = await submitDeleteCompanionshipRelation(relationId);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Akompaniament nie został znaleziony.');
+  });
+
+  it('submitDeleteCompanionshipRelation returns error on failure', async () => {
+    (deleteCompanionshipRelationModule.deleteCompanionshipRelation as Mock).mockRejectedValue(
+      new Error('Database error')
+    );
+
+    const relationId = 'relation-123';
+
+    const result = await submitDeleteCompanionshipRelation(relationId);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Nie udało się usunąć akompaniamentu. Spróbuj ponownie.');
   });
 });

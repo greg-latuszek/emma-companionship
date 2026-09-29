@@ -1,5 +1,6 @@
 'use server';
 
+import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { companionshipRelationWriteSchema } from '@/schemas/companionship-relation';
 import {
@@ -11,6 +12,10 @@ import {
   isCompanionshipRelationNotFound,
   isCompanionAndAccompaniedAreSamePerson as isCompanionAndAccompaniedAreSamePersonUpdate,
 } from '@/application/update-companionship-relation';
+import {
+  deleteCompanionshipRelation,
+  isCompanionshipRelationNotFound as isCompanionshipRelationNotFoundDelete,
+} from '@/application/delete-companionship-relation';
 import {
   companionshipRelationFormValuesFromForm,
   polishCompanionshipRelationWriteIssues,
@@ -89,4 +94,26 @@ export async function submitEditCompanionshipRelation(
   }
 
   redirect('/app/companionships');
+}
+
+export async function submitDeleteCompanionshipRelation(
+  relationId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    await deleteCompanionshipRelation(relationId);
+    revalidatePath('/app/companionships');
+    return { success: true };
+  } catch (error) {
+    if (isCompanionshipRelationNotFoundDelete(error)) {
+      return {
+        success: false,
+        error: 'Akompaniament nie został znaleziony.',
+      };
+    }
+
+    return {
+      success: false,
+      error: 'Nie udało się usunąć akompaniamentu. Spróbuj ponownie.',
+    };
+  }
 }

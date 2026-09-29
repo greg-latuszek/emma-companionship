@@ -16,4 +16,5 @@ export interface ICompanionshipRelationRepository {
     id: string,
     write: CompanionshipRelationWriteWithDefaults
   ): Promise<CompanionshipRelation>;
+  deleteCompanionshipRelation(id: string): Promise<void>;
 }

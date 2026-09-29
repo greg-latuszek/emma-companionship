@@ -50,6 +50,7 @@ function aCompanionshipRelationRepository(
     updateCompanionshipRelation: vi
       .fn()
       .mockResolvedValue(aCompanionshipRelation()),
+    deleteCompanionshipRelation: vi.fn(),
     ...stubs,
   };
 }

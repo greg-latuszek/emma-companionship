@@ -113,11 +113,12 @@ Actor: an approved Province Companionship Delegate.
     - Add `updateCompanionshipRelation` and `findCompanionshipRelationById` to repository port and adapter
   - Verify: edit an existing relation through the UI, see changes in the list.
 
-- [ ] **Chunk 6 — Delete mutation**
+- [x] **Chunk 6 — Delete mutation**
   - Files:
     - `src/application/delete-companionship-relation.ts` + tests
     - `src/app/app/companionships/actions.ts` (add delete action) + tests
-    - Add delete button/confirmation to list or detail view
+    - `src/app/app/companionships/DeleteCompanionshipRelationButton.tsx` (new, with confirmation)
+    - `src/app/app/companionships/CompanionshipRelationList.tsx` (add delete buttons)
     - Add `deleteCompanionshipRelation` to repository port and adapter
   - Verify: delete a relation through the UI, see it removed from the list.
 
@@ -130,4 +131,4 @@ Actor: an approved Province Companionship Delegate.
 
 ## Status
 
-Chunks 1–5 completed. Ready for Chunk 6 (delete mutation).
+Chunks 1–6 completed. Ready for Chunk 7 (architecture docs).

@@ -236,4 +236,15 @@ export class PgCompanionshipRelationRepository
       notes: row.notes,
     };
   }
+
+  async deleteCompanionshipRelation(id: string): Promise<void> {
+    await queryOne(
+      `
+      DELETE FROM companionship_relations
+      WHERE id = $1
+      RETURNING id
+    `,
+      [id]
+    );
+  }
 }
