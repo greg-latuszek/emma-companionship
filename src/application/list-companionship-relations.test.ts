@@ -13,6 +13,9 @@ function aParticipant(
     id: MemberId(id),
     first_name: firstName,
     last_name: lastName,
+    marital_status: null,
+    consecrated_status: null,
+    community_engagement_status: null,
   };
 }
 

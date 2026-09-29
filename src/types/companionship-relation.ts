@@ -1,4 +1,9 @@
 import type { MemberId } from '@/types/auth';
+import type {
+  MaritalStatus,
+  ConsecratedStatus,
+  CommunityEngagementStatus,
+} from '@/types/community-member';
 
 export const companionshipRelationStatuses = ['active', 'archived'] as const;
 export type CompanionshipRelationStatus =
@@ -8,6 +13,9 @@ export interface CompanionshipRelationParticipant {
   id: MemberId;
   first_name: string;
   last_name: string;
+  marital_status: MaritalStatus | null;
+  consecrated_status: ConsecratedStatus | null;
+  community_engagement_status: CommunityEngagementStatus | null;
 }
 
 export interface CompanionshipRelation {
