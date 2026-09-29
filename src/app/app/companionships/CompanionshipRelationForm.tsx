@@ -72,7 +72,7 @@ export function CompanionshipRelationForm({
       ) : null}
 
       <label className="flex flex-col gap-1">
-        <span>Akompaniujący</span>
+        <span>Akompaniator</span>
         <select
           name="companion_id"
           defaultValue={values.companion_id}

@@ -32,7 +32,7 @@ export async function submitNewCompanionshipRelation(
     if (isCompanionAndAccompaniedAreSamePerson(error)) {
       return {
         values,
-        formError: 'Akompaniujący i akompaniowany nie mogą być tą samą osobą.',
+        formError: 'Akompaniator i akompaniowany nie mogą być tą samą osobą.',
       };
     }
 

@@ -69,7 +69,7 @@ describe('submitNewCompanionshipRelation', () => {
 
     const result = await submitNewCompanionshipRelation(undefined, formData);
 
-    expect(result.formError).toBe('Akompaniujący i akompaniowany nie mogą być tą samą osobą.');
+    expect(result.formError).toBe('Akompaniator i akompaniowany nie mogą być tą samą osobą.');
     expect(redirect).not.toHaveBeenCalled();
   });
 

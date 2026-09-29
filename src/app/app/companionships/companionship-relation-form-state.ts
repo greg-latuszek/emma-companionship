@@ -31,7 +31,7 @@ export function polishCompanionshipRelationWriteIssues(
 ): Partial<Record<keyof CompanionshipRelationFormValues, string>> {
   const fieldErrors: Partial<Record<keyof CompanionshipRelationFormValues, string>> = {};
   const fieldLabels: Record<keyof CompanionshipRelationFormValues, string> = {
-    companion_id: 'Akompaniujący',
+    companion_id: 'Akompaniator',
     accompanied_id: 'Akompaniowany',
     start_date: 'Data rozpoczęcia',
     end_date: 'Data zakończenia',
