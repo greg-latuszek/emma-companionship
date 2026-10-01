@@ -55,14 +55,14 @@ export function PeopleWithoutCompanionList({
 
   return (
     <div className="flex min-w-0 flex-col gap-6">
-      {/* Column toggle */}
-      <fieldset className="flex flex-col gap-2">
-        <legend className={`text-sm ${surfaces.secondaryText}`}>
-          Pokaż kolumny
-        </legend>
-        <div className="flex flex-wrap gap-x-4 gap-y-2">
+      {/* Column picker */}
+      <details className="text-sm">
+        <summary className={`cursor-pointer select-none ${surfaces.secondaryText}`}>
+          Widoczne pola
+        </summary>
+        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2 pl-1">
           {peopleWithoutCompanionColumns.map((column) => (
-            <label key={column} className="flex items-center gap-2 text-sm">
+            <label key={column} className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={shownColumns.includes(column)}
@@ -72,7 +72,7 @@ export function PeopleWithoutCompanionList({
             </label>
           ))}
         </div>
-      </fieldset>
+      </details>
 
       {/* Mobile cards */}
       <ul className={`divide-y ${surfaces.rowDivider} text-left lg:hidden`}>

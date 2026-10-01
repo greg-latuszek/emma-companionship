@@ -106,7 +106,6 @@ export function CompanionshipRelationList({
   const [companionExtras, setCompanionExtras] = useState<
     CompanionshipRelationListPersonExtraField[]
   >([]);
-  
   const surfaces = visualSurfaces(useVisualStyle());
 
   useEffect(() => {
@@ -167,6 +166,78 @@ export function CompanionshipRelationList({
 
   return (
     <div className="flex min-w-0 flex-col gap-6">
+      {/* Column picker — shared across all screen sizes */}
+      <details className="text-sm">
+        <summary className={`cursor-pointer select-none ${surfaces.secondaryText}`}>
+          Widoczne pola
+        </summary>
+        <div className="mt-3 flex flex-col gap-4 pl-1">
+          <div className="flex flex-col gap-2">
+            <p className={`text-xs font-semibold ${surfaces.mutedText}`}>Akompaniament</p>
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
+              {companionshipRelationListAkompaniamentExtraFields.map((field) => (
+                <label key={field} className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={akompaniamentExtras.includes(field)}
+                    onChange={() => {
+                      setAkompaniamentExtras((current) => {
+                        const extras = toggleCompanionshipRelationListAkompaniamentExtraField(current, field);
+                        storeCompanionshipRelationListAkompaniamentExtras(extras, window.localStorage);
+                        return extras;
+                      });
+                    }}
+                  />
+                  <span>{companionshipRelationListFieldLabels[field]}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-col gap-2">
+            <p className={`text-xs font-semibold ${surfaces.mutedText}`}>Akompaniowany</p>
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
+              {companionshipRelationListPersonExtraFields.map((field) => (
+                <label key={`accompanied-${field}`} className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={accompaniedExtras.includes(field)}
+                    onChange={() => {
+                      setAccompaniedExtras((current) => {
+                        const extras = toggleCompanionshipRelationListPersonExtraField(current, field);
+                        storeCompanionshipRelationListAccompaniedExtras(extras, window.localStorage);
+                        return extras;
+                      });
+                    }}
+                  />
+                  <span>{companionshipRelationListFieldLabels[field]}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-col gap-2">
+            <p className={`text-xs font-semibold ${surfaces.mutedText}`}>Akompaniator</p>
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
+              {companionshipRelationListPersonExtraFields.map((field) => (
+                <label key={`companion-${field}`} className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={companionExtras.includes(field)}
+                    onChange={() => {
+                      setCompanionExtras((current) => {
+                        const extras = toggleCompanionshipRelationListPersonExtraField(current, field);
+                        storeCompanionshipRelationListCompanionExtras(extras, window.localStorage);
+                        return extras;
+                      });
+                    }}
+                  />
+                  <span>{companionshipRelationListFieldLabels[field]}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        </div>
+      </details>
+
       {/* Mobile sort control */}
       <div className="flex flex-col gap-4 text-left lg:hidden">
         <label className="flex flex-col gap-1 text-sm">
@@ -188,89 +259,6 @@ export function CompanionshipRelationList({
           </select>
         </label>
         
-        <fieldset className="flex flex-col gap-2">
-          <legend className="text-sm">Pokaż pola - Akompaniament</legend>
-          <div className="flex flex-wrap gap-x-4 gap-y-2">
-            {companionshipRelationListAkompaniamentExtraFields.map((field) => (
-              <label key={field} className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={akompaniamentExtras.includes(field)}
-                  onChange={() => {
-                    setAkompaniamentExtras((current) => {
-                      const extras = toggleCompanionshipRelationListAkompaniamentExtraField(
-                        current,
-                        field
-                      );
-                      storeCompanionshipRelationListAkompaniamentExtras(
-                        extras,
-                        window.localStorage
-                      );
-                      return extras;
-                    });
-                  }}
-                />
-                <span>{companionshipRelationListFieldLabels[field]}</span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
-        
-        <fieldset className="flex flex-col gap-2">
-          <legend className="text-sm">Pokaż pola - Akompaniowany</legend>
-          <div className="flex flex-wrap gap-x-4 gap-y-2">
-            {companionshipRelationListPersonExtraFields.map((field) => (
-              <label key={field} className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={accompaniedExtras.includes(field)}
-                  onChange={() => {
-                    setAccompaniedExtras((current) => {
-                      const extras = toggleCompanionshipRelationListPersonExtraField(
-                        current,
-                        field
-                      );
-                      storeCompanionshipRelationListAccompaniedExtras(
-                        extras,
-                        window.localStorage
-                      );
-                      return extras;
-                    });
-                  }}
-                />
-                <span>{companionshipRelationListFieldLabels[field]}</span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
-        
-        <fieldset className="flex flex-col gap-2">
-          <legend className="text-sm">Pokaż pola - Akompaniator</legend>
-          <div className="flex flex-wrap gap-x-4 gap-y-2">
-            {companionshipRelationListPersonExtraFields.map((field) => (
-              <label key={field} className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={companionExtras.includes(field)}
-                  onChange={() => {
-                    setCompanionExtras((current) => {
-                      const extras = toggleCompanionshipRelationListPersonExtraField(
-                        current,
-                        field
-                      );
-                      storeCompanionshipRelationListCompanionExtras(
-                        extras,
-                        window.localStorage
-                      );
-                      return extras;
-                    });
-                  }}
-                />
-                <span>{companionshipRelationListFieldLabels[field]}</span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
       </div>
 
       {/* Mobile card view */}
@@ -340,98 +328,8 @@ export function CompanionshipRelationList({
 
       {/* Desktop table view */}
       <div className="hidden min-w-0 max-w-full lg:block">
-        <div className="flex flex-col gap-4 text-left">
-          <fieldset className="flex flex-col gap-2">
-            <legend className="text-sm">Pokaż pola</legend>
-            
-            <div className="flex flex-col gap-2">
-              <div className="font-medium text-sm">Akompaniament</div>
-              <div className="flex flex-wrap gap-x-4 gap-y-2 pl-4">
-                {companionshipRelationListAkompaniamentExtraFields.map((field) => (
-                  <label key={field} className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={akompaniamentExtras.includes(field)}
-                      onChange={() => {
-                        setAkompaniamentExtras((current) => {
-                          const extras = toggleCompanionshipRelationListAkompaniamentExtraField(
-                            current,
-                            field
-                          );
-                          storeCompanionshipRelationListAkompaniamentExtras(
-                            extras,
-                            window.localStorage
-                          );
-                          return extras;
-                        });
-                      }}
-                    />
-                    <span>{companionshipRelationListFieldLabels[field]}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-            
-            <div className="flex flex-col gap-2">
-              <div className="font-medium text-sm">Akompaniowany</div>
-              <div className="flex flex-wrap gap-x-4 gap-y-2 pl-4">
-                {companionshipRelationListPersonExtraFields.map((field) => (
-                  <label key={field} className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={accompaniedExtras.includes(field)}
-                      onChange={() => {
-                        setAccompaniedExtras((current) => {
-                          const extras = toggleCompanionshipRelationListPersonExtraField(
-                            current,
-                            field
-                          );
-                          storeCompanionshipRelationListAccompaniedExtras(
-                            extras,
-                            window.localStorage
-                          );
-                          return extras;
-                        });
-                      }}
-                    />
-                    <span>{companionshipRelationListFieldLabels[field]}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-            
-            <div className="flex flex-col gap-2">
-              <div className="font-medium text-sm">Akompaniator</div>
-              <div className="flex flex-wrap gap-x-4 gap-y-2 pl-4">
-                {companionshipRelationListPersonExtraFields.map((field) => (
-                  <label key={field} className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={companionExtras.includes(field)}
-                      onChange={() => {
-                        setCompanionExtras((current) => {
-                          const extras = toggleCompanionshipRelationListPersonExtraField(
-                            current,
-                            field
-                          );
-                          storeCompanionshipRelationListCompanionExtras(
-                            extras,
-                            window.localStorage
-                          );
-                          return extras;
-                        });
-                      }}
-                    />
-                    <span>{companionshipRelationListFieldLabels[field]}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          </fieldset>
-        </div>
-        
         <MirroredHorizontalScroll>
-          <table className="w-max min-w-full border-collapse text-left text-sm mt-4">
+          <table className="w-max min-w-full border-collapse text-left text-sm">
             <thead>
               {/* Top tier header - Grouping */}
               <tr className={`border-b ${surfaces.hairline}`}>

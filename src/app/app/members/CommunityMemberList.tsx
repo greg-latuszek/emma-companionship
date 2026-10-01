@@ -186,11 +186,13 @@ export function CommunityMemberList({
           </select>
         </label>
 
-        <fieldset className="flex flex-col gap-2">
-          <legend className="text-sm">Pokaż pola</legend>
-          <div className="flex flex-wrap gap-x-4 gap-y-2">
+        <details className="text-sm">
+          <summary className={`cursor-pointer select-none ${surfaces.secondaryText}`}>
+            Widoczne pola
+          </summary>
+          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2 pl-1">
             {communityMemberListExtraFields.map((field) => (
-              <label key={field} className="flex items-center gap-2 text-sm">
+              <label key={field} className="flex items-center gap-2">
                 <input
                   type="checkbox"
                   checked={extraFields.includes(field)}
@@ -212,7 +214,7 @@ export function CommunityMemberList({
               </label>
             ))}
           </div>
-        </fieldset>
+        </details>
       </div>
 
       <ul className={`divide-y ${surfaces.rowDivider} text-left lg:hidden`}>
