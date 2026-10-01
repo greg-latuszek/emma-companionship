@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { auth } from '@/lib/auth';
 import { listCompanionshipRelations } from '@/application/list-companionship-relations';
+import { listPeopleWithoutCompanion } from '@/application/list-people-without-companion';
 import { PageBackground } from '@/components/PageBackground';
 import { AppArea } from '@/components/AppArea';
 import { Navbar } from '@/components/Navbar';
@@ -10,8 +11,15 @@ import { PageTitle } from '@/components/PageTitle';
 import { SemiTransparentPanel } from '@/components/SemiTransparentButton';
 import { signedInMemberFrom } from '@/app/app/companionship-panel/signed-in-member';
 import { CompanionshipRelationList } from './CompanionshipRelationList';
+import { CompanionshipsTabs } from './CompanionshipsTabs';
+import { PeopleWithoutCompanionList } from './PeopleWithoutCompanionList';
+import { companionshipsTabFrom } from './companionships-tab';
 
-export default async function CompanionshipsPage() {
+export default async function CompanionshipsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const session = await auth();
 
   if (!session?.user) {
@@ -19,7 +27,7 @@ export default async function CompanionshipsPage() {
   }
 
   const member = await signedInMemberFrom(session);
-  const relations = await listCompanionshipRelations();
+  const selectedTab = companionshipsTabFrom((await searchParams).tab);
 
   return (
     <PageBackground
@@ -51,15 +59,22 @@ export default async function CompanionshipsPage() {
           </div>
 
           <SemiTransparentPanel className="mx-auto mt-8 w-full min-w-0 max-w-3xl p-6 lg:max-w-none">
-            <div className="mb-4 flex justify-end">
-              <Link
-                href="/app/companionships/new"
-                className="rounded-lg bg-white/20 px-4 py-2 text-white transition-colors hover:bg-white/30"
-              >
-                Dodaj akompaniament
-              </Link>
-            </div>
-            <CompanionshipRelationList relations={relations} />
+            <CompanionshipsTabs selectedTab={selectedTab} />
+            {selectedTab === 'missing' ? (
+              <PeopleWithoutCompanionList people={await listPeopleWithoutCompanion()} />
+            ) : (
+              <>
+                <div className="mb-4 flex justify-end">
+                  <Link
+                    href="/app/companionships/new"
+                    className="rounded-lg bg-white/20 px-4 py-2 text-white transition-colors hover:bg-white/30"
+                  >
+                    Dodaj akompaniament
+                  </Link>
+                </div>
+                <CompanionshipRelationList relations={await listCompanionshipRelations()} />
+              </>
+            )}
           </SemiTransparentPanel>
         </div>
       </AppArea>

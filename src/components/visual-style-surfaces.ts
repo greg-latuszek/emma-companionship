@@ -28,6 +28,7 @@ export type VisualSurfaces = {
   secondaryButton: string;
   primaryButton: string;
   choice: (isSelected: boolean) => string;
+  tabChoice: (isSelected: boolean) => string;
 };
 
 const glassSurfaces: VisualSurfaces = {
@@ -56,6 +57,10 @@ const glassSurfaces: VisualSurfaces = {
     isSelected
       ? 'border-white/60 bg-white/30'
       : 'border-white/25 bg-white/10 hover:bg-white/20',
+  tabChoice: (isSelected) =>
+    isSelected
+      ? 'relative z-10 -mb-px rounded-t-lg border border-white/40 border-b-0 bg-white/20'
+      : 'opacity-70 transition-opacity hover:opacity-100',
 };
 
 const highContrastSurfaces: VisualSurfaces = {
@@ -85,6 +90,10 @@ const highContrastSurfaces: VisualSurfaces = {
     isSelected
       ? 'border-gray-900 bg-gray-200'
       : 'border-gray-300 bg-white hover:bg-gray-50',
+  tabChoice: (isSelected) =>
+    isSelected
+      ? 'relative z-10 -mb-px rounded-t-lg border border-gray-300 border-b-0 bg-white'
+      : 'opacity-60 transition-opacity hover:opacity-100',
 };
 
 export function visualSurfaces(visualStyle: VisualStyle): VisualSurfaces {
