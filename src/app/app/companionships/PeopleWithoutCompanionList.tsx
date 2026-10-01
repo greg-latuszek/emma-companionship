@@ -91,7 +91,7 @@ export function PeopleWithoutCompanionList({
               );
             })}
             <Link
-              href={`/app/companionships/new?accompanied=${person.id}`}
+              href={`/app/companionships?tab=new&accompanied=${person.id}`}
               className={`mt-2 self-start text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
             >
               Przypisz akompaniatora
@@ -147,7 +147,7 @@ export function PeopleWithoutCompanionList({
                 ))}
                 <td className="whitespace-nowrap px-3 py-3">
                   <Link
-                    href={`/app/companionships/new?accompanied=${person.id}`}
+                    href={`/app/companionships?tab=new&accompanied=${person.id}`}
                     className={`text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
                   >
                     Przypisz akompaniatora

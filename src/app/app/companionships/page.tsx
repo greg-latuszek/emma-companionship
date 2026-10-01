@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { listCompanionshipRelations } from '@/application/list-companionship-relations';
 import { listPeopleWithoutCompanion } from '@/application/list-people-without-companion';
+import { listCommunityMembers } from '@/application/list-community-members';
 import { PageBackground } from '@/components/PageBackground';
 import { AppArea } from '@/components/AppArea';
 import { Navbar } from '@/components/Navbar';
@@ -10,8 +11,16 @@ import { SemiTransparentPanel } from '@/components/SemiTransparentButton';
 import { TabbedPanel } from '@/components/TabbedPanel';
 import { signedInMemberFrom } from '@/app/app/companionship-panel/signed-in-member';
 import { CompanionshipRelationList } from './CompanionshipRelationList';
+import { CompanionshipRelationForm } from './CompanionshipRelationForm';
 import { PeopleWithoutCompanionList } from './PeopleWithoutCompanionList';
-import { companionshipsTabFrom } from './companionships-tab';
+import { submitNewCompanionshipRelation } from './actions';
+import { newCompanionshipRelationFormValues } from './companionship-relation-form-state';
+
+function companionshipsTabFrom(tab: string | string[] | undefined): 'created' | 'missing' | 'new' {
+  if (tab === 'missing') return 'missing';
+  if (tab === 'new') return 'new';
+  return 'created';
+}
 
 export default async function CompanionshipsPage({
   searchParams,
@@ -24,8 +33,21 @@ export default async function CompanionshipsPage({
     redirect('/');
   }
 
-  const member = await signedInMemberFrom(session);
-  const selectedTab = companionshipsTabFrom((await searchParams).tab);
+  const params = await searchParams;
+  const selectedTab = companionshipsTabFrom(params.tab);
+  const accompaniedId = params.accompanied?.toString();
+
+  const [member, members] = await Promise.all([
+    signedInMemberFrom(session),
+    selectedTab === 'new' ? listCommunityMembers() : Promise.resolve([] as Awaited<ReturnType<typeof listCommunityMembers>>),
+  ]);
+
+  const initialFormValues =
+    selectedTab === 'new'
+      ? newCompanionshipRelationFormValues(accompaniedId, members)
+      : undefined;
+
+  const returnTab = accompaniedId !== undefined ? 'missing' : undefined;
 
   return (
     <PageBackground
@@ -51,10 +73,17 @@ export default async function CompanionshipsPage({
               tabs={[
                 { href: '/app/companionships', label: 'Utworzone Akompaniamenty', isActive: selectedTab === 'created' },
                 { href: '/app/companionships?tab=missing', label: 'Brakujące Akompaniamenty', isActive: selectedTab === 'missing' },
-                { href: '/app/companionships/new', label: '+ Dodaj Akompaniament' },
+                { href: '/app/companionships?tab=new', label: '+ Dodaj Akompaniament', isActive: selectedTab === 'new' },
               ]}
             >
-              {selectedTab === 'missing' ? (
+              {selectedTab === 'new' ? (
+                <CompanionshipRelationForm
+                  action={submitNewCompanionshipRelation}
+                  members={members}
+                  initialValues={initialFormValues!}
+                  returnTab={returnTab}
+                />
+              ) : selectedTab === 'missing' ? (
                 <PeopleWithoutCompanionList people={await listPeopleWithoutCompanion()} />
               ) : (
                 <CompanionshipRelationList relations={await listCompanionshipRelations()} />
