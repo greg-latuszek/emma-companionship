@@ -41,6 +41,7 @@ vi.mock('@/application/delete-companionship-relation', () => ({
 describe('submitNewCompanionshipRelation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    (addCompanionshipRelationModule.addCompanionshipRelation as Mock).mockResolvedValue(undefined);
     vi.mocked(addCompanionshipRelationModule.isCompanionAndAccompaniedAreSamePerson).mockReturnValue(false);
   });
 
@@ -96,6 +97,33 @@ describe('submitNewCompanionshipRelation', () => {
 
     expect(result.formError).toBe('Akompaniator i akompaniowany nie mogą być tą samą osobą.');
     expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it('submitNewCompanionshipRelation returns to Brakujące Akompaniamenty when the relation was started there', async () => {
+    const formData = new FormData();
+    formData.set('companion_id', '550e8400-e29b-41d4-a716-446655440000');
+    formData.set('accompanied_id', '550e8400-e29b-41d4-a716-446655440001');
+    formData.set('start_date', '2024-01-15');
+    formData.set('end_date', '');
+    formData.set('notes', '');
+    formData.set('return_tab', 'missing');
+
+    await submitNewCompanionshipRelation(undefined, formData);
+
+    expect(redirect).toHaveBeenCalledWith('/app/companionships?tab=missing');
+  });
+
+  it('submitNewCompanionshipRelation returns to Utworzone Akompaniamenty when started from the add button', async () => {
+    const formData = new FormData();
+    formData.set('companion_id', '550e8400-e29b-41d4-a716-446655440000');
+    formData.set('accompanied_id', '550e8400-e29b-41d4-a716-446655440001');
+    formData.set('start_date', '2024-01-15');
+    formData.set('end_date', '');
+    formData.set('notes', '');
+
+    await submitNewCompanionshipRelation(undefined, formData);
+
+    expect(redirect).toHaveBeenCalledWith('/app/companionships');
   });
 
   it('submitNewCompanionshipRelation refuses invalid date format', async () => {

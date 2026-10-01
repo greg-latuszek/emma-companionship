@@ -77,7 +77,7 @@ flowchart TB
 |---|---|---|
 | `IMemberRepository` | `Member` | `findMemberById` / `findMemberByEmail` / `findMemberByOAuth` / `createMember` (scoped to `member_type = 'app_user'`). Also `updateMemberVisualStyle` for the signed-in person’s look. |
 | `ICommunityMemberRepository` | `CommunityMember` | `listCommunityMembers` / `findCommunityMemberById` / `findCommunityMemberByEmail` / `addCommunityMember` / `updateCommunityMember` / `removeCommunityMember`. Lists **every** row. Writes omit OAuth, password, `is_active`, approval, `member_type`, and `profile_picture`. |
-| `ICompanionshipRelationRepository` | `CompanionshipRelation` / `CompanionshipRelationListItem` | `listCompanionshipRelations` / `findCompanionshipRelationById` / `addCompanionshipRelation` / `updateCompanionshipRelation` / `deleteCompanionshipRelation`. Manages accompaniment tracking on `companionship_relations` table. List enriches with participant names and member details via JOIN. |
+| `ICompanionshipRelationRepository` | `CompanionshipRelation` / `CompanionshipRelationListItem` / `PersonWithoutCompanion` | `listCompanionshipRelations` / `findCompanionshipRelationById` / `addCompanionshipRelation` / `updateCompanionshipRelation` / `deleteCompanionshipRelation` / `listPeopleWithoutCompanion`. Manages accompaniment tracking on `companionship_relations` table. List enriches with participant names and member details via JOIN. `listPeopleWithoutCompanion` returns every non-Looker-On member who appears in no `companionship_relations` row as `accompanied_id` (any status), sorted by last name then first name. |
 
 `hasLoginIdentity` is derived from `oauth_id`; it is not a column. Registry inserts leave `member_type` unset so Postgres defaults to `'companion'`. Dropping `member_type` is a later login-identity story, not a form story.
 
@@ -123,12 +123,12 @@ flowchart TD
 | `/auth/continue` | Post-OAuth fork |
 | `/auth/awaiting-approval` | Signed in, not approved |
 | `/auth/error` | Sign-in failed; public copy has no npm/DB details |
-| `/app/companionship-panel` | Approved member; **Członkowie wspólnoty**, **Akompaniamenty**, Health Dashboard stub, **Ustawienia aplikacji** |
-| `/app/members` | Community registry list |
-| `/app/members/new` | **Dodaj osobę** |
+| `/app/companionship-panel` | Approved member; **Członkowie wspólnoty**, **Akompaniamenty** (with missing count), Health Dashboard stub, **Ustawienia aplikacji** |
+| `/app/members` | **Członkowie Wspólnoty** tab (list) or **+ Dodaj Osobę** tab (inline form) via `?tab=new` |
+| `/app/members/new` | Redirects to `/app/members?tab=new` |
 | `/app/members/[id]/edit` | **Edytuj**; missing id → 404 |
-| `/app/companionships` | Companionship relations list |
-| `/app/companionships/new` | **Dodaj akompaniament** |
+| `/app/companionships` | Three tabs: **Utworzone Akompaniamenty** (default), **Brakujące Akompaniamenty** (`?tab=missing`), **+ Dodaj Akompaniament** (`?tab=new`); `?accompanied=<id>` pre-fills the accompanied person on the add form |
+| `/app/companionships/new` | Redirects to `/app/companionships?tab=new` (preserving `?accompanied`) |
 | `/app/companionships/[id]/edit` | **Edytuj akompaniament**; missing id → 404 |
 
 **Approval today** is not an admin screen. Create happens pending. An operator sets `members.is_active = true` (e.g. DBeaver). JWT fields are set at sign-in, so the member **must sign in again** after the flip (and after a `profile_picture` change).
@@ -143,16 +143,16 @@ An approved member opens **Członkowie wspólnoty** and works people as registry
 
 ```mermaid
 flowchart LR
-  panel[Companionship panel] --> list["/app/members"]
-  list --> add["/app/members/new"]
-  list --> edit["/app/members/id/edit"]
-  add --> register[addCommunityMember]
-  edit --> update[updateCommunityMember]
-  list --> remove[removeCommunityMember]
+  panel[Companionship panel] --> members["/app/members"]
+  members --> tabList["tab: Członkowie Wspólnoty\n(listCommunityMembers)"]
+  members --> tabAdd["tab: + Dodaj Osobę\n(?tab=new, inline form)"]
+  tabList --> edit["/app/members/id/edit"]
+  tabList --> remove[removeCommunityMember]
+  tabAdd --> register[addCommunityMember]
   register --> repo[ICommunityMemberRepository]
-  update --> repo
+  edit --> update[updateCommunityMember]
   remove --> repo
-  list --> listUse[listCommunityMembers]
+  tabList --> listUse[listCommunityMembers]
   listUse --> repo
   repo --> pg[(members)]
 ```
@@ -170,25 +170,32 @@ An approved member opens **Akompaniamenty** from the panel and manages accompani
 
 ```mermaid
 flowchart LR
-  panel[Companionship panel] --> list["/app/companionships"]
-  list --> add["/app/companionships/new"]
-  list --> edit["/app/companionships/id/edit"]
-  add --> create[addCompanionshipRelation]
-  edit --> update[updateCompanionshipRelation]
-  list --> remove[deleteCompanionshipRelation]
+  panel["Companionship panel\n(shows missing count)"] --> companionships["/app/companionships"]
+  companionships --> tabCreated["tab: Utworzone\n(listCompanionshipRelations)"]
+  companionships --> tabMissing["tab: Brakujące\n(listPeopleWithoutCompanion)"]
+  companionships --> tabNew["tab: + Dodaj\n(inline form, ?accompanied pre-fills)"]
+  tabCreated --> edit["/app/companionships/id/edit"]
+  tabCreated --> remove[deleteCompanionshipRelation]
+  tabMissing --> assign["Przypisz → ?tab=new&accompanied=id"]
+  tabNew --> create[addCompanionshipRelation]
   create --> repo[ICompanionshipRelationRepository]
-  update --> repo
+  edit --> update[updateCompanionshipRelation]
   remove --> repo
-  list --> listUse[listCompanionshipRelations]
-  listUse --> repo
-  repo --> pg[(companionship_relations)]
+  tabCreated --> listRel[listCompanionshipRelations]
+  tabMissing --> listMissing[listPeopleWithoutCompanion]
+  listRel --> repo
+  listMissing --> repo
+  repo --> pg[(companionship_relations + members JOIN)]
 ```
 
 - Relation fields: `companion_id`, `accompanied_id`, `status` (`active` | `archived`), `start_date`, `end_date`, `notes`.
 - Required on write: `companion_id`, `accompanied_id`. `status` defaults to `active`, `start_date` defaults to today.
 - The list loads all relations via JOIN with `members` to fetch participant names and member details (marital status, consecrated status, community engagement).
 - Member details from the JOIN are **read-only informational fields** — they must be edited in `/app/members`, not in companionship forms.
-- List view: responsive table (desktop `lg:`) with two-tier headers showing groups "Akompaniament" / "Akompaniowany" / "Akompaniator". Toggleable columns for member details per person. Two sticky columns (Akompaniowany, Akompaniator). Mobile shows cards. Sort and column visibility stored in `localStorage`.
+- **Utworzone** tab: responsive table (desktop `lg:`) with two-tier headers showing groups "Akompaniament" / "Akompaniowany" / "Akompaniator". Toggleable columns for member details per person. Two sticky columns (Akompaniowany, Akompaniator). Mobile shows cards. Sort and column visibility stored in `localStorage`.
+- **Brakujące** tab: every eligible member (non-Looker-On) with no `accompanied_id` in any relation (any status). Fixed sort by last name, first name. Toggleable detail columns (marital status, consecrated type, engagement). Each row has a **Przypisz akompaniatora** link that opens the add tab with the person pre-selected.
+- **+ Dodaj** tab: inline form. `?accompanied=<id>` pre-selects accompanied person. After save, redirects to the **Brakujące** tab if the form was opened from there, otherwise to **Utworzone**.
+- Panel card shows `listPeopleWithoutCompanion().length` as the "Brakujące akompaniamenty" count.
 - **Usuń** requires two-step confirmation (button label changes to confirm). Hard `DELETE` from `companionship_relations` table. FK constraints on `companion_id` and `accompanied_id` use `ON DELETE RESTRICT`.
 
 ## UI composition
@@ -211,6 +218,10 @@ flowchart TB
 ```
 
 Controls (logo, login) sit **two** frame-widths from the outer edge: one for the border, one for navbar padding. The login control is a child of `Navbar` (`rightContent`), pinned to the top-right so the Emmanuel mark cannot wrap under it. On small screens the Google control is the mark only (`aria-label` still “Zaloguj się przez Google”). The landing Google button stays glass even when the signed-in member chose high-contrast.
+
+The `Navbar` accepts an optional `homeHref` prop that renders a centred home-icon link (48 × 48 px filled SVG house). App pages that serve a single domain (members, companionships) pass `homeHref="/app/companionship-panel"` so the delegate can return without a back link in the body. The navbar is `sticky top-0` within `AppArea` so it stays visible as the list scrolls.
+
+Tab-based navigation is handled by the generic `TabbedPanel` component (`src/components/TabbedPanel.tsx`). It accepts a `tabs` array (`{ href, label, isActive? }`) and `children`. The tab nav is client-rendered (needs `useVisualStyle`); children may be server-rendered and passed through the RSC boundary. Both the members page and the companionships page use `TabbedPanel`.
 
 Signed-in chrome (panel cards, registry, logout) follows `members.visual_style` on the **login** row: `semi-transparent` (Polish **Półprzeźroczysty**, the default when the column is empty) or `high-contrast` (**Kontrastowy**). The panel **Ustawienia aplikacji** card writes it through `updateMemberVisualStyle`. The client applies the choice immediately; the default is stored as `NULL`. The background photograph does not change.
 

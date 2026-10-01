@@ -186,11 +186,13 @@ export function CommunityMemberList({
           </select>
         </label>
 
-        <fieldset className="flex flex-col gap-2">
-          <legend className="text-sm">Pokaż pola</legend>
-          <div className="flex flex-wrap gap-x-4 gap-y-2">
+        <details className="text-sm">
+          <summary className={`cursor-pointer select-none ${surfaces.secondaryText}`}>
+            Widoczne pola
+          </summary>
+          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2 pl-1">
             {communityMemberListExtraFields.map((field) => (
-              <label key={field} className="flex items-center gap-2 text-sm">
+              <label key={field} className="flex items-center gap-2">
                 <input
                   type="checkbox"
                   checked={extraFields.includes(field)}
@@ -212,7 +214,7 @@ export function CommunityMemberList({
               </label>
             ))}
           </div>
-        </fieldset>
+        </details>
       </div>
 
       <ul className={`divide-y ${surfaces.rowDivider} text-left lg:hidden`}>
@@ -227,7 +229,7 @@ export function CommunityMemberList({
                 <span className={`font-medium ${surfaces.strongText}`}>
                   {communityMemberName(member)}
                 </span>
-                {extraFields.map((field) => {
+                {communityMemberListExtraFields.filter((f) => extraFields.includes(f)).map((field) => {
                   const text = communityMemberFieldText(member, field);
                   if (!text) {
                     return null;
@@ -279,7 +281,7 @@ export function CommunityMemberList({
                   textClassName="font-bold text-yellow-300"
                 />
               </th>
-              {extraFields.map((field) => (
+              {communityMemberListExtraFields.filter((f) => extraFields.includes(f)).map((field) => (
                 <th
                   key={field}
                   aria-sort={sortAria(field, sortField, sortDirection)}
@@ -310,7 +312,7 @@ export function CommunityMemberList({
                 <td className={`${surfaces.stickyCell} sticky left-40 z-10 whitespace-nowrap px-3 py-3 font-bold text-yellow-300`}>
                   {member.last_name}
                 </td>
-                {extraFields.map((field) => (
+                {communityMemberListExtraFields.filter((f) => extraFields.includes(f)).map((field) => (
                   <td key={field} className={`whitespace-nowrap px-3 py-3 ${surfaces.mutedText}`}>
                     {communityMemberFieldText(member, field)}
                   </td>

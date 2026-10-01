@@ -15,9 +15,15 @@ import { communityMembersPanelCard } from './community-members-panel-card';
 import { companionshipsPanelCard } from './companionships-panel-card';
 import { VisualStyleSettings } from './VisualStyleSettings';
 
-export function CompanionshipPanel({ member }: { member: SignedInMember }): JSX.Element {
+export function CompanionshipPanel({
+  member,
+  missingCount,
+}: {
+  member: SignedInMember;
+  missingCount: number;
+}): JSX.Element {
   const communityMembers = communityMembersPanelCard();
-  const companionships = companionshipsPanelCard();
+  const companionships = companionshipsPanelCard(missingCount);
   const surfaces = visualSurfaces(useVisualStyle());
 
   return (
@@ -93,6 +99,9 @@ export function CompanionshipPanel({ member }: { member: SignedInMember }): JSX.
                 </h3>
                 <p className={`text-sm ${surfaces.mutedText}`}>
                   Kto jest czyim akompaniatorem
+                </p>
+                <p className={`mt-3 text-sm font-medium ${surfaces.strongText}`}>
+                  Brakujące akompaniamenty: {companionships.missingCount}
                 </p>
               </Link>
 

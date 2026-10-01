@@ -47,10 +47,12 @@ export function CompanionshipRelationForm({
   action,
   members,
   initialValues,
+  returnTab,
 }: {
   action: CompanionshipRelationFormAction;
   members: CommunityMember[];
   initialValues?: CompanionshipRelationFormValues;
+  returnTab?: string;
 }): JSX.Element {
   const [state, formAction] = useActionState(action, undefined);
   const values = state?.values ?? initialValues ?? emptyFormValues;
@@ -63,8 +65,14 @@ export function CompanionshipRelationForm({
     return nameA.localeCompare(nameB, 'pl');
   });
 
+  const cancelHref =
+    returnTab === 'missing'
+      ? '/app/companionships?tab=missing'
+      : '/app/companionships';
+
   return (
     <form action={formAction} className="flex flex-col gap-4 text-left">
+      <input type="hidden" name="return_tab" value={returnTab ?? ''} />
       {state?.formError ? (
         <p className={surfaces.formError}>
           {state.formError}
@@ -146,7 +154,7 @@ export function CompanionshipRelationForm({
 
       <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:justify-end">
         <Link
-          href="/app/companionships"
+          href={cancelHref}
           className={surfaces.secondaryButton}
         >
           Anuluj
