@@ -36,6 +36,12 @@ export function CompanionshipsTabs({
           </Link>
         );
       })}
+      <Link
+        href="/app/companionships/new"
+        className={`px-4 py-2 text-sm font-medium ${surfaces.strongText} ${surfaces.tabChoice(false)} ${surfaces.focusOutline}`}
+      >
+        + Dodaj Akompaniament
+      </Link>
     </nav>
   );
 }

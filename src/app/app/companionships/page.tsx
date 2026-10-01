@@ -63,17 +63,7 @@ export default async function CompanionshipsPage({
             {selectedTab === 'missing' ? (
               <PeopleWithoutCompanionList people={await listPeopleWithoutCompanion()} />
             ) : (
-              <>
-                <div className="mb-4 flex justify-end">
-                  <Link
-                    href="/app/companionships/new"
-                    className="rounded-lg bg-white/20 px-4 py-2 text-white transition-colors hover:bg-white/30"
-                  >
-                    Dodaj akompaniament
-                  </Link>
-                </div>
-                <CompanionshipRelationList relations={await listCompanionshipRelations()} />
-              </>
+              <CompanionshipRelationList relations={await listCompanionshipRelations()} />
             )}
           </SemiTransparentPanel>
         </div>
