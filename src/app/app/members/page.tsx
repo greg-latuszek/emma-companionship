@@ -7,8 +7,8 @@ import { Navbar } from '@/components/Navbar';
 import { LogoutButton } from '@/components/LogoutButton';
 import { signedInMemberFrom } from '@/app/app/companionship-panel/signed-in-member';
 import { SemiTransparentPanel } from '@/components/SemiTransparentButton';
+import { TabbedPanel } from '@/components/TabbedPanel';
 import { CommunityMemberList } from './CommunityMemberList';
-import { MembersTabs } from './MembersTabs';
 
 export default async function CommunityMembersPage() {
   const session = await auth();
@@ -39,8 +39,15 @@ export default async function CommunityMembersPage() {
 
         <div className="flex min-w-0 flex-1 flex-col px-4 pb-16">
           <SemiTransparentPanel className="mx-auto mt-8 w-full min-w-0 max-w-3xl p-6 lg:max-w-none">
-            <MembersTabs />
-            <CommunityMemberList members={members} />
+            <TabbedPanel
+              ariaLabel="Członkowie wspólnoty"
+              tabs={[
+                { href: '/app/members', label: 'Członkowie Wspólnoty', isActive: true },
+                { href: '/app/members/new', label: '+ Dodaj Osobę' },
+              ]}
+            >
+              <CommunityMemberList members={members} />
+            </TabbedPanel>
           </SemiTransparentPanel>
         </div>
       </AppArea>

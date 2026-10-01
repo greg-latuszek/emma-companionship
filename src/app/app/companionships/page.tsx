@@ -7,9 +7,9 @@ import { AppArea } from '@/components/AppArea';
 import { Navbar } from '@/components/Navbar';
 import { LogoutButton } from '@/components/LogoutButton';
 import { SemiTransparentPanel } from '@/components/SemiTransparentButton';
+import { TabbedPanel } from '@/components/TabbedPanel';
 import { signedInMemberFrom } from '@/app/app/companionship-panel/signed-in-member';
 import { CompanionshipRelationList } from './CompanionshipRelationList';
-import { CompanionshipsTabs } from './CompanionshipsTabs';
 import { PeopleWithoutCompanionList } from './PeopleWithoutCompanionList';
 import { companionshipsTabFrom } from './companionships-tab';
 
@@ -46,12 +46,20 @@ export default async function CompanionshipsPage({
 
         <div className="flex min-w-0 flex-1 flex-col px-4 pb-16">
           <SemiTransparentPanel className="mx-auto mt-8 w-full min-w-0 max-w-3xl p-6 lg:max-w-none">
-            <CompanionshipsTabs selectedTab={selectedTab} />
-            {selectedTab === 'missing' ? (
-              <PeopleWithoutCompanionList people={await listPeopleWithoutCompanion()} />
-            ) : (
-              <CompanionshipRelationList relations={await listCompanionshipRelations()} />
-            )}
+            <TabbedPanel
+              ariaLabel="Akompaniamenty"
+              tabs={[
+                { href: '/app/companionships', label: 'Utworzone Akompaniamenty', isActive: selectedTab === 'created' },
+                { href: '/app/companionships?tab=missing', label: 'Brakujące Akompaniamenty', isActive: selectedTab === 'missing' },
+                { href: '/app/companionships/new', label: '+ Dodaj Akompaniament' },
+              ]}
+            >
+              {selectedTab === 'missing' ? (
+                <PeopleWithoutCompanionList people={await listPeopleWithoutCompanion()} />
+              ) : (
+                <CompanionshipRelationList relations={await listCompanionshipRelations()} />
+              )}
+            </TabbedPanel>
           </SemiTransparentPanel>
         </div>
       </AppArea>
