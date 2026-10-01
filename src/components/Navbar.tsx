@@ -65,7 +65,7 @@ export function Navbar({
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: logoDelay }}
-      className={`${decorativeFrame.paddingClassName} relative w-full shrink-0`}
+      className={`${decorativeFrame.paddingClassName} relative w-full shrink-0 sticky top-0 z-30 backdrop-blur-sm`}
     >
       <motion.div
         initial={{ opacity: 0, x: -20 }}
