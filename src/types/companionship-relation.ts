@@ -18,6 +18,12 @@ export interface CompanionshipRelationParticipant {
   community_engagement_status: CommunityEngagementStatus | null;
 }
 
+/**
+ * Member eligible for companionship (not Looker-On) who is nobody's accompanied
+ * in any relation, active or archived.
+ */
+export type PersonWithoutCompanion = CompanionshipRelationParticipant;
+
 export interface CompanionshipRelation {
   id: string;
   companion_id: MemberId;

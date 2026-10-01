@@ -59,7 +59,7 @@ statistics, health and overwhelmed views.
 
 ## Chunk list
 
-- [ ] **Chunk 1 — Read people without a companion**
+- [x] **Chunk 1 — Read people without a companion**
   - Files:
     - `src/types/companionship-relation.ts` (`PersonWithoutCompanion`)
     - `src/ports/repositories/ICompanionshipRelationRepository.ts`
@@ -71,8 +71,10 @@ statistics, health and overwhelmed views.
     - `listPeopleWithoutCompanion includes a committed member who is accompanied by nobody`
     - `listPeopleWithoutCompanion includes a member whose engagement status is not filled in`
     - `listPeopleWithoutCompanion leaves out a Looker-On because they are not eligible`
+    - `listPeopleWithoutCompanion leaves out a member who is accompanied in an active relation`
     - `listPeopleWithoutCompanion leaves out a member with an archived relation as accompanied`
     - `listPeopleWithoutCompanion includes a member who is only someone else's companion`
+    - `listPeopleWithoutCompanion sorts people by last name, then first name`
   - Verify: `npm run db:migrate:test && npm run test:db && npm test && npm run type-check`
   - Commit: `Read who is eligible for companionship and has no companion`
 
@@ -133,4 +135,4 @@ statistics, health and overwhelmed views.
 
 ## Status
 
-Plan drafted. Nothing implemented.
+Chunk 1 done, awaiting review. Next: Chunk 2.

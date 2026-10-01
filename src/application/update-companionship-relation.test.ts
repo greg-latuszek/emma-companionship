@@ -43,6 +43,7 @@ function aCompanionshipRelationRepository(
 ): ICompanionshipRelationRepository {
   return {
     listCompanionshipRelations: vi.fn(),
+    listPeopleWithoutCompanion: vi.fn(),
     findCompanionshipRelationById: vi
       .fn()
       .mockResolvedValue(aCompanionshipRelation()),

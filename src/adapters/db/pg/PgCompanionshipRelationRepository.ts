@@ -7,6 +7,7 @@ import type {
   CompanionshipRelationListItem,
   CompanionshipRelationParticipant,
   CompanionshipRelationStatus,
+  PersonWithoutCompanion,
 } from '@/types/companionship-relation';
 
 const COMPANIONSHIP_RELATION_COLUMNS = `
@@ -107,6 +108,43 @@ export class PgCompanionshipRelationRepository
       ORDER BY accompanied.last_name, accompanied.first_name, cr.created_at
     `);
     return rows.map(companionshipRelationListItemFromRow);
+  }
+
+  async listPeopleWithoutCompanion(): Promise<PersonWithoutCompanion[]> {
+    const rows = await queryMany<{
+      id: string;
+      first_name: string;
+      last_name: string;
+      marital_status: string | null;
+      consecrated_status: string | null;
+      community_engagement_status: string | null;
+    }>(`
+      SELECT
+        m.id,
+        m.first_name,
+        m.last_name,
+        m.marital_status,
+        m.consecrated_status,
+        m.community_engagement_status
+      FROM members m
+      WHERE m.community_engagement_status IS DISTINCT FROM 'Looker-On'
+        AND NOT EXISTS (
+          SELECT 1
+          FROM companionship_relations cr
+          WHERE cr.accompanied_id = m.id
+        )
+      ORDER BY m.last_name, m.first_name
+    `);
+    return rows.map((row) =>
+      participantFromRow(
+        row.id,
+        row.first_name,
+        row.last_name,
+        row.marital_status,
+        row.consecrated_status,
+        row.community_engagement_status
+      )
+    );
   }
 
   async findCompanionshipRelationById(
