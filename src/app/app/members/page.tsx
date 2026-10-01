@@ -9,16 +9,26 @@ import { signedInMemberFrom } from '@/app/app/companionship-panel/signed-in-memb
 import { SemiTransparentPanel } from '@/components/SemiTransparentButton';
 import { TabbedPanel } from '@/components/TabbedPanel';
 import { CommunityMemberList } from './CommunityMemberList';
+import { CommunityMemberForm } from './CommunityMemberForm';
+import { submitNewCommunityMember } from './actions';
 
-export default async function CommunityMembersPage() {
+export default async function CommunityMembersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const session = await auth();
 
   if (!session?.user) {
     redirect('/');
   }
 
-  const member = await signedInMemberFrom(session);
-  const members = await listCommunityMembers();
+  const [member, members] = await Promise.all([
+    signedInMemberFrom(session),
+    listCommunityMembers(),
+  ]);
+
+  const showForm = (await searchParams).tab === 'new';
 
   return (
     <PageBackground
@@ -42,11 +52,15 @@ export default async function CommunityMembersPage() {
             <TabbedPanel
               ariaLabel="Członkowie wspólnoty"
               tabs={[
-                { href: '/app/members', label: 'Członkowie Wspólnoty', isActive: true },
-                { href: '/app/members/new', label: '+ Dodaj Osobę' },
+                { href: '/app/members', label: 'Członkowie Wspólnoty', isActive: !showForm },
+                { href: '/app/members?tab=new', label: '+ Dodaj Osobę', isActive: showForm },
               ]}
             >
-              <CommunityMemberList members={members} />
+              {showForm ? (
+                <CommunityMemberForm action={submitNewCommunityMember} />
+              ) : (
+                <CommunityMemberList members={members} />
+              )}
             </TabbedPanel>
           </SemiTransparentPanel>
         </div>
