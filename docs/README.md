@@ -4,7 +4,7 @@ Start here. These files describe the **current** application plus the **domain d
 
 ## What the app is today
 
-A closed, members-only web app. Google confirms identity. The application recognizes that person as a member (existing or pending). Only an **approved** member (`is_active` and not revoked) may stay under `/app`. From the panel they can open **Członkowie wspólnoty** and add, correct, or remove people in the community registry. Companionship relations and graphs are not built yet.
+A closed, members-only web app. Google confirms identity. The application recognizes that person as a member (existing or pending). Only an **approved** member (`is_active` and not revoked) may stay under `/app`. From the panel they can open **Członkowie wspólnoty** or **Akompaniamenty**. The panel card shows how many people still await a companion.
 
 ```mermaid
 flowchart LR
@@ -13,15 +13,17 @@ flowchart LR
   google --> recognize[Recognize member]
   recognize --> pending{Approved?}
   pending -->|no| wait["/auth/awaiting-approval"]
-  pending -->|yes| panel["/app/companionship-panel"]
-  panel --> members["/app/members"]
-  members --> add["Dodaj osobę"]
-  members --> edit["Edytuj"]
+  pending -->|yes| panel["/app/companionship-panel\n(shows missing count)"]
+  panel --> members["/app/members\n(tab: lista | dodaj osobę)"]
+  members --> edit["Edytuj / Usuń"]
+  panel --> companionships["/app/companionships\n(tab: utworzone | brakujące | dodaj)"]
+  companionships --> editRel["Edytuj / Usuń akompaniament"]
+  companionships --> assign["Przypisz akompaniatora\n(pre-selects accompanied)"]
 ```
 
 ## What it is not yet
 
-Companionship or supervision relations, couple/geo assignment, Excel/CSV import, health views, role assignment UI, admin approval UI, password login, Facebook (or any second OAuth provider).
+Business-rule validation (gender, consecrated constraints, power separation), couple or geography assignment, supervision relations, graphs, Excel/CSV import, health views, role assignment UI, admin approval UI, password login, Facebook (or any second OAuth provider).
 
 ## Read order
 

@@ -2,7 +2,13 @@
 
 This file is the **domain vision** for emmaCompanionship — terminology, constraints, personas, and Phase-1 workflows. Almost none of it is implemented yet.
 
-**Built today:** a closed Google OAuth gate, a companionship panel, community-member registry CRUD (list / add / edit / remove), and companionship-relation CRUD (list / add / edit / delete). First sign-in creates a pending `app_user`; an operator flips `is_active`; an approved member reaches `/app/companionship-panel` and can open **Członkowie wspólnoty** or **Akompaniamenty**.
+**Built today:** a closed Google OAuth gate, a companionship panel, community-member registry CRUD (list / add / edit / remove), 
+and companionship-relation CRUD (list / add / edit / delete). 
+First sign-in creates a pending `app_user`; an operator flips `is_active`; 
+an approved member reaches `/app/companionship-panel` and can open **Członkowie wspólnoty** or **Akompaniamenty**. 
+The panel card shows how many people still need a companion. 
+The Akompaniamenty screen has three tabs: created relations, people without a companion (sorted, with toggleable detail columns), 
+and an inline add form — including a direct shortcut from the missing list that pre-selects the accompanied person.
 
 **Not built:** business-rule validation (gender, consecrated constraints, power separation), couple or geography assignment, supervision relations, graphs, import, health views, roles UI, admin approval UI, password or Facebook login.
 
