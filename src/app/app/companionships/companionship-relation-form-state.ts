@@ -1,4 +1,5 @@
 import type { ZodIssue } from 'zod';
+import type { CommunityMember } from '@/types/community-member';
 
 export interface CompanionshipRelationFormValues {
   companion_id: string;
@@ -23,6 +24,21 @@ export function companionshipRelationFormValuesFromForm(
     start_date: formData.get('start_date')?.toString() ?? '',
     end_date: formData.get('end_date')?.toString() ?? '',
     notes: formData.get('notes')?.toString() ?? '',
+  };
+}
+
+export function newCompanionshipRelationFormValues(
+  accompaniedId: string | undefined,
+  members: CommunityMember[]
+): CompanionshipRelationFormValues {
+  const isKnown =
+    accompaniedId !== undefined && members.some((m) => m.id === accompaniedId);
+  return {
+    companion_id: '',
+    accompanied_id: isKnown ? accompaniedId : '',
+    start_date: new Date().toISOString().slice(0, 10),
+    end_date: '',
+    notes: '',
   };
 }
 

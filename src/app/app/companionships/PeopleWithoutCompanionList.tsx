@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState, type JSX } from 'react';
 import { useVisualStyle } from '@/components/VisualStyleProvider';
 import { visualSurfaces } from '@/components/visual-style-surfaces';
@@ -89,6 +90,12 @@ export function PeopleWithoutCompanionList({
                 </span>
               );
             })}
+            <Link
+              href={`/app/companionships/new?accompanied=${person.id}`}
+              className={`mt-2 self-start text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
+            >
+              Przypisz akompaniatora
+            </Link>
           </li>
         ))}
       </ul>
@@ -105,38 +112,49 @@ export function PeopleWithoutCompanionList({
                   Osoba
                 </th>
                 {peopleWithoutCompanionColumns.filter((c) => shownColumns.includes(c)).map((column) => (
-                  <th
-                    key={column}
-                    className="min-w-[12rem] px-3 py-3 font-semibold"
-                  >
-                    {peopleWithoutCompanionColumnLabels[column]}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className={`divide-y ${surfaces.rowDivider}`}>
-              {people.map((person) => (
-                <tr key={person.id}>
-                  <td
-                    className={`${surfaces.stickyCell} sticky left-0 z-10 whitespace-nowrap px-3 py-3 font-bold text-yellow-300`}
-                  >
-                    {personFullName(person)}
-                  </td>
-                  {peopleWithoutCompanionColumns.filter((c) => shownColumns.includes(c)).map((column) => (
-                    <td
-                      key={column}
-                      className={`px-3 py-3 ${
-                        column === 'community_engagement_status' &&
-                        !person.community_engagement_status
-                          ? surfaces.mutedText
-                          : ''
-                      }`}
-                    >
-                      {personWithoutCompanionColumnText(person, column)}
-                    </td>
-                  ))}
-                </tr>
+                <th
+                  key={column}
+                  className="min-w-[12rem] px-3 py-3 font-semibold"
+                >
+                  {peopleWithoutCompanionColumnLabels[column]}
+                </th>
               ))}
+              <th className="px-3 py-3">
+                <span className="sr-only">Działania</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody className={`divide-y ${surfaces.rowDivider}`}>
+            {people.map((person) => (
+              <tr key={person.id}>
+                <td
+                  className={`${surfaces.stickyCell} sticky left-0 z-10 whitespace-nowrap px-3 py-3 font-bold text-yellow-300`}
+                >
+                  {personFullName(person)}
+                </td>
+                {peopleWithoutCompanionColumns.filter((c) => shownColumns.includes(c)).map((column) => (
+                  <td
+                    key={column}
+                    className={`px-3 py-3 ${
+                      column === 'community_engagement_status' &&
+                      !person.community_engagement_status
+                        ? surfaces.mutedText
+                        : ''
+                    }`}
+                  >
+                    {personWithoutCompanionColumnText(person, column)}
+                  </td>
+                ))}
+                <td className="whitespace-nowrap px-3 py-3">
+                  <Link
+                    href={`/app/companionships/new?accompanied=${person.id}`}
+                    className={`text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
+                  >
+                    Przypisz akompaniatora
+                  </Link>
+                </td>
+              </tr>
+            ))}
             </tbody>
           </table>
         </MirroredHorizontalScroll>

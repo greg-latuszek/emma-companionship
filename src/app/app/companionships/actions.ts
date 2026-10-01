@@ -52,7 +52,12 @@ export async function submitNewCompanionshipRelation(
     };
   }
 
-  redirect('/app/companionships');
+  const returnTab = formData.get('return_tab')?.toString();
+  redirect(
+    returnTab === 'missing'
+      ? '/app/companionships?tab=missing'
+      : '/app/companionships'
+  );
 }
 
 export async function submitEditCompanionshipRelation(

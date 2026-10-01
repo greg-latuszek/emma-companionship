@@ -10,16 +10,27 @@ import { signedInMemberFrom } from '@/app/app/companionship-panel/signed-in-memb
 import { SemiTransparentPanel } from '@/components/SemiTransparentButton';
 import { CompanionshipRelationForm } from '../CompanionshipRelationForm';
 import { submitNewCompanionshipRelation } from '../actions';
+import { newCompanionshipRelationFormValues } from '../companionship-relation-form-state';
 
-export default async function AddCompanionshipRelationPage() {
+export default async function AddCompanionshipRelationPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const session = await auth();
 
   if (!session?.user) {
     redirect('/');
   }
 
-  const member = await signedInMemberFrom(session);
-  const members = await listCommunityMembers();
+  const [member, members] = await Promise.all([
+    signedInMemberFrom(session),
+    listCommunityMembers(),
+  ]);
+
+  const accompaniedId = (await searchParams).accompanied?.toString();
+  const initialValues = newCompanionshipRelationFormValues(accompaniedId, members);
+  const returnTab = accompaniedId !== undefined ? 'missing' : undefined;
 
   return (
     <PageBackground
@@ -46,6 +57,8 @@ export default async function AddCompanionshipRelationPage() {
             <CompanionshipRelationForm
               action={submitNewCompanionshipRelation}
               members={members}
+              initialValues={initialValues}
+              returnTab={returnTab}
             />
           </SemiTransparentPanel>
         </div>
