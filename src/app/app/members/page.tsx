@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation';
-import Link from 'next/link';
 import { auth } from '@/lib/auth';
 import { listCommunityMembers } from '@/application/list-community-members';
 import { PageBackground } from '@/components/PageBackground';
@@ -28,6 +27,7 @@ export default async function CommunityMembersPage() {
     >
       <AppArea>
         <Navbar
+          homeHref="/app/companionship-panel"
           rightContent={
             <LogoutButton
               profilePicture={member.profilePicture}
@@ -38,17 +38,6 @@ export default async function CommunityMembersPage() {
         />
 
         <div className="flex min-w-0 flex-1 flex-col px-4 pb-16">
-          <div className="pt-4 text-center">
-            <div className="flex flex-col items-center gap-2">
-              <Link
-                href="/app/companionship-panel"
-                className="inline-block text-white/80 underline-offset-4 hover:underline"
-              >
-                Wróć do panelu
-              </Link>
-            </div>
-          </div>
-
           <SemiTransparentPanel className="mx-auto mt-8 w-full min-w-0 max-w-3xl p-6 lg:max-w-none">
             <MembersTabs />
             <CommunityMemberList members={members} />

@@ -39,6 +39,7 @@ export default async function AddCompanionshipRelationPage({
     >
       <AppArea>
         <Navbar
+          homeHref="/app/companionship-panel"
           rightContent={
             <LogoutButton
               profilePicture={member.profilePicture}

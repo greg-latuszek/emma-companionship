@@ -26,6 +26,7 @@ export default async function AddCommunityMemberPage() {
     >
       <AppArea>
         <Navbar
+          homeHref="/app/companionship-panel"
           rightContent={
             <LogoutButton
               profilePicture={member.profilePicture}
