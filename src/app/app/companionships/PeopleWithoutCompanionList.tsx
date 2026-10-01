@@ -80,7 +80,7 @@ export function PeopleWithoutCompanionList({
             <span className="font-bold text-yellow-300">
               {personFullName(person)}
             </span>
-            {shownColumns.map((column) => {
+            {peopleWithoutCompanionColumns.filter((c) => shownColumns.includes(c)).map((column) => {
               const text = personWithoutCompanionColumnText(person, column);
               if (!text) return null;
               return (
@@ -104,7 +104,7 @@ export function PeopleWithoutCompanionList({
                 >
                   Osoba
                 </th>
-                {shownColumns.map((column) => (
+                {peopleWithoutCompanionColumns.filter((c) => shownColumns.includes(c)).map((column) => (
                   <th
                     key={column}
                     className="min-w-[12rem] px-3 py-3 font-semibold"
@@ -122,7 +122,7 @@ export function PeopleWithoutCompanionList({
                   >
                     {personFullName(person)}
                   </td>
-                  {shownColumns.map((column) => (
+                  {peopleWithoutCompanionColumns.filter((c) => shownColumns.includes(c)).map((column) => (
                     <td
                       key={column}
                       className={`px-3 py-3 ${

@@ -227,7 +227,7 @@ export function CommunityMemberList({
                 <span className={`font-medium ${surfaces.strongText}`}>
                   {communityMemberName(member)}
                 </span>
-                {extraFields.map((field) => {
+                {communityMemberListExtraFields.filter((f) => extraFields.includes(f)).map((field) => {
                   const text = communityMemberFieldText(member, field);
                   if (!text) {
                     return null;
@@ -279,7 +279,7 @@ export function CommunityMemberList({
                   textClassName="font-bold text-yellow-300"
                 />
               </th>
-              {extraFields.map((field) => (
+              {communityMemberListExtraFields.filter((f) => extraFields.includes(f)).map((field) => (
                 <th
                   key={field}
                   aria-sort={sortAria(field, sortField, sortDirection)}
@@ -310,7 +310,7 @@ export function CommunityMemberList({
                 <td className={`${surfaces.stickyCell} sticky left-40 z-10 whitespace-nowrap px-3 py-3 font-bold text-yellow-300`}>
                   {member.last_name}
                 </td>
-                {extraFields.map((field) => (
+                {communityMemberListExtraFields.filter((f) => extraFields.includes(f)).map((field) => (
                   <td key={field} className={`whitespace-nowrap px-3 py-3 ${surfaces.mutedText}`}>
                     {communityMemberFieldText(member, field)}
                   </td>

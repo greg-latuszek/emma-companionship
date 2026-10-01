@@ -285,7 +285,7 @@ export function CompanionshipRelationList({
                 <span className={`font-medium ${surfaces.strongText}`}>
                   {accompaniedFullName(relation)}
                 </span>
-                {accompaniedExtras.map((field) => {
+                {companionshipRelationListPersonExtraFields.filter((f) => accompaniedExtras.includes(f)).map((field) => {
                   const text = personFieldText(relation.accompanied, field);
                   if (!text) return null;
                   return (
@@ -302,7 +302,7 @@ export function CompanionshipRelationList({
                 <span className={`font-medium ${surfaces.strongText}`}>
                   {companionFullName(relation)}
                 </span>
-                {companionExtras.map((field) => {
+                {companionshipRelationListPersonExtraFields.filter((f) => companionExtras.includes(f)).map((field) => {
                   const text = personFieldText(relation.companion, field);
                   if (!text) return null;
                   return (
@@ -514,7 +514,7 @@ export function CompanionshipRelationList({
                     />
                   </th>
                 ) : null}
-                {accompaniedExtras.map((field) => (
+                {companionshipRelationListPersonExtraFields.filter((f) => accompaniedExtras.includes(f)).map((field) => (
                   <th
                     key={field}
                     aria-sort={sortAria(`accompanied_${field}` as CompanionshipRelationListSortField, sortField, sortDirection)}
@@ -528,7 +528,7 @@ export function CompanionshipRelationList({
                     />
                   </th>
                 ))}
-                {companionExtras.map((field) => (
+                {companionshipRelationListPersonExtraFields.filter((f) => companionExtras.includes(f)).map((field) => (
                   <th
                     key={field}
                     aria-sort={sortAria(`companion_${field}` as CompanionshipRelationListSortField, sortField, sortDirection)}
@@ -574,7 +574,7 @@ export function CompanionshipRelationList({
                       {statusLabel(relation.status)}
                     </td>
                   ) : null}
-                  {accompaniedExtras.map((field) => (
+                  {companionshipRelationListPersonExtraFields.filter((f) => accompaniedExtras.includes(f)).map((field) => (
                     <td
                       key={field}
                       className={`whitespace-nowrap px-3 py-3 ${surfaces.mutedText}`}
@@ -582,7 +582,7 @@ export function CompanionshipRelationList({
                       {personFieldText(relation.accompanied, field)}
                     </td>
                   ))}
-                  {companionExtras.map((field) => (
+                  {companionshipRelationListPersonExtraFields.filter((f) => companionExtras.includes(f)).map((field) => (
                     <td
                       key={field}
                       className={`whitespace-nowrap px-3 py-3 ${surfaces.mutedText}`}
