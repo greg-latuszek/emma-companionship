@@ -21,7 +21,9 @@
     "db:migrate:test": "bash db/migrate.sh ${npm_package_config_dbNameTest:-emma_companionship_test}",
     "db:psql": "docker exec -it emma_companionship_db psql -U devuser -d emma_companionship_dev",
     "db:reset": "npm run db:stop && npm run db:start",
-    "db:logs": "docker compose logs -f postgres"
+    "db:logs": "docker compose logs -f postgres",
+    "db:wiping_export": "bash db/scripts/export-wiping.sh",
+    "db:appending_export": "bash db/scripts/export-appending.sh"
   },
   "dependencies": {
     "motion": "^13.2.0",
