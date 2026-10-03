@@ -48,7 +48,7 @@ export function CompanionshipPanel({
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 0.2 }}
-              className="pt-4 pb-16 px-4 text-center"
+              className="pt-4 pb-1 px-4 text-center"
             >
               <PageTitle delay={0.2}>Witamy Delegata ds. Akompaniamentów</PageTitle>
 

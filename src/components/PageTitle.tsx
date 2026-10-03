@@ -33,7 +33,7 @@ export function PageTitle({
   animated = true,
 }: PageTitleProps): JSX.Element {
   const baseClass =
-    'font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-[1.1] md:leading-[1.05] font-light tracking-tight mb-6 md:mb-8 drop-shadow-lg';
+    'font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-[1.1] md:leading-[1.05] font-light tracking-tight drop-shadow-lg';
 
   const styleProps = {
     color: 'transparent',
