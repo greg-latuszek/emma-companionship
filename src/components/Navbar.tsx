@@ -32,7 +32,7 @@ function SignedInLogo(): JSX.Element {
     <>
       <div className="relative h-32 w-32 sm:hidden">
         <Image
-          src="/docs/img/logo_emma_companionship_square.png"
+          src="/docs/img/logo_emma_companionship_narrow.png"
           alt="emmaCompanionship"
           fill
           className="object-contain"
