@@ -52,22 +52,6 @@ export function CompanionshipPanel({
             >
               <PageTitle delay={0.2}>Witamy Delegata ds. Akompaniamentów</PageTitle>
 
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.8, delay: 0.4 }}
-                className={`${surfaces.panel} p-6 max-w-md mx-auto mt-8`}
-              >
-                <p className={`mb-2 text-sm ${surfaces.mutedText}`}>Zalogowany użytkownik:</p>
-                <p className="mb-1 text-2xl font-bold">{member.name}</p>
-                <p className={`mb-6 ${surfaces.secondaryText}`}>{member.email}</p>
-
-                {member.memberId ? (
-                  <div className={`border-t ${surfaces.hairline} pt-4 text-sm ${surfaces.mutedText}`}>
-                    <p>ID: {member.memberId}</p>
-                  </div>
-                ) : null}
-              </motion.div>
             </motion.div>
           </AnimatePresence>
 
