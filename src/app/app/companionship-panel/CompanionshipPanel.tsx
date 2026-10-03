@@ -66,7 +66,7 @@ export function CompanionshipPanel({
                 href={communityMembers.href}
                 className={`${surfaces.panel} block p-6 ${surfaces.panelHover} ${surfaces.focusOutline}`}
               >
-                <h3 className="mb-2 text-lg font-bold">
+                <h3 className={`mb-2 text-lg ${surfaces.headerText}`}>
                   {communityMembers.title}
                 </h3>
                 <p className={`text-sm ${surfaces.mutedText}`}>
@@ -78,7 +78,7 @@ export function CompanionshipPanel({
                 href={companionships.href}
                 className={`${surfaces.panel} block p-6 ${surfaces.panelHover} ${surfaces.focusOutline}`}
               >
-                <h3 className="mb-2 text-lg font-bold">
+                <h3 className={`mb-2 text-lg ${surfaces.headerText}`}>
                   {companionships.title}
                 </h3>
                 <p className={`text-sm ${surfaces.mutedText}`}>
@@ -94,7 +94,7 @@ export function CompanionshipPanel({
                   <VisualStyleSettings />
                 ) : (
                   <>
-                    <h3 className="mb-2 text-lg font-bold">Ustawienia aplikacji</h3>
+                    <h3 className={`mb-2 text-lg ${surfaces.headerText}`}>Ustawienia aplikacji</h3>
                     <p className={`text-sm ${surfaces.mutedText}`}>
                       Zaloguj się ponownie, aby zmienić wygląd.
                     </p>

@@ -49,16 +49,19 @@ function SortHeader({
   sortField,
   sortDirection,
   onSort,
-  textClassName,
+  isImportant,
 }: {
   field: CompanionshipRelationListSortField;
   sortField: CompanionshipRelationListSortField;
   sortDirection: CompanionshipRelationListSortDirection;
   onSort: (field: CompanionshipRelationListSortField) => void;
-  textClassName?: string;
+  isImportant?: boolean;
 }): JSX.Element {
   const active = sortField === field;
   const surfaces = visualSurfaces(useVisualStyle());
+  const textClass = isImportant
+    ? surfaces.importantText
+    : `font-medium ${surfaces.strongText}`;
 
   return (
     <button
@@ -66,7 +69,7 @@ function SortHeader({
       onClick={() => {
         onSort(field);
       }}
-      className={`inline-flex items-center gap-1 text-left font-medium ${textClassName ?? surfaces.strongText} underline-offset-4 hover:underline`}
+      className={`inline-flex items-center gap-1 text-left ${textClass} underline-offset-4 hover:underline`}
     >
       {companionshipRelationListFieldLabels[field]}
       {active ? (
@@ -335,14 +338,14 @@ export function CompanionshipRelationList({
               <tr className={`border-b ${surfaces.hairline}`}>
                 <th
                   colSpan={2 + akompaniamentExtras.length}
-                  className={`${surfaces.stickyCell} sticky left-0 z-20 px-3 py-2 font-bold text-center`}
+                  className={`${surfaces.importantArea} sticky left-0 z-20 px-3 py-2 font-bold text-center`}
                 >
                   Akompaniament
                 </th>
                 {showAccompaniedGroup ? (
                   <th
                     colSpan={accompaniedExtras.length}
-                    className="px-3 py-2 font-bold text-center border-l border-white/20"
+                    className={`px-3 py-2 font-bold text-center ${surfaces.groupDivider}`}
                   >
                     Akompaniowany
                   </th>
@@ -350,7 +353,7 @@ export function CompanionshipRelationList({
                 {showCompanionGroup ? (
                   <th
                     colSpan={companionExtras.length}
-                    className="px-3 py-2 font-bold text-center border-l border-white/20"
+                    className={`px-3 py-2 font-bold text-center ${surfaces.groupDivider}`}
                   >
                     Akompaniator
                   </th>
@@ -364,26 +367,26 @@ export function CompanionshipRelationList({
               <tr className={`border-b ${surfaces.hairline}`}>
                 <th
                   aria-sort={sortAria('accompanied', sortField, sortDirection)}
-                  className={`${surfaces.stickyCell} sticky left-0 z-10 min-w-[14rem] px-3 py-3`}
+                  className={`${surfaces.importantArea} sticky left-0 z-10 min-w-[14rem] px-3 py-3`}
                 >
                   <SortHeader
                     field="accompanied"
                     sortField={sortField}
                     sortDirection={sortDirection}
                     onSort={sortBy}
-                    textClassName="font-bold text-yellow-300"
+                    isImportant
                   />
                 </th>
                 <th
                   aria-sort={sortAria('companion', sortField, sortDirection)}
-                  className={`${surfaces.stickyCell} sticky left-[14rem] z-10 min-w-[14rem] whitespace-nowrap px-3 py-3`}
+                  className={`${surfaces.importantArea} sticky left-[14rem] z-10 min-w-[14rem] whitespace-nowrap px-3 py-3`}
                 >
                   <SortHeader
                     field="companion"
                     sortField={sortField}
                     sortDirection={sortDirection}
                     onSort={sortBy}
-                    textClassName="font-bold text-yellow-300"
+                    isImportant
                   />
                 </th>
                 {akompaniamentExtras.includes('start_date') ? (
@@ -449,12 +452,12 @@ export function CompanionshipRelationList({
               {sortedRelations.map((relation) => (
                 <tr key={relation.id}>
                   <td
-                    className={`${surfaces.stickyCell} sticky left-0 z-10 whitespace-nowrap px-3 py-3 font-bold text-yellow-300`}
+                    className={`${surfaces.importantArea} sticky left-0 z-10 whitespace-nowrap px-3 py-3 ${surfaces.importantText}`}
                   >
                     {accompaniedFullName(relation)}
                   </td>
                   <td
-                    className={`${surfaces.stickyCell} sticky left-[14rem] z-10 whitespace-nowrap px-3 py-3 font-bold text-yellow-300`}
+                    className={`${surfaces.importantArea} sticky left-[14rem] z-10 whitespace-nowrap px-3 py-3 ${surfaces.importantText}`}
                   >
                     {companionFullName(relation)}
                   </td>

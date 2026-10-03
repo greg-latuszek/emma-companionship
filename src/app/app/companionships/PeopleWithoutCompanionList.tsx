@@ -78,7 +78,7 @@ export function PeopleWithoutCompanionList({
       <ul className={`divide-y ${surfaces.rowDivider} text-left lg:hidden`}>
         {people.map((person) => (
           <li key={person.id} className="flex flex-col gap-1 py-4">
-            <span className="font-bold text-yellow-300">
+            <span className={surfaces.importantText}>
               {personFullName(person)}
             </span>
             {peopleWithoutCompanionColumns.filter((c) => shownColumns.includes(c)).map((column) => {
@@ -107,7 +107,7 @@ export function PeopleWithoutCompanionList({
             <thead>
               <tr className={`border-b ${surfaces.hairline}`}>
                 <th
-                  className={`${surfaces.stickyCell} sticky left-0 z-10 min-w-[14rem] px-3 py-3 font-bold text-yellow-300`}
+                  className={`${surfaces.importantArea} sticky left-0 z-10 min-w-[14rem] px-3 py-3 ${surfaces.importantText}`}
                 >
                   Osoba
                 </th>
@@ -128,7 +128,7 @@ export function PeopleWithoutCompanionList({
             {people.map((person) => (
               <tr key={person.id}>
                 <td
-                  className={`${surfaces.stickyCell} sticky left-0 z-10 whitespace-nowrap px-3 py-3 font-bold text-yellow-300`}
+                  className={`${surfaces.importantArea} sticky left-0 z-10 whitespace-nowrap px-3 py-3 ${surfaces.importantText}`}
                 >
                   {personFullName(person)}
                 </td>

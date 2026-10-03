@@ -17,10 +17,18 @@ export type VisualSurfaces = {
   field: string;
   mutedText: string;
   secondaryText: string;
+  /** Primary readable text — body copy, links, labels. */
   strongText: string;
+  /** Section or panel heading — bold with the appropriate heading colour. */
+  headerText: string;
+  /** Highlighted data cell or sort-header — bold with the accent colour (yellow / blue). */
+  importantText: string;
   hairline: string;
   rowDivider: string;
-  stickyCell: string;
+  /** Separator between column groups in table headers. */
+  groupDivider: string;
+  /** Background for emphasised / sticky cells and highlighted areas. */
+  importantArea: string;
   dangerText: string;
   face: string;
   hint: string;
@@ -42,9 +50,12 @@ const glassSurfaces: VisualSurfaces = {
   mutedText: 'text-white/80',
   secondaryText: 'text-white/70',
   strongText: 'text-white',
+  headerText: 'font-bold text-white',
+  importantText: 'font-bold text-yellow-300',
   hairline: 'border-white/25',
   rowDivider: 'divide-white/20',
-  stickyCell: 'bg-black/35 backdrop-blur-sm',
+  groupDivider: 'border-l border-white/20',
+  importantArea: 'bg-black/35 backdrop-blur-sm',
   dangerText: 'text-red-200',
   face: 'h-9 w-9 shrink-0 overflow-hidden rounded-full bg-white/20 ring-1 ring-white/40',
   hint: 'rounded border border-white/25 bg-white/10 px-3 py-2 text-sm text-white/90',
@@ -75,9 +86,12 @@ const highContrastSurfaces: VisualSurfaces = {
   mutedText: 'text-gray-600',
   secondaryText: 'text-gray-500',
   strongText: 'text-gray-900',
+  headerText: 'font-bold text-gray-900',
+  importantText: 'font-bold text-blue-700',
   hairline: 'border-gray-200',
   rowDivider: 'divide-gray-200',
-  stickyCell: 'bg-white',
+  groupDivider: 'border-l border-gray-200',
+  importantArea: 'bg-blue-50',
   dangerText: 'text-red-700',
   face: 'h-9 w-9 shrink-0 overflow-hidden rounded-full bg-gray-200 ring-1 ring-gray-400',
   hint: 'rounded border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-800',
