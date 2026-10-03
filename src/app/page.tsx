@@ -48,7 +48,7 @@ export default function Home(): JSX.Element {
                 transition={{ duration: 1, ease: 'easeOut' }}
               >
                 <PageTitle delay={0.3}>
-                  emmaCompanionship
+                  emma Companionship
                 </PageTitle>
 
                 <motion.div
