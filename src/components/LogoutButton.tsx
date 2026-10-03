@@ -26,8 +26,13 @@ export function LogoutButton({
     <motion.button
       type="button"
       aria-label="Wyloguj mnie"
-      onClick={() => {
-        void signOut({ callbackUrl: '/' });
+      onClick={async () => {
+        if (process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true') {
+          await signOut({ redirect: false });
+          window.location.href = '/';
+        } else {
+          void signOut({ callbackUrl: '/' });
+        }
       }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
