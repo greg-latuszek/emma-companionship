@@ -48,26 +48,10 @@ export function CompanionshipPanel({
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 0.2 }}
-              className="pt-4 pb-16 px-4 text-center"
+              className="pt-4 pb-1 px-4 text-center"
             >
               <PageTitle delay={0.2}>Witamy Delegata ds. Akompaniamentów</PageTitle>
 
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.8, delay: 0.4 }}
-                className={`${surfaces.panel} p-6 max-w-md mx-auto mt-8`}
-              >
-                <p className={`mb-2 text-sm ${surfaces.mutedText}`}>Zalogowany użytkownik:</p>
-                <p className="mb-1 text-2xl font-bold">{member.name}</p>
-                <p className={`mb-6 ${surfaces.secondaryText}`}>{member.email}</p>
-
-                {member.memberId ? (
-                  <div className={`border-t ${surfaces.hairline} pt-4 text-sm ${surfaces.mutedText}`}>
-                    <p>ID: {member.memberId}</p>
-                  </div>
-                ) : null}
-              </motion.div>
             </motion.div>
           </AnimatePresence>
 
@@ -82,7 +66,7 @@ export function CompanionshipPanel({
                 href={communityMembers.href}
                 className={`${surfaces.panel} block p-6 ${surfaces.panelHover} ${surfaces.focusOutline}`}
               >
-                <h3 className="mb-2 text-lg font-bold">
+                <h3 className={`mb-2 text-lg ${surfaces.headerText}`}>
                   {communityMembers.title}
                 </h3>
                 <p className={`text-sm ${surfaces.mutedText}`}>
@@ -94,7 +78,7 @@ export function CompanionshipPanel({
                 href={companionships.href}
                 className={`${surfaces.panel} block p-6 ${surfaces.panelHover} ${surfaces.focusOutline}`}
               >
-                <h3 className="mb-2 text-lg font-bold">
+                <h3 className={`mb-2 text-lg ${surfaces.headerText}`}>
                   {companionships.title}
                 </h3>
                 <p className={`text-sm ${surfaces.mutedText}`}>
@@ -110,7 +94,7 @@ export function CompanionshipPanel({
                   <VisualStyleSettings />
                 ) : (
                   <>
-                    <h3 className="mb-2 text-lg font-bold">Ustawienia aplikacji</h3>
+                    <h3 className={`mb-2 text-lg ${surfaces.headerText}`}>Ustawienia aplikacji</h3>
                     <p className={`text-sm ${surfaces.mutedText}`}>
                       Zaloguj się ponownie, aby zmienić wygląd.
                     </p>

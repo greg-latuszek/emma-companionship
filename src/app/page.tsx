@@ -7,6 +7,7 @@ import { PageBackground } from '@/components/PageBackground';
 import { AppArea } from '@/components/AppArea';
 import { Navbar } from '@/components/Navbar';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
+import { DevSignInButton } from '@/components/DevSignInButton';
 import { PageTitle } from '@/components/PageTitle';
 import { PageCredit } from '@/components/PageCredit';
 
@@ -23,7 +24,15 @@ export default function Home(): JSX.Element {
       <AppArea>
         <Navbar
           rightContent={
-            <GoogleSignInButton delay={0.5} />
+            <>
+              {process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true' && (
+                <>
+                  <DevSignInButton providerId="dev-cd1" label="CD1" delay={0.2} />
+                  <DevSignInButton providerId="dev-cd2" label="CD2" delay={0.3} />
+                </>
+              )}
+              <GoogleSignInButton delay={0.5} />
+            </>
           }
         />
 
@@ -39,7 +48,7 @@ export default function Home(): JSX.Element {
                 transition={{ duration: 1, ease: 'easeOut' }}
               >
                 <PageTitle delay={0.3}>
-                  emmaCompanionship
+                  emma Companionship
                 </PageTitle>
 
                 <motion.div

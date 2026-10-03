@@ -15,7 +15,7 @@ interface NavbarProps {
 
 function UnsignedInLogo(): JSX.Element {
   return (
-    <div className="relative w-60 h-60 sm:w-64 sm:h-24">
+    <div className="relative w-60 h-20 sm:w-64 sm:h-24">
       <Image
         src="/docs/img/logo_emmanuel_en-1.png"
         alt="Emmanuel Community"
@@ -30,16 +30,16 @@ function UnsignedInLogo(): JSX.Element {
 function SignedInLogo(): JSX.Element {
   return (
     <>
-      <div className="relative h-32 w-32 sm:hidden">
+      <div className="relative h-16 w-32 sm:hidden">
         <Image
-          src="/docs/img/logo_emma_companionship_square.png"
+          src="/docs/img/logo_emma_companionship_narrow.png"
           alt="emmaCompanionship"
           fill
           className="object-contain"
           quality={90}
         />
       </div>
-      <div className="relative hidden h-24 w-72 sm:block">
+      <div className="relative hidden h-22 w-72 sm:block">
         <Image
           src="/docs/img/logo_emma_companionship.png"
           alt="emmaCompanionship"

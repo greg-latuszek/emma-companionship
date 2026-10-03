@@ -26,7 +26,7 @@ export function VisualStyleSettings(): JSX.Element {
 
   return (
     <form action={formAction}>
-      <h3 className="mb-2 text-lg font-bold">Ustawienia aplikacji</h3>
+      <h3 className={`mb-2 text-lg ${surfaces.headerText}`}>Ustawienia aplikacji</h3>
       <fieldset>
         <legend className={`mb-3 text-sm ${surfaces.mutedText}`}>Wygląd</legend>
         <div className="flex flex-col gap-2">
