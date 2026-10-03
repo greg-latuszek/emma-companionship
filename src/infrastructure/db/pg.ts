@@ -32,6 +32,9 @@ export function initializePool(
     max: 20, // Maximum number of clients in the pool
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 2000,
+    ssl: process.env.DB_SSL === 'false'
+      ? false
+      : { rejectUnauthorized: true },
   });
 
   pool.on('error', (err: Error) => {
