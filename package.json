@@ -22,6 +22,7 @@
     "db:psql": "docker exec -it emma_companionship_db psql -U devuser -d emma_companionship_dev",
     "db:reset": "npm run db:stop && npm run db:start",
     "db:logs": "docker compose logs -f postgres",
+    "db:check_schema_sync": "bash db/scripts/check-schema-sync.sh",
     "db:wiping_export": "bash db/scripts/export-wiping.sh",
     "db:appending_export": "bash db/scripts/export-appending.sh",
     "db:wiping_import": "bash db/scripts/import-wiping.sh",

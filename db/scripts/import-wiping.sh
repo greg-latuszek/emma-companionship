@@ -1,19 +1,24 @@
 #!/bin/bash
 
 # Wipe the target DB and import from db/exports/wiping-seed.sql.
-# TRUNCATES members and companionship_relations then inserts all rows.
+# TRUNCATES exported tables then inserts all rows.
 # Usage: npm run db:wiping_import
-# Requires: IMPORT_DATABASE_URL, EXPORT_CONTAINER in .env.local
+# Requires: EXPORT_CONTAINER, EXPORT_DB_USER, EXPORT_DB_NAME,
+#           IMPORT_DATABASE_URL  — all in .env.local
 
 set -e
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/exported-tables.sh"
 
 if [ -f .env.local ]; then
     export $(cat .env.local | grep -v '^#' | xargs)
 fi
 
 missing=()
-[ -z "$IMPORT_DATABASE_URL" ] && missing+=("IMPORT_DATABASE_URL")
 [ -z "$EXPORT_CONTAINER"    ] && missing+=("EXPORT_CONTAINER")
+[ -z "$EXPORT_DB_USER"      ] && missing+=("EXPORT_DB_USER")
+[ -z "$EXPORT_DB_NAME"      ] && missing+=("EXPORT_DB_NAME")
+[ -z "$IMPORT_DATABASE_URL" ] && missing+=("IMPORT_DATABASE_URL")
 
 if [ ${#missing[@]} -gt 0 ]; then
     echo "❌ Missing required env vars in .env.local: ${missing[*]}"
@@ -28,7 +33,9 @@ if [ ! -f "$SEED" ]; then
     exit 1
 fi
 
-echo "⚠️  This will TRUNCATE members and companionship_relations on: $IMPORT_DATABASE_URL"
+check_schema_match
+
+echo "⚠️  This will TRUNCATE $(tables_truncate_list) on: $IMPORT_DATABASE_URL"
 read -p "   Type YES to continue: " confirm
 if [ "$confirm" != "YES" ]; then
     echo "Aborted."
