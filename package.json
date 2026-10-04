@@ -23,7 +23,9 @@
     "db:reset": "npm run db:stop && npm run db:start",
     "db:logs": "docker compose logs -f postgres",
     "db:wiping_export": "bash db/scripts/export-wiping.sh",
-    "db:appending_export": "bash db/scripts/export-appending.sh"
+    "db:appending_export": "bash db/scripts/export-appending.sh",
+    "db:wiping_import": "bash db/scripts/import-wiping.sh",
+    "db:appending_import": "bash db/scripts/import-appending.sh"
   },
   "dependencies": {
     "motion": "^13.2.0",
