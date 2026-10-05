@@ -24,7 +24,7 @@ Every table in this app falls into exactly one bucket:
 
 | Bucket | Owned by | Examples | In export scripts? |
 |--------|----------|----------|--------------------|
-| **Migration-seeded** | `db/migrations/*.sql` | `_schema_migrations`, `roles`, `geographic_units` | ❌ Never — migrations recreate them; wiping them destroys schema tracking |
+| **Migration-seeded** | `db/migrations/*.sql` | `_schema_migrations`, `roles` | ❌ Never — migrations recreate them; wiping them destroys schema tracking |
 | **User-entered data** | Application at runtime | `members`, `companionship_relations` | ✅ Yes — export scripts must list them |
 
 A table is **user-entered data** when:
