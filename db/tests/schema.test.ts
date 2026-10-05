@@ -406,14 +406,14 @@ describe('Database Schema Validation', () => {
   });
 
   describe('Migration Tracking', () => {
-    it('should track all executed migrations', async () => {
+    it('should record exactly one migration row for the squashed initial schema', async () => {
       const result = await query(`
         SELECT version, description
         FROM _schema_migrations
         ORDER BY version
       `);
 
-      expect(result.rows.length).toBeGreaterThanOrEqual(7);
+      expect(result.rows).toHaveLength(1);
       expect(result.rows[0].version).toBe(1);
     });
   });
