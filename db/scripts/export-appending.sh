@@ -31,7 +31,7 @@ mkdir -p db/exports
 
 docker exec "$EXPORT_CONTAINER" pg_dump \
     -U "$EXPORT_DB_USER" -d "$EXPORT_DB_NAME" \
-    --data-only --inserts --on-conflict-do-nothing --no-privileges --no-owner \
+    --data-only --column-inserts --on-conflict-do-nothing --no-privileges --no-owner \
     $(pg_dump_table_flags) \
     | grep -v '^\\' > "$OUT"
 
