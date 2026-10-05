@@ -37,6 +37,13 @@ tables_truncate_list() {
 
 # ── Schema comparison ─────────────────────────────────────────────────────────
 #
+# Called by IMPORT scripts only (not export).
+#
+# Exports use --column-inserts so the SQL dump names every column explicitly,
+# making column order irrelevant.  Imports, however, must verify that the
+# target DB has the same set of columns as the source — otherwise rows would
+# be rejected or silently misrouted.
+#
 # Queries information_schema.columns for EXPORTED_TABLES on both DBs and diffs
 # them.  Exits 1 (aborting the caller) if the schemas diverge.
 #
@@ -47,11 +54,11 @@ check_schema_match() {
   echo "🔍 Comparing schemas of exported tables between EXPORT and IMPORT databases..."
 
   local sql
-  sql="SELECT table_name||'|'||ordinal_position||'|'||column_name||'|'||data_type||'|'||udt_name
+  sql="SELECT table_name||'|'||column_name||'|'||data_type||'|'||udt_name
        FROM information_schema.columns
        WHERE table_schema = 'public'
          AND table_name IN ($(tables_sql_in))
-       ORDER BY table_name, ordinal_position;"
+       ORDER BY table_name, column_name;"
 
   local export_schema
   if ! export_schema=$(docker exec "$EXPORT_CONTAINER" \
@@ -75,6 +82,7 @@ check_schema_match() {
   fi
 
   echo "❌ Schema mismatch! Aborting to prevent corrupt data."
+  echo "   (Column order is ignored — only names and types are compared.)"
   echo ""
   echo "Column differences (EXPORT vs IMPORT):"
   diff \
