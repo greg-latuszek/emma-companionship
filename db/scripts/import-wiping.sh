@@ -36,6 +36,7 @@ fi
 check_schema_match
 
 echo "⚠️  This will TRUNCATE $(tables_truncate_list) on: $IMPORT_DATABASE_URL"
+echo "   Seed file : $SEED"
 read -p "   Type YES to continue: " confirm
 if [ "$confirm" != "YES" ]; then
     echo "Aborted."
