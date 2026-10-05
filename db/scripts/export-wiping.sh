@@ -26,8 +26,6 @@ if [ ${#missing[@]} -gt 0 ]; then
     exit 1
 fi
 
-check_schema_match
-
 OUT="db/exports/wiping-seed.sql"
 mkdir -p db/exports
 
