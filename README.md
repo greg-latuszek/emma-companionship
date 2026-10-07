@@ -1,5 +1,31 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Security
+Don't put secrets in .env* files. Why?
+- AI agents can read them
+- read [that article](https://github.com/Infisical/infisical)
+- in simple words: **put secrets in memory**
+
+But that's not enough. 
+As developer, you need to take care of not exposing
+memory stored secrets into LMM context.
+- read [that article](https://auth0.com/blog/want-ai-agents-that-don-t-spill-secrets-don-t-give-them-secrets/)
+- so, also **review** AI generated code if AI has not exposed envvars, like: `print(os.environ["PUSH_SERVER_KEY"])` 
+
+### simplest handling of secrets
+- export them as envvars inside terminal where you start your app
+- but **remember to prefix export by space**
+  ```bash
+  export DB_PASSWORD=123passwd_example456   # wrong
+   export DB_PASSWORD=123passwd_example456  # good
+  ```
+  - that way this command won't land in history (including history files: `~/.zsh_history`, `~/.bash_history` )
+  - test it with `history` command
+- so, it should look something like:
+  ```bash
+   export DB_PASSWORD=123passwd_example456
+  npn run dev
+  ```
 ## Getting Started
 
 First, run the development server:
