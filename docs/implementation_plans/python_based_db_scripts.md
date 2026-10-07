@@ -52,6 +52,7 @@ Working plan (throwaway). Delete after live docs match. Do not treat as backlog 
 | Package import name | `db_scripts` living at `db/scripts/db_scripts/` (run with `PYTHONPATH` set by wrappers, or package-relative runs from repo root) |
 | Wrappers | Keep `.sh` files npm already calls; body = python check + `exec python3 … --mode … "$@"` |
 | Profiles | Same as today: `SOURCE_PROFILE` / `TARGET_PROFILE`; load `.env.<name>`; compose URL only at `psql` boundary |
+| Sensitive DB keys | `DB_USER`, `DB_PASSWORD`, `DB_HOST` may live in the shell instead of `.env.*` (fewer secrets in files AI can read). Resolution: non-empty value in the profile file wins; else non-empty `os.environ`; else incomplete. That way local Docker can keep secrets in `.env.development` while staging/production leave those three blank and the operator exports them in the terminal before running scripts. |
 | Tables list | Python constant mirroring current `exported-tables.sh` (single source in package) |
 | Confirm wipe | Still interactive `YES` on wiping import (`--mode wiping` only) |
 | Tests | `unittest` under `db/scripts/db_scripts/tests/`; run via `python3 -m unittest` |
@@ -149,6 +150,41 @@ PYTHONPATH=db/scripts python3 -m unittest discover -s db/scripts/db_scripts/test
 ```
 
 **Commit message:** `add db_scripts env profile loader with unittest coverage`
+
+---
+
+### Chunk 1b — Shell overlay for sensitive DB keys
+
+**Job:** Scripts treat `DB_USER` / `DB_PASSWORD` / `DB_HOST` from the process environment the same as from the profile file when the file leaves them blank — so staging/production secrets need not sit in `.env.*` (AI-readable disk).
+
+**Allowed files**
+
+- `db/scripts/db_scripts/env_profiles.py`
+- `db/scripts/db_scripts/tests/test_env_profiles.py`
+- `docs/implementation_plans/python_based_db_scripts.md` (this chunk)
+- Optional one-line hint in `.env.example` under staging/production example
+
+**Behavior**
+
+- Sensitive keys only: `DB_USER`, `DB_PASSWORD`, `DB_HOST`.
+- Resolve each: non-empty profile-file value → else non-empty `os.environ[key]` → else missing.
+- Non-empty file values are **not** overridden by the shell (so `.env.development` can keep local secrets while a blank `.env.staging` picks up exports for the target).
+- `DB_NAME` and other keys remain file-only for this slice.
+- Error text when still missing: hint to set the key in `.env.<profile>` **or** export it in the shell.
+
+**Tests (sentence titles)**
+
+- `load_db_profile raises when DB_PASSWORD is missing from both the profile file and the environment`
+- `load_db_profile uses DB_PASSWORD from the environment when the profile file leaves it blank`
+- `load_db_profile prefers a non-empty profile file DB_PASSWORD over the environment`
+
+**Verify**
+
+```bash
+PYTHONPATH=db/scripts python3 -m unittest discover -s db/scripts/db_scripts/tests -v
+```
+
+**Commit message:** `allow shell DB_USER DB_PASSWORD DB_HOST to fill blank profile values`
 
 ---
 

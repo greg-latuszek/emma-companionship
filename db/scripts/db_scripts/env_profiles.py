@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Mapping
 from urllib.parse import quote
 
 
@@ -40,6 +42,10 @@ class SharedScriptEnv:
 
 
 _REQUIRED_DB_KEYS = ("DB_USER", "DB_PASSWORD", "DB_HOST", "DB_NAME")
+
+# May be omitted from .env.* and supplied via the process environment instead
+# (keeps staging/production secrets out of files that tools may read into LLM context).
+_SHELL_FILLABLE_DB_KEYS = frozenset({"DB_USER", "DB_PASSWORD", "DB_HOST"})
 
 
 def find_repo_root(start: Path | None = None) -> Path:
@@ -92,8 +98,35 @@ def load_shared_env(repo_root: Path | None = None) -> SharedScriptEnv:
     )
 
 
-def load_db_profile(profile: str, repo_root: Path | None = None) -> DbProfile:
-    """Load .env.<profile> and return a validated DbProfile."""
+def resolve_db_setting(
+    key: str,
+    file_values: Mapping[str, str],
+    environ: Mapping[str, str] | None = None,
+) -> str:
+    """
+    Resolve one DB_* setting from the profile file and/or the process environment.
+
+    For DB_USER / DB_PASSWORD / DB_HOST: non-empty file value wins; otherwise a
+    non-empty process env value is used (shell can fill blanks for staging/prod).
+    Other keys: profile file only.
+    """
+    env = os.environ if environ is None else environ
+    from_file = (file_values.get(key) or "").strip()
+    if from_file:
+        return from_file
+    if key in _SHELL_FILLABLE_DB_KEYS:
+        from_shell = (env.get(key) or "").strip()
+        if from_shell:
+            return from_shell
+    return ""
+
+
+def load_db_profile(
+    profile: str,
+    repo_root: Path | None = None,
+    environ: Mapping[str, str] | None = None,
+) -> DbProfile:
+    """Load .env.<profile>, optionally filling blank sensitive keys from the environment."""
     if not profile:
         raise IncompleteDbProfile("profile name is required")
 
@@ -105,12 +138,26 @@ def load_db_profile(profile: str, repo_root: Path | None = None) -> DbProfile:
             "   Create it from the schema in .env.example."
         )
 
-    values = parse_env_file(path)
-    missing = [
-        f"{key} (from .env.{profile})"
+    file_values = parse_env_file(path)
+    resolved = {
+        key: resolve_db_setting(key, file_values, environ=environ)
         for key in _REQUIRED_DB_KEYS
-        if not values.get(key)
-    ]
+    }
+    # Non-required keys stay file-only
+    for key in ("DB_PORT", "DB_OPTIONS", "DB_SSL", "DB_NAME_TEST", "DB_CONTAINER"):
+        resolved[key] = (file_values.get(key) or "").strip()
+
+    missing: list[str] = []
+    for key in _REQUIRED_DB_KEYS:
+        if resolved[key]:
+            continue
+        if key in _SHELL_FILLABLE_DB_KEYS:
+            missing.append(
+                f"{key} (set in .env.{profile} or export {key} in the shell)"
+            )
+        else:
+            missing.append(f"{key} (from .env.{profile})")
+
     if missing:
         joined = "\n".join(f"   - {item}" for item in missing)
         raise IncompleteDbProfile(
@@ -120,17 +167,16 @@ def load_db_profile(profile: str, repo_root: Path | None = None) -> DbProfile:
 
     return DbProfile(
         name=profile,
-        user=values["DB_USER"],
-        password=values["DB_PASSWORD"],
-        host=values["DB_HOST"],
-        database=values["DB_NAME"],
-        port=values.get("DB_PORT") or "5432",
-        options=values.get("DB_OPTIONS") or "",
-        ssl=values.get("DB_SSL") or "",
-        database_test=values.get("DB_NAME_TEST") or "",
-        container=values.get("DB_CONTAINER") or "",
+        user=resolved["DB_USER"],
+        password=resolved["DB_PASSWORD"],
+        host=resolved["DB_HOST"],
+        database=resolved["DB_NAME"],
+        port=resolved.get("DB_PORT") or "5432",
+        options=resolved.get("DB_OPTIONS") or "",
+        ssl=resolved.get("DB_SSL") or "",
+        database_test=resolved.get("DB_NAME_TEST") or "",
+        container=resolved.get("DB_CONTAINER") or "",
     )
-
 
 def compose_database_url(profile: DbProfile) -> str:
     """Build postgresql://… from discrete parts (password URL-encoded)."""

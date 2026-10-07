@@ -36,8 +36,10 @@ class LoadDbProfileTests(unittest.TestCase):
 
             self.assertIn(".env.staging", str(ctx.exception))
 
-    def test_load_db_profile_raises_when_DB_PASSWORD_is_empty(self) -> None:
-        # Given a profile file with an empty password
+    def test_load_db_profile_raises_when_DB_PASSWORD_is_missing_from_both_the_profile_file_and_the_environment(
+        self,
+    ) -> None:
+        # Given a profile file with an empty password and no shell value
         with tempfile.TemporaryDirectory() as tmp:
             repo_root = Path(tmp)
             write_profile(
@@ -55,9 +57,74 @@ class LoadDbProfileTests(unittest.TestCase):
 
             # When / Then
             with self.assertRaises(IncompleteDbProfile) as ctx:
-                load_db_profile("staging", repo_root=repo_root)
+                load_db_profile(
+                    "staging",
+                    repo_root=repo_root,
+                    environ={},
+                )
 
-            self.assertIn("DB_PASSWORD", str(ctx.exception))
+            message = str(ctx.exception)
+            self.assertIn("DB_PASSWORD", message)
+            self.assertIn("export DB_PASSWORD", message)
+
+    def test_load_db_profile_uses_DB_PASSWORD_from_the_environment_when_the_profile_file_leaves_it_blank(
+        self,
+    ) -> None:
+        # Given blank password in the file and a shell export
+        with tempfile.TemporaryDirectory() as tmp:
+            repo_root = Path(tmp)
+            write_profile(
+                repo_root,
+                "staging",
+                "\n".join(
+                    [
+                        "DB_USER=alice",
+                        "DB_PASSWORD=",
+                        "DB_HOST=db.example",
+                        "DB_NAME=app",
+                    ]
+                ),
+            )
+
+            # When
+            profile = load_db_profile(
+                "staging",
+                repo_root=repo_root,
+                environ={"DB_PASSWORD": "from-shell"},
+            )
+
+            # Then
+            self.assertEqual(profile.password, "from-shell")
+            self.assertEqual(profile.user, "alice")
+
+    def test_load_db_profile_prefers_a_non_empty_profile_file_DB_PASSWORD_over_the_environment(
+        self,
+    ) -> None:
+        # Given password in the file and a different shell value
+        with tempfile.TemporaryDirectory() as tmp:
+            repo_root = Path(tmp)
+            write_profile(
+                repo_root,
+                "development",
+                "\n".join(
+                    [
+                        "DB_USER=devuser",
+                        "DB_PASSWORD=from-file",
+                        "DB_HOST=localhost",
+                        "DB_NAME=emma_companionship_dev",
+                    ]
+                ),
+            )
+
+            # When
+            profile = load_db_profile(
+                "development",
+                repo_root=repo_root,
+                environ={"DB_PASSWORD": "from-shell"},
+            )
+
+            # Then — file wins so SOURCE (file) and TARGET (shell-filled) can coexist
+            self.assertEqual(profile.password, "from-file")
 
     def test_load_db_profile_returns_discrete_parts_and_default_port(self) -> None:
         # Given a minimal valid profile without DB_PORT
