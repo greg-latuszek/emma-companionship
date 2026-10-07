@@ -16,6 +16,7 @@ Working plan (throwaway). Delete after live docs match. Do not treat as backlog 
 5. Missing `python3` → short install hint, exit 1. No silent fallback to fat bash.
 6. Logs never print passwords or full composed URLs (host/user/db/container only).
 7. Unit tests cover profile load, URL compose, and schema-diff helpers without Docker.
+8. A cloner reading `README.md` / `db/README.md` knows: Python 3.10+, profile files, and which `npm run db:*` commands to use for local DB and export/import.
 
 ## Scope by exclusion
 
@@ -25,7 +26,7 @@ Working plan (throwaway). Delete after live docs match. Do not treat as backlog 
 - Thin client scripts: `export_db.py`, `import_db.py` (each with `--mode wiping|appending`), `check_schema_sync.py`, `create_databases.py`, plus migrate entry used by `db/migrate.sh`.
 - Thin bash wrappers (`export-wiping.sh`, …) that only check `python3` and `exec` the matching `.py` **with the mode baked in** so npm script names stay stable.
 - `unittest` for pure logic (no Docker in CI requirement for this slice).
-- Doc touch: `.env.example` notes if needed, `db-export-scope` skill, brief note in `docs/current-architecture.md` when finishing. (`.env.example` profile schema already committed — only amend if Python requirements need a line.)
+- Doc touch: `db-export-scope` skill, `docs/current-architecture.md`, root `README.md` + `db/README.md` for cloners (chunk 7–8). (`.env.example` profile schema already committed — only amend if Python requirements need a line.)
 
 **Out**
 
@@ -297,9 +298,9 @@ npm run db:migrate:dev   # if Docker up
 
 ---
 
-### Chunk 7 — Remove fat bash + docs
+### Chunk 7 — Remove fat bash + architecture/skill docs
 
-**Job:** Single implementation story; docs tell the truth.
+**Job:** Single implementation story in code; agent/architecture docs match.
 
 **Allowed files**
 
@@ -308,7 +309,8 @@ npm run db:migrate:dev   # if Docker up
 - `.env.example` (python3 note if useful)
 - `docs/current-architecture.md` (short “DB scripts are Python stdlib under db/scripts”)
 - `docs/README.md` only if it points at scripts
-- Delete this plan file after docs land
+
+**Not in this chunk:** root / `db/README.md` cloner guide (chunk 8). Do not delete this plan yet.
 
 **Verify**
 
@@ -320,6 +322,34 @@ command -v python3 >/dev/null && ! grep -r 'load-db-profile' db/scripts/*.sh || 
 ```
 
 **Commit message:** `drop bash db script logic and document Python db_scripts`
+
+---
+
+### Chunk 8 — README for repository cloners
+
+**Job:** Someone who clones the repo can set up profiles and run local DB + export/import without reading this plan.
+
+**Allowed files**
+
+- `README.md` (short pointer / prerequisites: Node, Docker, Python 3.10+)
+- `db/README.md` (how-to: profile files, `SOURCE_PROFILE` / `TARGET_PROFILE`, npm `db:*` table including export/import/schema sync, `--help`, no full URL/password in logs)
+
+**Behavior / content to cover**
+
+1. Prerequisites: Docker, Node, **Python 3.10+** (`python3` on PATH); no pip install for DB scripts.
+2. Env layout: copy `.env.example` ideas into `.env.local` (auth) + `.env.development` / `.env.staging` / `.env.production` (discrete `DB_*`); link or summarize keys from `.env.example`.
+3. Local loop: `db:start` → migrate → app uses `.env.development` via Next.
+4. Export/import: defaults `development` → `staging`; `npm run db:wiping_export` / `db:appending_export` / imports / `db:check_schema_sync`; wrappers hide `--mode`.
+5. Discover flags: `npm run db:wiping_export -- --help` (and siblings).
+6. Security: never commit `.env.*`; scripts must not echo passwords or full connection URLs.
+7. Drop outdated `db/README.md` claims that all DB config lives only in `.env.local` / hand-written `DATABASE_URL`.
+
+**Verify**
+
+- Read-through: a new cloner could follow README → `db/README.md` without opening `docs/implementation_plans/`.
+- Commands named in the README still match `package.json`.
+
+**Commit message:** `document Python db scripts and env profiles for cloners`
 
 Then **delete** `docs/implementation_plans/python_based_db_scripts.md`.
 
