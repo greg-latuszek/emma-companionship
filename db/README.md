@@ -1,220 +1,122 @@
-# Database Setup & Development
+# Database setup and operator scripts
 
-This document describes the local PostgreSQL database setup using Docker for `emma-companionship`.
+Local PostgreSQL (Docker) plus Python stdlib scripts for migrate / export / import.
 
 ## Prerequisites
 
-- Docker and Docker Compose installed
-- `.env.local` file created (see Configuration section)
-- `psql` CLI tool installed (for manual queries)
+- **Docker** and Docker Compose
+- **Node.js** (for `npm run db:*` and the Next app)
+- **Python 3.10+** as `python3` on PATH — required by DB operator scripts (stdlib only; no pip install)
 
-## Configuration
+## Configuration (env profiles)
 
-### `.env.local` File
+Do **not** put everything in one `.env.local`. Use discrete parts (no hand-maintained `DATABASE_URL` for scripts).
 
-The `.env.local` file contains database credentials and connection strings. **This file is in `.gitignore` and should never be committed.**
+| File | Purpose |
+|------|---------|
+| `.env.local` | Auth / shared secrets; optional `SOURCE_PROFILE` / `TARGET_PROFILE` |
+| `.env.development` | Local Docker `DB_*` — Next loads this on `next dev`; export SOURCE default |
+| `.env.staging` | Cloud staging `DB_*` — import TARGET default |
+| `.env.production` | Cloud production `DB_*` |
 
-**Create `.env.local`:**
+Canonical keys and examples: see [`.env.example`](../.env.example).
 
-```bash
-# Local Development Database Configuration
-DB_USER=devuser
-DB_PASSWORD=devpassword
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=emma_companionship_dev
-DB_NAME_TEST=emma_companionship_test
-
-DATABASE_URL=postgresql://devuser:devpassword@localhost:5432/emma_companionship_dev
-DATABASE_TEST_URL=postgresql://devuser:devpassword@localhost:5432/emma_companionship_test
-
-NODE_ENV=development
-```
-
-## Quick Start
-
-### 1. Start PostgreSQL Container
+**Sensitive keys for staging/production:** you may leave `DB_USER`, `DB_PASSWORD`, and `DB_HOST` blank in the profile file 
+and export them in the shell instead (keeps secrets out of files AI tools can read). 
+A non-empty value in the file still wins over the shell.
 
 ```bash
-npm run db:start
+# example — leading space so the export is not stored in shell history
+ export DB_PASSWORD='…'
+ export DB_USER='…'
+ export DB_HOST='…'
 ```
 
-This command:
-- Starts the PostgreSQL container in the background
-- Waits 2 seconds for the database to be ready
-- Creates the development and test databases
-- Shows: `✅ Database creation completed`
+Never commit `.env*` (gitignored except `.env.example`).
 
-### 2. Run Migrations
-
-**For development database:**
+## Local quick start
 
 ```bash
-npm run db:migrate:dev
+# Auth secrets in .env.local; DB_* in .env.development (from .env.example)
+npm run db:start          # postgres container + create databases
+npm run db:migrate:dev    # apply db/migrations/*.sql
+npm run dev               # Next uses .env.local + .env.development
 ```
 
-**For test database:**
+**Port trap:** Compose publishes `${DB_PORT:-5433}:5432`. Set the same `DB_PORT` in `.env.development` that Compose uses (default **5433**).
 
-```bash
-npm run db:migrate:test
-```
-
-### 3. Verify Database Connection
-
-```bash
-npm run db:psql -c "\dt"
-```
-
-This lists all tables. After migrations, you should see:
-- `_schema_migrations`
-- `members` (coming in COMMIT 2)
-- `blacklist` (coming in COMMIT 2)
-- etc.
-
-## Available Commands
+## Available commands
 
 | Command | Purpose |
 |---------|---------|
-| `npm run db:start` | Start PostgreSQL container and create databases |
-| `npm run db:stop` | Stop PostgreSQL container |
-| `npm run db:create` | Create dev and test databases (run separately if needed) |
-| `npm run db:migrate:dev` | Run all migrations on development database |
-| `npm run db:migrate:test` | Run all migrations on test database |
-| `npm run db:psql` | Connect to development database via psql CLI |
-| `npm run db:reset` | Stop and restart containers (fresh state) |
-| `npm run db:logs` | Follow PostgreSQL container logs |
+| `npm run db:start` | Start Postgres and create databases |
+| `npm run db:stop` | Stop Compose services |
+| `npm run db:create` | Create dev + test databases |
+| `npm run db:migrate:dev` | Migrations on development DB |
+| `npm run db:migrate:test` | Migrations on test DB |
+| `npm run db:psql` | Interactive psql in the Docker container |
+| `npm run db:reset` | Stop and start fresh |
+| `npm run db:logs` | Follow Postgres logs |
+| `npm run db:wiping_export` | Export seed with TRUNCATE header |
+| `npm run db:appending_export` | Export seed with `ON CONFLICT DO NOTHING` |
+| `npm run db:wiping_import` | Import wiping seed into TARGET (asks `YES`) |
+| `npm run db:appending_import` | Append seed into TARGET |
+| `npm run db:check_schema_sync` | Compare exported-table columns SOURCE vs TARGET |
 
-## Migration Files
-
-Migrations are stored in `db/migrations/` and executed in alphabetical order:
-
-```
-db/migrations/
-├── 001_init.sql                    # Extensions + migration tracking
-├── 002_members_table.sql           # Members table with auth fields
-├── 003_oauth_identities.sql        # OAuth identities (optional)
-├── 004_blacklist_security.sql      # Blacklist + security events
-├── 005_roles_access_control.sql    # Roles + approval audit + auth events
-├── 006_companionship.sql           # Companionship relationships
-├── 007_approval_workflow.sql       # Approval workflow tables
-└── 008_two_factor_auth.sql         # 2FA table (future-proofed)
-```
-
-**To add a new migration:**
-
-1. Create a new SQL file: `db/migrations/009_my_feature.sql`
-2. Write your schema changes
-3. Run `npm run db:migrate:dev` to apply
-
-## Container Management
-
-### View Logs
+Flags and modes:
 
 ```bash
-npm run db:logs
+npm run db:wiping_export -- --help
+npm run db:appending_import -- --help
+npm run db:check_schema_sync -- --help
 ```
 
-### Connect to Running Container
+Export/import wrappers call `export_db.py` / `import_db.py` with `--mode` already set. Defaults: `SOURCE_PROFILE=development`, `TARGET_PROFILE=staging` (override in `.env.local` or the environment).
+
+Logic lives in `db/scripts/db_scripts/` (Python). Thin `.sh` files only check for `python3` and exec the client.
+
+Unit tests (no Docker):
 
 ```bash
-docker exec -it emma_companionship_db psql -U devuser -d emma_companionship_dev
+PYTHONPATH=db/scripts python3 -m unittest discover -s db/scripts/db_scripts/tests -v
 ```
 
-### Stop Container
+## Export / import between environments
 
-```bash
-npm run db:stop
-```
+Typical flow (local Docker → staging):
 
-### Full Reset (Delete All Data)
+1. `npm run db:wiping_export` or `db:appending_export` (reads SOURCE)
+2. Ensure TARGET schema matches: `npm run db:check_schema_sync`
+3. `npm run db:wiping_import` or `db:appending_import` (writes TARGET; wiping requires typing `YES`)
 
-```bash
-npm run db:reset
-```
+Scripts log host/user/database/container only — **not** passwords or full connection URLs.
 
-This stops the container, removes the data volume, and restarts everything fresh.
+Exported tables are listed in `db/scripts/db_scripts/exported_tables.py`. When adding a user-data table, follow `.cursor/skills/db-export-scope/SKILL.md`.
 
-## Testing with Separate Database
+## Migrations
 
-Tests use a separate database (`emma_companionship_test`) to avoid affecting development data:
+SQL files in `db/migrations/` run in sorted filename order via `npm run db:migrate:dev` / `db:migrate:test`.
 
-```bash
-# Ensure test database has latest schema
-npm run db:migrate:test
-
-# Run tests (they connect to DATABASE_TEST_URL)
-npm test
-```
+To add a migration: create `db/migrations/00N_….sql`, then run both migrate commands so test DB stays in sync.
 
 ## Troubleshooting
 
-### "Connection refused" error
+**Connection refused** — container not up: `npm run db:stop && npm run db:start`.
 
-**Problem:** Docker container isn't running or hasn't started yet.
+**python3 not found** — install Python 3.10+ so `python3 --version` works.
 
-**Solution:**
+**Database already exists** — normal on repeated `db:start`; create is idempotent.
 
-```bash
-npm run db:stop
-npm run db:start
-```
+**Schema mismatch on import** — apply pending migrations on the TARGET, then retry `db:check_schema_sync`.
 
-### "Database already exists" error
-
-This is normal if you run `npm run db:start` multiple times. Databases are created only if they don't exist.
-
-### "Permission denied" when running scripts
-
-Make sure scripts are executable:
-
-```bash
-chmod +x db/scripts/create-databases.sh
-chmod +x db/migrate.sh
-```
-
-### View Database Contents
+Interactive SQL:
 
 ```bash
 npm run db:psql
-# Then in psql prompt:
-\dt                    # List all tables
-\d members             # Describe members table
-SELECT * FROM members; # View data
-\q                     # Quit psql
 ```
 
-## Development Workflow
+## Security
 
-### Before Development
-
-```bash
-npm run db:start
-npm run db:migrate:dev
-```
-
-### After Adding New Migration
-
-```bash
-npm run db:migrate:dev
-npm run db:migrate:test  # Keep test DB in sync
-```
-
-### Reset Everything
-
-```bash
-npm run db:reset
-npm run db:migrate:dev
-```
-
-## Security Notes
-
-- ⚠️ `.env.local` contains database passwords. Keep it local and never commit.
-- ⚠️ Default credentials (`devuser`/`devpassword`) are for local development only.
-- ⚠️ Change credentials in production environments.
-- ✅ `.env*` is in `.gitignore` for protection.
-
-## Next Steps
-
-- **COMMIT 2:** Create SQL migration files (002_members_table.sql, etc.)
-- **COMMIT 2:** Write database integration tests
-- **COMMIT 3+:** Wire up authentication logic using this database
+- ⚠️ Never commit `.env.local` or `.env.development` / `.env.staging` / `.env.production`.
+- ⚠️ Prefer shell exports for cloud `DB_USER` / `DB_PASSWORD` / `DB_HOST` (see root `README.md` Security section).
+- Default Docker credentials (`devuser` / `devpassword`) are local-only.
