@@ -1,48 +1,15 @@
-#!/bin/bash
-
-# Wipe the target DB and import from db/exports/wiping-seed.sql.
-# TRUNCATES exported tables then inserts all rows.
-# Usage: npm run db:wiping_import
-# Requires: EXPORT_CONTAINER, EXPORT_DB_USER, EXPORT_DB_NAME,
-#           IMPORT_DATABASE_URL  — all in .env.local
-
-set -e
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/lib/exported-tables.sh"
-
-if [ -f .env.local ]; then
-    export $(cat .env.local | grep -v '^#' | xargs)
+#!/usr/bin/env bash
+# Import wiping-seed.sql — npm run db:wiping_import
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "❌ python3 not found. Install Python 3.10+ and retry."
+  exit 1
 fi
-
-missing=()
-[ -z "$EXPORT_CONTAINER"    ] && missing+=("EXPORT_CONTAINER")
-[ -z "$EXPORT_DB_USER"      ] && missing+=("EXPORT_DB_USER")
-[ -z "$EXPORT_DB_NAME"      ] && missing+=("EXPORT_DB_NAME")
-[ -z "$IMPORT_DATABASE_URL" ] && missing+=("IMPORT_DATABASE_URL")
-
-if [ ${#missing[@]} -gt 0 ]; then
-    echo "❌ Missing required env vars in .env.local: ${missing[*]}"
-    echo "   See .env.example for the EXPORT_* / IMPORT_* section."
-    exit 1
+if ! python3 -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 10) else 1)'; then
+  echo "❌ Python 3.10+ required (found $(python3 -c 'import sys; print("%d.%d" % sys.version_info[:2])'))."
+  exit 1
 fi
-
-SEED="db/exports/wiping-seed.sql"
-
-if [ ! -f "$SEED" ]; then
-    echo "❌ $SEED not found — run npm run db:wiping_export first"
-    exit 1
-fi
-
-check_schema_match
-
-echo "⚠️  This will TRUNCATE $(tables_truncate_list) on: $IMPORT_DATABASE_URL"
-echo "   Seed file : $SEED"
-read -p "   Type YES to continue: " confirm
-if [ "$confirm" != "YES" ]; then
-    echo "Aborted."
-    exit 0
-fi
-
-echo "🌱 Importing $SEED → target DB..."
-docker exec -i "$EXPORT_CONTAINER" psql "$IMPORT_DATABASE_URL" < "$SEED"
-echo "✅ Done."
+export PYTHONPATH="${ROOT}/db/scripts${PYTHONPATH:+:$PYTHONPATH}"
+exec python3 "${SCRIPT_DIR}/import_db.py" --mode wiping "$@"

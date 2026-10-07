@@ -1,32 +1,15 @@
-#!/bin/bash
-
-# Show whether the exported tables have identical schemas on EXPORT and IMPORT DBs.
-# Usage: npm run db:check_schema_sync
-# Requires: EXPORT_CONTAINER, EXPORT_DB_USER, EXPORT_DB_NAME,
-#           IMPORT_DATABASE_URL  — all in .env.local
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/lib/exported-tables.sh"
-
-if [ -f .env.local ]; then
-    export $(cat .env.local | grep -v '^#' | xargs)
+#!/usr/bin/env bash
+# Compare SOURCE vs TARGET schemas — npm run db:check_schema_sync
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "❌ python3 not found. Install Python 3.10+ and retry."
+  exit 1
 fi
-
-missing=()
-[ -z "$EXPORT_CONTAINER"    ] && missing+=("EXPORT_CONTAINER")
-[ -z "$EXPORT_DB_USER"      ] && missing+=("EXPORT_DB_USER")
-[ -z "$EXPORT_DB_NAME"      ] && missing+=("EXPORT_DB_NAME")
-[ -z "$IMPORT_DATABASE_URL" ] && missing+=("IMPORT_DATABASE_URL")
-
-if [ ${#missing[@]} -gt 0 ]; then
-    echo "❌ Missing required env vars in .env.local: ${missing[*]}"
-    echo "   See .env.example for the EXPORT_* / IMPORT_* section."
-    exit 1
+if ! python3 -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 10) else 1)'; then
+  echo "❌ Python 3.10+ required (found $(python3 -c 'import sys; print("%d.%d" % sys.version_info[:2])'))."
+  exit 1
 fi
-
-echo "Tables checked: ${EXPORTED_TABLES[*]}"
-echo "EXPORT: $EXPORT_CONTAINER / $EXPORT_DB_NAME"
-echo "IMPORT: $IMPORT_DATABASE_URL"
-echo ""
-
-check_schema_match
+export PYTHONPATH="${ROOT}/db/scripts${PYTHONPATH:+:$PYTHONPATH}"
+exec python3 "${SCRIPT_DIR}/check_schema_sync.py" "$@"
