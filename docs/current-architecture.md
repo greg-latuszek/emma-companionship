@@ -268,25 +268,27 @@ flowchart LR
 ## Local development
 
 ```bash
-cp .env.example .env.local
+cp .env.example .env.local          # auth / shared secrets
+# also create .env.development with discrete DB_* (see .env.example)
 # AUTH_SECRET: openssl rand -base64 32
 # GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET: Google Cloud OAuth Web client
 # AUTH_URL=http://localhost:3000
 
 npm run db:start          # docker compose postgres + create databases
 npm run db:migrate:dev    # raw SQL on emma_companionship_dev
-npm run dev
+npm run dev               # Next loads .env.local + .env.development
 ```
+
+Requires **Python 3.10+** (`python3`) for `npm run db:*` operator scripts. Logic lives in `db/scripts/db_scripts/` (stdlib only); `.sh` files are thin wrappers. Export/import use `SOURCE_PROFILE` / `TARGET_PROFILE` (defaults development → staging). See `.env.example` and `db/README.md`.
 
 | Variable | Role |
 |---|---|
-| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | Node `pg` pool |
-| `DATABASE_URL` | Convenience URL; keep it consistent with the pool |
+| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | Node `pg` pool (from `.env.development` on `next dev`) |
 | `AUTH_SECRET` | Signs Auth.js cookies and state |
 | `GOOGLE_CLIENT_*` | Google Web client |
 | `OPERATOR_HINTS` | Extra local sentence on the error page when set to `1` |
 
-**Port trap.** `docker-compose.yml` publishes `${DB_PORT:-5433}:5432`. `initializePool` uses `DB_PORT` or **5432**. If Compose uses 5433 and the app uses 5432, login fails with a refused connection. Set the same `DB_PORT` in `.env.local` that Compose publishes.
+**Port trap.** `docker-compose.yml` publishes `${DB_PORT:-5433}:5432`. `initializePool` uses `DB_PORT` or **5432**. If Compose uses 5433 and the app uses 5432, login fails with a refused connection. Set the same `DB_PORT` in `.env.development` that Compose publishes.
 
 After the first Google login, approve the row and **sign in again**.
 

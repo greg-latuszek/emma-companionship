@@ -47,9 +47,7 @@ A table is **migration-seeded** when:
         — If migration-seeded: no export change needed. Done.
 
 [ ] 3. For each user-entered data table NOT yet in the export scripts:
-        Open db/scripts/export-wiping.sh and db/scripts/export-appending.sh.
-        Add  -t <table_name>  to the pg_dump call in both files.
-        Add  <table_name>  to the TRUNCATE list in export-wiping.sh
+        Open db/scripts/db_scripts/exported_tables.py and add the table to EXPORTED_TABLES
         (order matters: child tables before parent tables to respect FK constraints).
 
 [ ] 4. Re-export both seeds so the files stay current:
@@ -86,17 +84,25 @@ export: their schema is guaranteed consistent only after migrations run.
 ## Export scripts reference
 
 ```
-db/scripts/export-wiping.sh    — pg_dump source config (EXPORT_* vars)
-db/scripts/export-appending.sh — same, with ON CONFLICT DO NOTHING
-db/scripts/import-wiping.sh    — TRUNCATE + INSERT into IMPORT_DATABASE_URL
-db/scripts/import-appending.sh — INSERT … ON CONFLICT DO NOTHING into IMPORT_DATABASE_URL
+db/scripts/export_db.py / import_db.py   — Python clients (--mode wiping|appending)
+db/scripts/export-*.sh / import-*.sh     — thin wrappers (require python3 3.10+)
+db/scripts/check_schema_sync.py          — SOURCE vs TARGET column check
+db/scripts/db_scripts/                   — stdlib package (profiles, tables, docker_pg)
 ```
 
-Required env vars (set in `.env.local`, documented in `.env.example`):
+Profiles (discrete `DB_*` parts; see `.env.example`):
 
 ```
-EXPORT_CONTAINER   docker container that runs pg_dump / psql
-EXPORT_DB_USER     pg role inside that container
-EXPORT_DB_NAME     pg database inside that container
-IMPORT_DATABASE_URL  full connection URL of the write target
+.env.development   local Docker — SOURCE default; also used by Next on next dev
+.env.staging       cloud staging — TARGET default for import
+.env.production    cloud production
+
+SOURCE_PROFILE / TARGET_PROFILE  optional overrides in .env.local or the environment
+                                 (defaults: development → staging)
+
+Per-profile keys: DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME,
+                  DB_OPTIONS (cloud), DB_SSL=false + DB_CONTAINER (development)
+
+DB_USER / DB_PASSWORD / DB_HOST may be left blank in cloud profile files and
+exported in the shell instead (file value wins when non-empty).
 ```
