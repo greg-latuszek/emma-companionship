@@ -80,26 +80,6 @@ export function CompanionshipRelationForm({
       ) : null}
 
       <label className="flex flex-col gap-1">
-        <span>Akompaniator</span>
-        <select
-          name="companion_id"
-          defaultValue={values.companion_id}
-          className={fieldControlClassName}
-          required
-        >
-          <option value="" className={selectOptionClassName}>
-            wybierz osobę...
-          </option>
-          {sortedMembers.map((member) => (
-            <option key={member.id} value={member.id} className={selectOptionClassName}>
-              {formatMemberName(member)}
-            </option>
-          ))}
-        </select>
-        <FieldError message={state?.fieldErrors?.companion_id} className={surfaces.dangerText} />
-      </label>
-
-      <label className="flex flex-col gap-1">
         <span>Akompaniowany</span>
         <select
           name="accompanied_id"
@@ -117,6 +97,26 @@ export function CompanionshipRelationForm({
           ))}
         </select>
         <FieldError message={state?.fieldErrors?.accompanied_id} className={surfaces.dangerText} />
+      </label>
+
+      <label className="flex flex-col gap-1">
+        <span>Akompaniator</span>
+        <select
+          name="companion_id"
+          defaultValue={values.companion_id}
+          className={fieldControlClassName}
+          required
+        >
+          <option value="" className={selectOptionClassName}>
+            wybierz osobę...
+          </option>
+          {sortedMembers.map((member) => (
+            <option key={member.id} value={member.id} className={selectOptionClassName}>
+              {formatMemberName(member)}
+            </option>
+          ))}
+        </select>
+        <FieldError message={state?.fieldErrors?.companion_id} className={surfaces.dangerText} />
       </label>
 
       <label className="flex flex-col gap-1">
