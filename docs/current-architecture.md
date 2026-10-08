@@ -190,6 +190,7 @@ flowchart LR
 
 - Relation fields: `companion_id`, `accompanied_id`, `status` (`active` | `archived`), `start_date`, `end_date`, `notes`.
 - Required on write: `companion_id`, `accompanied_id`. `status` defaults to `active`, `start_date` defaults to today.
+- Same-gender rule: add/update refuse when both participants have a gender and they differ (`CompanionAndAccompaniedHaveDifferentGenders`). Null gender on either side is allowed. Form shows: „Akompaniator i akompaniowany muszą być tej samej płci.”
 - The list loads all relations via JOIN with `members` to fetch participant names and member details (marital status, consecrated status, community engagement).
 - Member details from the JOIN are **read-only informational fields** — they must be edited in `/app/members`, not in companionship forms.
 - **Utworzone** tab: responsive table (desktop `lg:`) with two-tier headers showing groups "Akompaniament" / "Akompaniowany" / "Akompaniator". Toggleable columns for member details per person. Two sticky columns (Akompaniowany, Akompaniator). Mobile shows cards. Sort and column visibility stored in `localStorage`.

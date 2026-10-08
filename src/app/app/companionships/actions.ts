@@ -6,11 +6,13 @@ import { companionshipRelationWriteSchema } from '@/schemas/companionship-relati
 import {
   addCompanionshipRelation,
   isCompanionAndAccompaniedAreSamePerson,
+  isCompanionAndAccompaniedHaveDifferentGenders,
 } from '@/application/add-companionship-relation';
 import {
   updateCompanionshipRelation,
   isCompanionshipRelationNotFound,
   isCompanionAndAccompaniedAreSamePerson as isCompanionAndAccompaniedAreSamePersonUpdate,
+  isCompanionAndAccompaniedHaveDifferentGenders as isCompanionAndAccompaniedHaveDifferentGendersUpdate,
 } from '@/application/update-companionship-relation';
 import {
   deleteCompanionshipRelation,
@@ -43,6 +45,13 @@ export async function submitNewCompanionshipRelation(
       return {
         values,
         formError: 'Akompaniator i akompaniowany nie mogą być tą samą osobą.',
+      };
+    }
+
+    if (isCompanionAndAccompaniedHaveDifferentGenders(error)) {
+      return {
+        values,
+        formError: 'Akompaniator i akompaniowany muszą być tej samej płci.',
       };
     }
 
@@ -82,6 +91,13 @@ export async function submitEditCompanionshipRelation(
       return {
         values,
         formError: 'Akompaniator i akompaniowany nie mogą być tą samą osobą.',
+      };
+    }
+
+    if (isCompanionAndAccompaniedHaveDifferentGendersUpdate(error)) {
+      return {
+        values,
+        formError: 'Akompaniator i akompaniowany muszą być tej samej płci.',
       };
     }
 
