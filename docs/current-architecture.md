@@ -40,17 +40,20 @@ flowchart TB
     mayUse[memberMayUseApp]
     visit[decideWhereAnAppVisitorMustGo]
     registry["list / add / update /\nremove community members"]
+    couples["list / add / remove couples"]
   end
 
   subgraph driven["Driven ports"]
     loginPort[IMemberRepository]
     registryPort[ICommunityMemberRepository]
+    couplePort[ICoupleRepository]
   end
 
   subgraph adapter["Driven adapters"]
     pgLogin[PgMemberRepository]
     pgRegistry[PgCommunityMemberRepository]
-    sql[(PostgreSQL members)]
+    pgCouple[PgCoupleRepository]
+    sql[(PostgreSQL)]
   end
 
   button --> authjs
@@ -67,17 +70,22 @@ flowchart TB
   registry --> registryPort
   registryPort --> pgRegistry
   pgRegistry --> sql
+  membersUi --> couples
+  couples --> couplePort
+  couplePort --> pgCouple
+  pgCouple --> sql
 ```
 
 **Why there is no `IOauthLogin` port.** Confirming identity at Google, holding cookies, and signing the JWT is delivery. Wrapping Auth.js would be hexagonal theater. A later GitHub or Facebook provider is another mapper branch plus an Auth.js provider — not a second use case.
 
-**Three ports across two tables.** Login is `Member`. Registry is `CommunityMember`. Companionship is `CompanionshipRelation`. Do not hang list/update/delete on the OAuth port, and do not hang Google recognition on the registry port. Do not hang companionship tracking on member CRUD.
+**Four ports across three tables.** Login is `Member`. Registry is `CommunityMember`. Companionship is `CompanionshipRelation`. Couples are `Couple`. Do not hang list/update/delete on the OAuth port, and do not hang Google recognition on the registry port. Do not hang companionship or couples on member CRUD.
 
 | Port | Type | What it does |
 |---|---|---|
 | `IMemberRepository` | `Member` | `findMemberById` / `findMemberByEmail` / `findMemberByOAuth` / `createMember` (scoped to `member_type = 'app_user'`). Also `updateMemberVisualStyle` for the signed-in person’s look. |
 | `ICommunityMemberRepository` | `CommunityMember` | `listCommunityMembers` / `findCommunityMemberById` / `findCommunityMemberByEmail` / `addCommunityMember` / `updateCommunityMember` / `removeCommunityMember`. Lists **every** row. Writes omit OAuth, password, `is_active`, approval, `member_type`, and `profile_picture`. |
 | `ICompanionshipRelationRepository` | `CompanionshipRelation` / `CompanionshipRelationListItem` / `PersonWithoutCompanion` | `listCompanionshipRelations` / `findCompanionshipRelationById` / `addCompanionshipRelation` / `updateCompanionshipRelation` / `deleteCompanionshipRelation` / `listPeopleWithoutCompanion`. Manages accompaniment tracking on `companionship_relations` table. List enriches with participant names and member details via JOIN. `listPeopleWithoutCompanion` returns every non-Looker-On member who appears in no `companionship_relations` row as `accompanied_id` (any status), sorted by last name then first name. |
+| `ICoupleRepository` | `Couple` / `CoupleListItem` / `MarriedPersonWithoutCouple` | `listCouples` / `listMarriedPeopleWithoutCouple` / `findCoupleById` / `addCouple` / `removeCouple`. Manages `couples` plus both spouses’ `members.couple_id`. `member1_id` = husband (male), `member2_id` = wife (female). List sorts by husband’s then wife’s last name. Unpaired pool: `marital_status = 'married'`, gender set, `couple_id` null. |
 
 `hasLoginIdentity` is derived from `oauth_id`; it is not a column. Registry inserts leave `member_type` unset so Postgres defaults to `'companion'`. Dropping `member_type` is a later login-identity story, not a form story.
 
@@ -124,7 +132,7 @@ flowchart TD
 | `/auth/awaiting-approval` | Signed in, not approved |
 | `/auth/error` | Sign-in failed; public copy has no npm/DB details |
 | `/app/companionship-panel` | Approved member; **Członkowie wspólnoty**, **Akompaniamenty** (with missing count), Health Dashboard stub, **Ustawienia aplikacji** |
-| `/app/members` | **Członkowie Wspólnoty** tab (list) or **+ Dodaj Osobę** tab (inline form) via `?tab=new` |
+| `/app/members` | Four tabs: **Członkowie Wspólnoty** (list), **Małżeństwa** (`?tab=couples`), **+ Dodaj Małżeństwa** (`?tab=build-couples`), **+ Dodaj Osobę** (`?tab=new`) |
 | `/app/members/new` | Redirects to `/app/members?tab=new` |
 | `/app/members/[id]/edit` | **Edytuj**; missing id → 404 |
 | `/app/companionships` | Three tabs: **Utworzone Akompaniamenty** (default), **Brakujące Akompaniamenty** (`?tab=missing`), **+ Dodaj Akompaniament** (`?tab=new`); `?accompanied=<id>` pre-fills the accompanied person on the add form |
@@ -145,6 +153,8 @@ An approved member opens **Członkowie wspólnoty** and works people as registry
 flowchart LR
   panel[Companionship panel] --> members["/app/members"]
   members --> tabList["tab: Członkowie Wspólnoty\n(listCommunityMembers)"]
+  members --> tabCouples["tab: Małżeństwa"]
+  members --> tabBuildCouples["tab: + Dodaj Małżeństwa"]
   members --> tabAdd["tab: + Dodaj Osobę\n(?tab=new, inline form)"]
   tabList --> edit["/app/members/id/edit"]
   tabList --> remove[removeCommunityMember]
@@ -164,9 +174,34 @@ flowchart LR
 - **Usuń** is a hard `DELETE` and only when `!hasLoginIdentity`. A login row shows a hint, not a delete control. A FK block shows a Polish sentence with no table names.
 - The list loads every in-scope row in one query (no pagination). Cards below the `lg` breakpoint, a table from `lg`. Imię and nazwisko stay visible; other columns are optional. Sort and shown fields live in `localStorage`. The table face is the Google `profile_picture` URL, not `image_url` (unused Base64).
 
+## Couples
+
+An approved member opens **Członkowie wspólnoty** and uses the marriage tabs. Couples are registry links only — companionship still names two people, not a couple.
+
+```mermaid
+flowchart LR
+  membersPage["/app/members"] --> tabCouples["tab: Małżeństwa\n(listCouples)"]
+  membersPage --> tabBuild["tab: + Dodaj Małżeństwa\n(listMarriedPeopleWithoutCouple)"]
+  tabCouples --> decouple[removeCouple]
+  tabBuild --> match[surname auto-match + draft]
+  match --> confirm[addCouple]
+  match --> drag[drag into empty cell]
+  confirm --> repo[ICoupleRepository]
+  decouple --> repo
+  repo --> pg[(couples + members.couple_id)]
+```
+
+- Schema: `couples(id, member1_id, member2_id, timestamps)`. No `wedding_date` / `number_of_children` (`002_couples_drop_unused_columns.sql`; `001_init.sql` matches for fresh DBs).
+- Add writes the couple row and sets both `members.couple_id` in one transaction. Remove deletes the couple; `members.couple_id` becomes null via `ON DELETE SET NULL`. Does **not** change `marital_status`.
+- Builder pool: married + gender male/female + not already in a couple. Missing gender stays out until person edit.
+- Auto-pair only when a surname match-group has exactly one male and one female. Surnames match after Polish lowercasing when equal or when they differ only by the last letter. Larger groups stay single-side rows for manual drag.
+- ✓ confirms to DB; ✕ splits the proposal and remembers the rejected pair in `localStorage` (`emma.couple-builder.draft`) so reload does not rematch. Drag only onto empty cells; still needs ✓. Same draft key keeps partial row layout across visits.
+- **Małżeństwa** shows `Jan Kowalski / Anna Kowalska` style rows with ✕ decouple (confirm step). **Widoczne pola** for couple tabs: email / phone / notes only (`emma.couple-tabs.extra-fields`, separate from the person-list key).
+- Same-sex couples are refused. In-place spouse swap is not offered — decouple then rebuild.
+
 ## Companionship relations
 
-An approved member opens **Akompaniamenty** from the panel and manages accompaniment relations (who accompanies whom). This slice does not validate business rules (gender, consecrated constraints, power separation). The delegate attests the relation is correct.
+An approved member opens **Akompaniamenty** from the panel and manages accompaniment relations (who accompanies whom). Same-gender check runs on write; consecrated constraints and power separation are not validated yet. The delegate attests the rest.
 
 ```mermaid
 flowchart LR
@@ -252,21 +287,25 @@ flowchart LR
     companionshipFields["id, companion_id, accompanied_id,\nstatus, start_date, end_date,\nnotes"]
   end
 
+  subgraph couplesLive["Live — couples"]
+    couplesFields["id, member1_id husband,\nmember2_id wife,\nmembers.couple_id"]
+  end
+
   subgraph unused["Present, unused by application code"]
-    extra["password_hash, image_url,\ndate_of_birth, languages,\nregistry JSON, geographic_units,\ncouples, blacklist,\nsecurity_events, roles, 2FA, …"]
+    extra["password_hash, image_url,\ndate_of_birth, languages,\nregistry JSON, geographic_units,\nblacklist, security_events, roles, 2FA, …"]
   end
 
   oauth[recognizeOAuthMember] --> loginLive
   crud[registry use cases] --> registryLive
   companionship[companionship use cases] --> companionshipLive
+  couples[couple use cases] --> couplesLive
   unused -.->|do not treat as product| later[Future stories]
 ```
 
 - Unique email / OAuth indexes apply to `app_user` rows only. Registry email uniqueness is enforced in application code.
-- `006_members_revoked_columns.sql` adds `revoked_at` / `revoked_by` on databases created before those columns existed.
-- `007_members_visual_style.sql` adds nullable `visual_style` (`semi-transparent` \| `high-contrast`). Empty means the default look.
-- `008_companionship_relations.sql` creates the `companionship_relations` table linking two `members` as companion and accompanied. `ON DELETE RESTRICT` on both FKs.
-- Do not write features against blacklist, 2FA, couples, or roles until a story asks. No live port sees them.
+- Initial schema is squashed in `001_init.sql`. `002_couples_drop_unused_columns.sql` drops `wedding_date` / `number_of_children` from existing DBs.
+- Export/import includes `companionship_relations`, `couples`, then `members` (child tables before parent).
+- Do not write features against blacklist, 2FA, or roles until a story asks. No live port sees them.
 
 ## Local development
 
@@ -305,5 +344,5 @@ npm run type-check
 
 - **Another OAuth provider:** add a branch in `oauthIdentityFromAuthJs` and an Auth.js provider. Do not fork `recognizeOAuthMember`.
 - **Password / Facebook / blacklist / admin UI:** not in the live product. Do not rebuild them from archived plans.
-- **Couples / graphs / geo / supervision / health tracking:** new ports and tables as each slice needs them. The person registry has `ICommunityMemberRepository`. Companionship tracking has `ICompanionshipRelationRepository`. Do not hang the next slice on either while "we are here".
+- **Graphs / geo / supervision / health / couple-as-companionship-participant:** new ports and tables as each slice needs them. Person registry, companionship, and couples each have their own port. Do not hang the next slice on an existing port while "we are here".
 - **Docs:** update this file when the running system changes. Put product rules in `application_idea.md`. Do not revive `_archived_docs/` or [`db/SCHEMA.md`](../db/SCHEMA.md) as current architecture.

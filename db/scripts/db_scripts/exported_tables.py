@@ -4,13 +4,14 @@ When adding a new Pg*Repository, check .cursor/skills/db-export-scope/SKILL.md
 to decide whether the new table belongs here.
 
 FK order matters for TRUNCATE in wiping-seed.sql: child tables before parents.
-companionship_relations references members, so companionship_relations comes first.
+companionship_relations and couples reference members, so they come before members.
 """
 
 from __future__ import annotations
 
 EXPORTED_TABLES: tuple[str, ...] = (
     "companionship_relations",
+    "couples",
     "members",
 )
 

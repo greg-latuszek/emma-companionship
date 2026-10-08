@@ -1,11 +1,22 @@
 'use server';
 
+import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { communityMemberWriteSchema } from '@/schemas/community-member';
+import { coupleWriteSchema } from '@/schemas/couple';
 import {
   addCommunityMember,
   isDuplicateCommunityMemberEmail,
 } from '@/application/add-community-member';
+import {
+  addCouple,
+  isCoupleParticipantsAreNotEligible,
+  isHusbandAndWifeAreSamePerson,
+} from '@/application/add-couple';
+import {
+  isCoupleNotFound,
+  removeCouple,
+} from '@/application/remove-couple';
 import {
   isCommunityMemberNotFound,
   updateCommunityMember,
@@ -131,4 +142,69 @@ export async function submitCommunityMemberRemoval(
   }
 
   redirect('/app/members');
+}
+
+export async function submitConfirmCouple(input: {
+  husbandId: string;
+  wifeId: string;
+}): Promise<{ success: boolean; error?: string }> {
+  const parsed = coupleWriteSchema.safeParse({
+    husband_id: input.husbandId,
+    wife_id: input.wifeId,
+  });
+
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: 'Nieprawidłowe dane małżeństwa.',
+    };
+  }
+
+  try {
+    await addCouple(parsed.data);
+    revalidatePath('/app/members');
+    return { success: true };
+  } catch (error) {
+    if (isHusbandAndWifeAreSamePerson(error)) {
+      return {
+        success: false,
+        error: 'Mąż i żona nie mogą być tą samą osobą.',
+      };
+    }
+
+    if (isCoupleParticipantsAreNotEligible(error)) {
+      return {
+        success: false,
+        error:
+          'Nie można utworzyć małżeństwa — sprawdź płeć, stan cywilny i czy osoby nie są już w parze.',
+      };
+    }
+
+    return {
+      success: false,
+      error: 'Nie udało się zapisać małżeństwa. Spróbuj ponownie.',
+    };
+  }
+}
+
+export async function submitDecoupleCouple(
+  coupleId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    await removeCouple(coupleId);
+    revalidatePath('/app/members');
+    return { success: true };
+  } catch (error) {
+    if (isCoupleNotFound(error)) {
+      return {
+        success: false,
+        error: 'Małżeństwo nie zostało znalezione.',
+      };
+    }
+
+    return {
+      success: false,
+      error: 'Nie udało się rozłączyć małżeństwa. Spróbuj ponownie.',
+    };
+  }
 }
