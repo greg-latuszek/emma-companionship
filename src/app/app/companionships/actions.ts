@@ -72,10 +72,12 @@ export async function submitNewCompanionshipRelation(
 
 export async function submitEditCompanionshipRelation(
   relationId: string,
+  lockedAccompaniedId: string,
   _previous: CompanionshipRelationFormState | undefined,
   formData: FormData
 ): Promise<CompanionshipRelationFormState> {
   const values = companionshipRelationFormValuesFromForm(formData);
+  values.accompanied_id = lockedAccompaniedId;
   const parsed = companionshipRelationWriteSchema.safeParse(values);
 
   if (!parsed.success) {

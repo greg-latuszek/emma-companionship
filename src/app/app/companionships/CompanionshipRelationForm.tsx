@@ -53,6 +53,7 @@ function sortCommunityMembersByPolishName(members: CommunityMember[]): Community
 function CompanionshipParticipantSelects({
   members,
   accompaniedCandidates,
+  accompaniedLocked,
   initialAccompaniedId,
   initialCompanionId,
   fieldControlClassName,
@@ -62,6 +63,7 @@ function CompanionshipParticipantSelects({
 }: {
   members: CommunityMember[];
   accompaniedCandidates: CommunityMember[];
+  accompaniedLocked: boolean;
   initialAccompaniedId: string;
   initialCompanionId: string;
   fieldControlClassName: string;
@@ -88,22 +90,31 @@ function CompanionshipParticipantSelects({
     <>
       <label className="flex flex-col gap-1">
         <span>Akompaniowany</span>
-        <select
-          name="accompanied_id"
-          value={accompaniedId}
-          onChange={(event) => setAccompaniedId(event.target.value)}
-          className={fieldControlClassName}
-          required
-        >
-          <option value="" className={selectOptionClassName}>
-            wybierz osobę...
-          </option>
-          {accompaniedOptions.map((member) => (
-            <option key={member.id} value={member.id} className={selectOptionClassName}>
-              {formatMemberName(member)}
+        {accompaniedLocked ? (
+          <>
+            <input type="hidden" name="accompanied_id" value={initialAccompaniedId} />
+            <p className={fieldControlClassName}>
+              {accompanied ? formatMemberName(accompanied) : '—'}
+            </p>
+          </>
+        ) : (
+          <select
+            name="accompanied_id"
+            value={accompaniedId}
+            onChange={(event) => setAccompaniedId(event.target.value)}
+            className={fieldControlClassName}
+            required
+          >
+            <option value="" className={selectOptionClassName}>
+              wybierz osobę...
             </option>
-          ))}
-        </select>
+            {accompaniedOptions.map((member) => (
+              <option key={member.id} value={member.id} className={selectOptionClassName}>
+                {formatMemberName(member)}
+              </option>
+            ))}
+          </select>
+        )}
         <FieldError message={accompaniedError} className={dangerTextClassName} />
       </label>
 
@@ -135,6 +146,7 @@ export function CompanionshipRelationForm({
   action,
   members,
   accompaniedCandidates,
+  accompaniedLocked = false,
   initialValues,
   returnTab,
 }: {
@@ -142,6 +154,8 @@ export function CompanionshipRelationForm({
   members: CommunityMember[];
   /** People who may be chosen as Akompaniowany (Brakujące on the add form). */
   accompaniedCandidates: CommunityMember[];
+  /** Edit: show Akompaniowany as fixed text; only Akompaniator is choosable. */
+  accompaniedLocked?: boolean;
   initialValues?: CompanionshipRelationFormValues;
   returnTab?: string;
 }): JSX.Element {
@@ -173,6 +187,7 @@ export function CompanionshipRelationForm({
           key={formKey}
           members={members}
           accompaniedCandidates={accompaniedCandidates}
+          accompaniedLocked={accompaniedLocked}
           initialAccompaniedId={values.accompanied_id}
           initialCompanionId={values.companion_id}
           fieldControlClassName={fieldControlClassName}
