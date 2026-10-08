@@ -33,6 +33,7 @@ export default async function EditCompanionshipRelationPage({
 
   const member = await signedInMemberFrom(session);
   const members = await listCommunityMembers();
+  const accompanied = members.find((candidate) => candidate.id === relation.accompanied_id);
 
   const initialValues: CompanionshipRelationFormValues = {
     companion_id: relation.companion_id,
@@ -65,8 +66,14 @@ export default async function EditCompanionshipRelationPage({
 
           <SemiTransparentPanel className="mx-auto mt-8 w-full max-w-3xl p-6">
             <CompanionshipRelationForm
-              action={submitEditCompanionshipRelation.bind(null, id)}
+              action={submitEditCompanionshipRelation.bind(
+                null,
+                id,
+                relation.accompanied_id
+              )}
               members={members}
+              accompaniedCandidates={accompanied ? [accompanied] : []}
+              accompaniedLocked
               initialValues={initialValues}
             />
           </SemiTransparentPanel>

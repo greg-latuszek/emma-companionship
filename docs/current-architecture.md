@@ -190,11 +190,14 @@ flowchart LR
 
 - Relation fields: `companion_id`, `accompanied_id`, `status` (`active` | `archived`), `start_date`, `end_date`, `notes`.
 - Required on write: `companion_id`, `accompanied_id`. `status` defaults to `active`, `start_date` defaults to today.
+- Same-gender rule: add/update refuse when both participants have a gender and they differ (`CompanionAndAccompaniedHaveDifferentGenders`). Null gender on either side is allowed. Form shows: „Akompaniator i akompaniowany muszą być tej samej płci.”
+- Form dropdowns: choosing one participant with a known gender filters the other list to the same gender (`companionshipSelectOptions`). Partner without gender → show everyone. Failed submits remount via `restoreKey` so both selections stay visible.
 - The list loads all relations via JOIN with `members` to fetch participant names and member details (marital status, consecrated status, community engagement).
 - Member details from the JOIN are **read-only informational fields** — they must be edited in `/app/members`, not in companionship forms.
 - **Utworzone** tab: responsive table (desktop `lg:`) with two-tier headers showing groups "Akompaniament" / "Akompaniowany" / "Akompaniator". Toggleable columns for member details per person. Two sticky columns (Akompaniowany, Akompaniator). Mobile shows cards. Sort and column visibility stored in `localStorage`.
 - **Brakujące** tab: every eligible member (non-Looker-On) with no `accompanied_id` in any relation (any status). Fixed sort by last name, first name. Toggleable detail columns (marital status, consecrated type, engagement). Each row has a **Przypisz akompaniatora** link that opens the add tab with the person pre-selected.
-- **+ Dodaj** tab: inline form. `?accompanied=<id>` pre-selects accompanied person. After save, redirects to the **Brakujące** tab if the form was opened from there, otherwise to **Utworzone**.
+- **+ Dodaj** form: **Akompaniowany** options are only people from Brakujące (`communityMembersNeedingCompanion`); **Akompaniator** is the full registry (same-gender filtered). Fields order: Akompaniowany, then Akompaniator. `?accompanied=<id>` pre-selects when that person still needs a companion. After save, redirects to Brakujące if opened from there, otherwise Utworzone.
+- Edit form: **Akompaniowany** is fixed (name + hidden id); only **Akompaniator** (and dates/notes) can change. Submit binds the relation’s `accompanied_id` so a tampered form cannot reassign the accompanied person.
 - Panel card shows `listPeopleWithoutCompanion().length` as the "Brakujące akompaniamenty" count.
 - **Usuń** requires two-step confirmation (button label changes to confirm). Hard `DELETE` from `companionship_relations` table. FK constraints on `companion_id` and `accompanied_id` use `ON DELETE RESTRICT`.
 

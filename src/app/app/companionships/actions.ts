@@ -6,17 +6,20 @@ import { companionshipRelationWriteSchema } from '@/schemas/companionship-relati
 import {
   addCompanionshipRelation,
   isCompanionAndAccompaniedAreSamePerson,
+  isCompanionAndAccompaniedHaveDifferentGenders,
 } from '@/application/add-companionship-relation';
 import {
   updateCompanionshipRelation,
   isCompanionshipRelationNotFound,
   isCompanionAndAccompaniedAreSamePerson as isCompanionAndAccompaniedAreSamePersonUpdate,
+  isCompanionAndAccompaniedHaveDifferentGenders as isCompanionAndAccompaniedHaveDifferentGendersUpdate,
 } from '@/application/update-companionship-relation';
 import {
   deleteCompanionshipRelation,
   isCompanionshipRelationNotFound as isCompanionshipRelationNotFoundDelete,
 } from '@/application/delete-companionship-relation';
 import {
+  companionshipRelationFormStateAfterFailedSubmit,
   companionshipRelationFormValuesFromForm,
   polishCompanionshipRelationWriteIssues,
   type CompanionshipRelationFormState,
@@ -30,26 +33,33 @@ export async function submitNewCompanionshipRelation(
   const parsed = companionshipRelationWriteSchema.safeParse(values);
 
   if (!parsed.success) {
-    return {
+    return companionshipRelationFormStateAfterFailedSubmit({
       values,
       fieldErrors: polishCompanionshipRelationWriteIssues(parsed.error.issues),
-    };
+    });
   }
 
   try {
     await addCompanionshipRelation(parsed.data);
   } catch (error) {
     if (isCompanionAndAccompaniedAreSamePerson(error)) {
-      return {
+      return companionshipRelationFormStateAfterFailedSubmit({
         values,
         formError: 'Akompaniator i akompaniowany nie mogą być tą samą osobą.',
-      };
+      });
     }
 
-    return {
+    if (isCompanionAndAccompaniedHaveDifferentGenders(error)) {
+      return companionshipRelationFormStateAfterFailedSubmit({
+        values,
+        formError: 'Akompaniator i akompaniowany muszą być tej samej płci.',
+      });
+    }
+
+    return companionshipRelationFormStateAfterFailedSubmit({
       values,
       formError: 'Nie udało się zapisać akompaniamentu. Spróbuj ponownie.',
-    };
+    });
   }
 
   const returnTab = formData.get('return_tab')?.toString();
@@ -62,40 +72,49 @@ export async function submitNewCompanionshipRelation(
 
 export async function submitEditCompanionshipRelation(
   relationId: string,
+  lockedAccompaniedId: string,
   _previous: CompanionshipRelationFormState | undefined,
   formData: FormData
 ): Promise<CompanionshipRelationFormState> {
   const values = companionshipRelationFormValuesFromForm(formData);
+  values.accompanied_id = lockedAccompaniedId;
   const parsed = companionshipRelationWriteSchema.safeParse(values);
 
   if (!parsed.success) {
-    return {
+    return companionshipRelationFormStateAfterFailedSubmit({
       values,
       fieldErrors: polishCompanionshipRelationWriteIssues(parsed.error.issues),
-    };
+    });
   }
 
   try {
     await updateCompanionshipRelation(relationId, parsed.data);
   } catch (error) {
     if (isCompanionAndAccompaniedAreSamePersonUpdate(error)) {
-      return {
+      return companionshipRelationFormStateAfterFailedSubmit({
         values,
         formError: 'Akompaniator i akompaniowany nie mogą być tą samą osobą.',
-      };
+      });
+    }
+
+    if (isCompanionAndAccompaniedHaveDifferentGendersUpdate(error)) {
+      return companionshipRelationFormStateAfterFailedSubmit({
+        values,
+        formError: 'Akompaniator i akompaniowany muszą być tej samej płci.',
+      });
     }
 
     if (isCompanionshipRelationNotFound(error)) {
-      return {
+      return companionshipRelationFormStateAfterFailedSubmit({
         values,
         formError: 'Akompaniament nie został znaleziony.',
-      };
+      });
     }
 
-    return {
+    return companionshipRelationFormStateAfterFailedSubmit({
       values,
       formError: 'Nie udało się zaktualizować akompaniamentu. Spróbuj ponownie.',
-    };
+    });
   }
 
   redirect('/app/companionships');

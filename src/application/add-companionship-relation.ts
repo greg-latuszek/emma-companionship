@@ -1,10 +1,16 @@
 import { startDatabasePool } from '@/infrastructure/db/startup';
 import { getRepositoryContainer } from '@/di/RepositoryProvider';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
+import type { ICommunityMemberRepository } from '@/ports/repositories/ICommunityMemberRepository';
+import {
+  companionshipParticipantsHaveDifferentGenders,
+  CompanionAndAccompaniedHaveDifferentGenders,
+} from '@/application/companionship-participant-genders';
 import {
   companionshipRelationWriteWithDefaults,
   type CompanionshipRelationWrite,
 } from '@/schemas/companionship-relation';
+import { MemberId } from '@/types/auth';
 import type { CompanionshipRelation } from '@/types/companionship-relation';
 import {
   describeUnavailableDatabase,
@@ -25,9 +31,19 @@ export function isCompanionAndAccompaniedAreSamePerson(
   return error instanceof CompanionAndAccompaniedAreSamePerson;
 }
 
+export {
+  CompanionAndAccompaniedHaveDifferentGenders,
+  isCompanionAndAccompaniedHaveDifferentGenders,
+} from '@/application/companionship-participant-genders';
+
 function currentCompanionshipRelationRepository(): ICompanionshipRelationRepository {
   startDatabasePool();
   return getRepositoryContainer().getCompanionshipRelationRepository();
+}
+
+function currentCommunityMemberRepository(): ICommunityMemberRepository {
+  startDatabasePool();
+  return getRepositoryContainer().getCommunityMemberRepository();
 }
 
 function reportFailedCompanionshipRelationAdd(error: unknown): void {
@@ -43,10 +59,17 @@ function reportFailedCompanionshipRelationAdd(error: unknown): void {
 
 export async function addCompanionshipRelation(
   write: CompanionshipRelationWrite,
-  relations: ICompanionshipRelationRepository = currentCompanionshipRelationRepository()
+  relations: ICompanionshipRelationRepository = currentCompanionshipRelationRepository(),
+  members: ICommunityMemberRepository = currentCommunityMemberRepository()
 ): Promise<CompanionshipRelation> {
   if (write.companion_id === write.accompanied_id) {
     throw new CompanionAndAccompaniedAreSamePerson();
+  }
+
+  const companion = await members.findCommunityMemberById(MemberId(write.companion_id));
+  const accompanied = await members.findCommunityMemberById(MemberId(write.accompanied_id));
+  if (companionshipParticipantsHaveDifferentGenders(companion, accompanied)) {
+    throw new CompanionAndAccompaniedHaveDifferentGenders();
   }
 
   const writeWithDefaults = companionshipRelationWriteWithDefaults(write);

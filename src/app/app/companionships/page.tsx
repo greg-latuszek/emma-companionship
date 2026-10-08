@@ -14,7 +14,10 @@ import { CompanionshipRelationList } from './CompanionshipRelationList';
 import { CompanionshipRelationForm } from './CompanionshipRelationForm';
 import { PeopleWithoutCompanionList } from './PeopleWithoutCompanionList';
 import { submitNewCompanionshipRelation } from './actions';
-import { newCompanionshipRelationFormValues } from './companionship-relation-form-state';
+import {
+  communityMembersNeedingCompanion,
+  newCompanionshipRelationFormValues,
+} from './companionship-relation-form-state';
 
 function companionshipsTabFrom(tab: string | string[] | undefined): 'created' | 'missing' | 'new' {
   if (tab === 'missing') return 'missing';
@@ -37,14 +40,24 @@ export default async function CompanionshipsPage({
   const selectedTab = companionshipsTabFrom(params.tab);
   const accompaniedId = params.accompanied?.toString();
 
-  const [member, members] = await Promise.all([
+  const [member, members, peopleWithoutCompanion] = await Promise.all([
     signedInMemberFrom(session),
-    selectedTab === 'new' ? listCommunityMembers() : Promise.resolve([] as Awaited<ReturnType<typeof listCommunityMembers>>),
+    selectedTab === 'new'
+      ? listCommunityMembers()
+      : Promise.resolve([] as Awaited<ReturnType<typeof listCommunityMembers>>),
+    selectedTab === 'new'
+      ? listPeopleWithoutCompanion()
+      : Promise.resolve([] as Awaited<ReturnType<typeof listPeopleWithoutCompanion>>),
   ]);
+
+  const accompaniedCandidates = communityMembersNeedingCompanion(
+    members,
+    peopleWithoutCompanion
+  );
 
   const initialFormValues =
     selectedTab === 'new'
-      ? newCompanionshipRelationFormValues(accompaniedId, members)
+      ? newCompanionshipRelationFormValues(accompaniedId, accompaniedCandidates)
       : undefined;
 
   const returnTab = accompaniedId !== undefined ? 'missing' : undefined;
@@ -80,6 +93,7 @@ export default async function CompanionshipsPage({
                 <CompanionshipRelationForm
                   action={submitNewCompanionshipRelation}
                   members={members}
+                  accompaniedCandidates={accompaniedCandidates}
                   initialValues={initialFormValues!}
                   returnTab={returnTab}
                 />

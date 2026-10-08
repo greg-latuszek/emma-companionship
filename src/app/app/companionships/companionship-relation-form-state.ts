@@ -13,6 +13,45 @@ export interface CompanionshipRelationFormState {
   values?: CompanionshipRelationFormValues;
   fieldErrors?: Partial<Record<keyof CompanionshipRelationFormValues, string>>;
   formError?: string;
+  /** Unique per failed submit so the form remounts and keeps submitted selects visible. */
+  restoreKey?: string;
+}
+
+export function companionshipRelationFormStateAfterFailedSubmit(
+  state: Omit<CompanionshipRelationFormState, 'restoreKey'>
+): CompanionshipRelationFormState {
+  return {
+    ...state,
+    restoreKey: crypto.randomUUID(),
+  };
+}
+
+/**
+ * Options for one person select once the other participant is known.
+ * No partner / partner without gender → everyone.
+ * Partner with gender → same gender only; always keep the current selection visible
+ * (e.g. after a gender validation error).
+ */
+export function companionshipSelectOptions(
+  members: CommunityMember[],
+  partner: Pick<CommunityMember, 'gender'> | undefined,
+  selectedMemberId: string
+): CommunityMember[] {
+  if (partner?.gender == null) {
+    return members;
+  }
+  return members.filter(
+    (member) => member.id === selectedMemberId || member.gender === partner.gender
+  );
+}
+
+/** Registry people who still appear on Brakujące Akompaniamenty (need a companion). */
+export function communityMembersNeedingCompanion(
+  members: CommunityMember[],
+  peopleWithoutCompanion: ReadonlyArray<{ id: string }>
+): CommunityMember[] {
+  const ids = new Set(peopleWithoutCompanion.map((person) => person.id));
+  return members.filter((member) => ids.has(member.id));
 }
 
 export function companionshipRelationFormValuesFromForm(
