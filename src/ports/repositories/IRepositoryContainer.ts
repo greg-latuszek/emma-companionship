@@ -6,6 +6,7 @@
 
 import { ICommunityMemberRepository } from './ICommunityMemberRepository';
 import { ICompanionshipRelationRepository } from './ICompanionshipRelationRepository';
+import { ICoupleRepository } from './ICoupleRepository';
 import { IMemberRepository } from './IMemberRepository';
 
 /**
@@ -13,10 +14,11 @@ import { IMemberRepository } from './IMemberRepository';
  * Implementation: PgRepositoryContainer (pg library + raw SQL)
  *
  * OAuth uses the member repository. The registry uses the community member port.
- * Companionship relations use their own port.
+ * Companionship relations use their own port. Couples use their own port.
  */
 export interface IRepositoryContainer {
   getMemberRepository(): IMemberRepository;
   getCommunityMemberRepository(): ICommunityMemberRepository;
   getCompanionshipRelationRepository(): ICompanionshipRelationRepository;
+  getCoupleRepository(): ICoupleRepository;
 }

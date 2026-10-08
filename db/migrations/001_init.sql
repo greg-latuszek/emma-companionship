@@ -120,11 +120,9 @@ CREATE INDEX IF NOT EXISTS idx_members_member_type ON members(member_type);
 CREATE TABLE IF NOT EXISTS couples (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
+    -- member1_id = husband (male), member2_id = wife (female); enforced in application.
     member1_id UUID NOT NULL REFERENCES members(id) ON DELETE CASCADE,
     member2_id UUID NOT NULL REFERENCES members(id) ON DELETE CASCADE,
-
-    wedding_date       DATE,
-    number_of_children INTEGER DEFAULT 0,
 
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),

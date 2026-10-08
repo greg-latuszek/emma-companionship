@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { listCommunityMembers } from '@/application/list-community-members';
+import { listCouples } from '@/application/list-couples';
+import { listMarriedPeopleWithoutCouple } from '@/application/list-married-people-without-couple';
 import { PageBackground } from '@/components/PageBackground';
 import { AppArea } from '@/components/AppArea';
 import { Navbar } from '@/components/Navbar';
@@ -10,7 +12,13 @@ import { SemiTransparentPanel } from '@/components/SemiTransparentButton';
 import { TabbedPanel } from '@/components/TabbedPanel';
 import { CommunityMemberList } from './CommunityMemberList';
 import { CommunityMemberForm } from './CommunityMemberForm';
+import { CoupleBuilder } from './CoupleBuilder';
+import { CoupleList } from './CoupleList';
 import { submitNewCommunityMember } from './actions';
+import {
+  membersPageTabFrom,
+  membersPageTabHref,
+} from './members-page-tab';
 
 export default async function CommunityMembersPage({
   searchParams,
@@ -23,12 +31,16 @@ export default async function CommunityMembersPage({
     redirect('/');
   }
 
-  const [member, members] = await Promise.all([
+  const selectedTab = membersPageTabFrom((await searchParams).tab);
+
+  const [member, members, couples, unpairedMarried] = await Promise.all([
     signedInMemberFrom(session),
     listCommunityMembers(),
+    selectedTab === 'couples' ? listCouples() : Promise.resolve([]),
+    selectedTab === 'build-couples'
+      ? listMarriedPeopleWithoutCouple()
+      : Promise.resolve([]),
   ]);
-
-  const showForm = (await searchParams).tab === 'new';
 
   return (
     <PageBackground
@@ -52,15 +64,40 @@ export default async function CommunityMembersPage({
             <TabbedPanel
               ariaLabel="Członkowie wspólnoty"
               tabs={[
-                { href: '/app/members', label: 'Członkowie Wspólnoty', isActive: !showForm },
-                { href: '/app/members?tab=new', label: '+ Dodaj Osobę', isActive: showForm },
+                {
+                  href: membersPageTabHref('list'),
+                  label: 'Członkowie Wspólnoty',
+                  isActive: selectedTab === 'list',
+                },
+                {
+                  href: membersPageTabHref('couples'),
+                  label: 'Małżeństwa',
+                  isActive: selectedTab === 'couples',
+                },
+                {
+                  href: membersPageTabHref('build-couples'),
+                  label: '+ Dodaj Małżeństwa',
+                  isActive: selectedTab === 'build-couples',
+                },
+                {
+                  href: membersPageTabHref('new'),
+                  label: '+ Dodaj Osobę',
+                  isActive: selectedTab === 'new',
+                },
               ]}
             >
-              {showForm ? (
+              {selectedTab === 'new' ? (
                 <CommunityMemberForm action={submitNewCommunityMember} />
-              ) : (
+              ) : null}
+              {selectedTab === 'list' ? (
                 <CommunityMemberList members={members} />
-              )}
+              ) : null}
+              {selectedTab === 'couples' ? (
+                <CoupleList couples={couples} />
+              ) : null}
+              {selectedTab === 'build-couples' ? (
+                <CoupleBuilder people={unpairedMarried} />
+              ) : null}
             </TabbedPanel>
           </SemiTransparentPanel>
         </div>
