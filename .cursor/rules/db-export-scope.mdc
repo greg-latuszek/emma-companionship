@@ -1,0 +1,14 @@
+---
+description: Guard the DB export scripts when a new table or repository is introduced.
+globs:
+  - src/adapters/db/pg/Pg*Repository.ts
+  - src/di/PgRepositoryContainer.ts
+  - src/di/RepositoryProvider.ts
+  - db/migrations/*.sql
+---
+
+# DB export scope
+
+When touching any of these files, read and follow `.cursor/skills/db-export-scope/SKILL.md`.
+
+It answers: does the new/changed table belong in the export scripts (`db/scripts/export-*.sh`)?

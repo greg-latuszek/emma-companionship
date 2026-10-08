@@ -40,6 +40,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# db exports — production data, never commit
+/db/exports/*.sql
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

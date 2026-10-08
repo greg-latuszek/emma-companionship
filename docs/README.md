@@ -43,13 +43,14 @@ flowchart TD
 ## How to run (short)
 
 ```bash
-cp .env.example .env.local   # then fill AUTH_SECRET and Google client credentials
+cp .env.example .env.local          # AUTH_SECRET + Google credentials
+# create .env.development with DB_* (see .env.example) — needs Python 3.10+ for db:* scripts
 npm run db:start
 npm run db:migrate:dev
 npm run dev
 ```
 
-Host Postgres port and `DB_PORT` must match. Compose defaults the published port to **5433**; the Node pool defaults to **5432** if `DB_PORT` is unset. Details in [current-architecture.md](./current-architecture.md#local-development).
+Host Postgres port and `DB_PORT` must match. Compose defaults the published port to **5433**; the Node pool defaults to **5432** if `DB_PORT` is unset. Details in [current-architecture.md](./current-architecture.md#local-development). DB operator scripts overview: [db/README.md](../db/README.md).
 
 ## Do not load as current truth
 
