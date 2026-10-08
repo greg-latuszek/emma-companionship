@@ -52,6 +52,7 @@ function sortCommunityMembersByPolishName(members: CommunityMember[]): Community
 
 function CompanionshipParticipantSelects({
   members,
+  accompaniedCandidates,
   initialAccompaniedId,
   initialCompanionId,
   fieldControlClassName,
@@ -60,6 +61,7 @@ function CompanionshipParticipantSelects({
   companionError,
 }: {
   members: CommunityMember[];
+  accompaniedCandidates: CommunityMember[];
   initialAccompaniedId: string;
   initialCompanionId: string;
   fieldControlClassName: string;
@@ -70,11 +72,13 @@ function CompanionshipParticipantSelects({
   const [accompaniedId, setAccompaniedId] = useState(initialAccompaniedId);
   const [companionId, setCompanionId] = useState(initialCompanionId);
 
-  const accompanied = members.find((member) => member.id === accompaniedId);
+  const accompanied =
+    accompaniedCandidates.find((member) => member.id === accompaniedId) ??
+    members.find((member) => member.id === accompaniedId);
   const companion = members.find((member) => member.id === companionId);
 
   const accompaniedOptions = sortCommunityMembersByPolishName(
-    companionshipSelectOptions(members, companion, accompaniedId)
+    companionshipSelectOptions(accompaniedCandidates, companion, accompaniedId)
   );
   const companionOptions = sortCommunityMembersByPolishName(
     companionshipSelectOptions(members, accompanied, companionId)
@@ -130,11 +134,14 @@ function CompanionshipParticipantSelects({
 export function CompanionshipRelationForm({
   action,
   members,
+  accompaniedCandidates,
   initialValues,
   returnTab,
 }: {
   action: CompanionshipRelationFormAction;
   members: CommunityMember[];
+  /** People who may be chosen as Akompaniowany (Brakujące on the add form). */
+  accompaniedCandidates: CommunityMember[];
   initialValues?: CompanionshipRelationFormValues;
   returnTab?: string;
 }): JSX.Element {
@@ -165,6 +172,7 @@ export function CompanionshipRelationForm({
         <CompanionshipParticipantSelects
           key={formKey}
           members={members}
+          accompaniedCandidates={accompaniedCandidates}
           initialAccompaniedId={values.accompanied_id}
           initialCompanionId={values.companion_id}
           fieldControlClassName={fieldControlClassName}

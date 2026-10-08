@@ -196,7 +196,8 @@ flowchart LR
 - Member details from the JOIN are **read-only informational fields** — they must be edited in `/app/members`, not in companionship forms.
 - **Utworzone** tab: responsive table (desktop `lg:`) with two-tier headers showing groups "Akompaniament" / "Akompaniowany" / "Akompaniator". Toggleable columns for member details per person. Two sticky columns (Akompaniowany, Akompaniator). Mobile shows cards. Sort and column visibility stored in `localStorage`.
 - **Brakujące** tab: every eligible member (non-Looker-On) with no `accompanied_id` in any relation (any status). Fixed sort by last name, first name. Toggleable detail columns (marital status, consecrated type, engagement). Each row has a **Przypisz akompaniatora** link that opens the add tab with the person pre-selected.
-- **+ Dodaj** / edit form: fields start with **Akompaniowany**, then **Akompaniator** (find a companion for the accompanied). `?accompanied=<id>` pre-selects accompanied person. After save from add, redirects to the **Brakujące** tab if the form was opened from there, otherwise to **Utworzone**.
+- **+ Dodaj** form: **Akompaniowany** options are only people from Brakujące (`communityMembersNeedingCompanion`); **Akompaniator** is the full registry (same-gender filtered). Fields order: Akompaniowany, then Akompaniator. `?accompanied=<id>` pre-selects when that person still needs a companion. After save, redirects to Brakujące if opened from there, otherwise Utworzone.
+- Edit form still allows choosing both people (locked-accompanied edit is a follow-up).
 - Panel card shows `listPeopleWithoutCompanion().length` as the "Brakujące akompaniamenty" count.
 - **Usuń** requires two-step confirmation (button label changes to confirm). Hard `DELETE` from `companionship_relations` table. FK constraints on `companion_id` and `accompanied_id` use `ON DELETE RESTRICT`.
 

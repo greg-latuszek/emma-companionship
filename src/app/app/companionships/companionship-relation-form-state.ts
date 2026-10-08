@@ -45,6 +45,15 @@ export function companionshipSelectOptions(
   );
 }
 
+/** Registry people who still appear on Brakujące Akompaniamenty (need a companion). */
+export function communityMembersNeedingCompanion(
+  members: CommunityMember[],
+  peopleWithoutCompanion: ReadonlyArray<{ id: string }>
+): CommunityMember[] {
+  const ids = new Set(peopleWithoutCompanion.map((person) => person.id));
+  return members.filter((member) => ids.has(member.id));
+}
+
 export function companionshipRelationFormValuesFromForm(
   formData: FormData
 ): CompanionshipRelationFormValues {

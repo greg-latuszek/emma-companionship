@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  communityMembersNeedingCompanion,
   companionshipRelationFormStateAfterFailedSubmit,
   companionshipSelectOptions,
   newCompanionshipRelationFormValues,
@@ -100,5 +101,21 @@ describe('companionshipSelectOptions', () => {
 
   it('companionshipSelectOptions keeps a mismatched current selection visible after a validation error', () => {
     expect(companionshipSelectOptions(registry, ada, jan.id)).toEqual([ada, ala, jan]);
+  });
+});
+
+describe('communityMembersNeedingCompanion', () => {
+  it('communityMembersNeedingCompanion keeps only registry people who still wait for a companion', () => {
+    const ada = aMember({ id: MemberId('ada'), gender: 'female' });
+    const jan = aMember({
+      id: MemberId('jan'),
+      first_name: 'Jan',
+      last_name: 'Kowalski',
+      gender: 'male',
+    });
+
+    expect(
+      communityMembersNeedingCompanion([ada, jan], [{ id: ada.id }])
+    ).toEqual([ada]);
   });
 });

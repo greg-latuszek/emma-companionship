@@ -67,6 +67,7 @@ export default async function EditCompanionshipRelationPage({
             <CompanionshipRelationForm
               action={submitEditCompanionshipRelation.bind(null, id)}
               members={members}
+              accompaniedCandidates={members}
               initialValues={initialValues}
             />
           </SemiTransparentPanel>
