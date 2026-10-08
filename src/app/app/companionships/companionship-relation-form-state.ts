@@ -13,6 +13,17 @@ export interface CompanionshipRelationFormState {
   values?: CompanionshipRelationFormValues;
   fieldErrors?: Partial<Record<keyof CompanionshipRelationFormValues, string>>;
   formError?: string;
+  /** Unique per failed submit so the form remounts and keeps submitted selects visible. */
+  restoreKey?: string;
+}
+
+export function companionshipRelationFormStateAfterFailedSubmit(
+  state: Omit<CompanionshipRelationFormState, 'restoreKey'>
+): CompanionshipRelationFormState {
+  return {
+    ...state,
+    restoreKey: crypto.randomUUID(),
+  };
 }
 
 export function companionshipRelationFormValuesFromForm(

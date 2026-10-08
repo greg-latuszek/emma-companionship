@@ -120,6 +120,9 @@ describe('submitNewCompanionshipRelation', () => {
     const result = await submitNewCompanionshipRelation(undefined, formData);
 
     expect(result.formError).toBe('Akompaniator i akompaniowany muszą być tej samej płci.');
+    expect(result.values?.companion_id).toBe('550e8400-e29b-41d4-a716-446655440000');
+    expect(result.values?.accompanied_id).toBe('550e8400-e29b-41d4-a716-446655440001');
+    expect(result.restoreKey).toEqual(expect.any(String));
     expect(redirect).not.toHaveBeenCalled();
   });
 
@@ -235,6 +238,9 @@ describe('submitEditCompanionshipRelation', () => {
     const result = await submitEditCompanionshipRelation(relationId, undefined, formData);
 
     expect(result.formError).toBe('Akompaniator i akompaniowany muszą być tej samej płci.');
+    expect(result.values?.companion_id).toBe('550e8400-e29b-41d4-a716-446655440000');
+    expect(result.values?.accompanied_id).toBe('550e8400-e29b-41d4-a716-446655440001');
+    expect(result.restoreKey).toEqual(expect.any(String));
     expect(redirect).not.toHaveBeenCalled();
   });
 

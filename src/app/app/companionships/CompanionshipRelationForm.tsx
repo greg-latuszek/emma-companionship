@@ -70,102 +70,108 @@ export function CompanionshipRelationForm({
       ? '/app/companionships?tab=missing'
       : '/app/companionships';
 
+  // React resets the form after a Server Action. Remount with submitted values so
+  // Akompaniowany / Akompaniator stay selected under validation errors.
+  const formKey = state?.restoreKey ?? 'pristine';
+
   return (
-    <form action={formAction} className="flex flex-col gap-4 text-left">
-      <input type="hidden" name="return_tab" value={returnTab ?? ''} />
+    <div className="flex flex-col gap-4 text-left">
       {state?.formError ? (
         <p className={surfaces.formError}>
           {state.formError}
         </p>
       ) : null}
+      <form key={formKey} action={formAction} className="flex flex-col gap-4 text-left">
+        <input type="hidden" name="return_tab" value={returnTab ?? ''} />
 
-      <label className="flex flex-col gap-1">
-        <span>Akompaniowany</span>
-        <select
-          name="accompanied_id"
-          defaultValue={values.accompanied_id}
-          className={fieldControlClassName}
-          required
-        >
-          <option value="" className={selectOptionClassName}>
-            wybierz osobę...
-          </option>
-          {sortedMembers.map((member) => (
-            <option key={member.id} value={member.id} className={selectOptionClassName}>
-              {formatMemberName(member)}
+        <label className="flex flex-col gap-1">
+          <span>Akompaniowany</span>
+          <select
+            name="accompanied_id"
+            defaultValue={values.accompanied_id}
+            className={fieldControlClassName}
+            required
+          >
+            <option value="" className={selectOptionClassName}>
+              wybierz osobę...
             </option>
-          ))}
-        </select>
-        <FieldError message={state?.fieldErrors?.accompanied_id} className={surfaces.dangerText} />
-      </label>
+            {sortedMembers.map((member) => (
+              <option key={member.id} value={member.id} className={selectOptionClassName}>
+                {formatMemberName(member)}
+              </option>
+            ))}
+          </select>
+          <FieldError message={state?.fieldErrors?.accompanied_id} className={surfaces.dangerText} />
+        </label>
 
-      <label className="flex flex-col gap-1">
-        <span>Akompaniator</span>
-        <select
-          name="companion_id"
-          defaultValue={values.companion_id}
-          className={fieldControlClassName}
-          required
-        >
-          <option value="" className={selectOptionClassName}>
-            wybierz osobę...
-          </option>
-          {sortedMembers.map((member) => (
-            <option key={member.id} value={member.id} className={selectOptionClassName}>
-              {formatMemberName(member)}
+        <label className="flex flex-col gap-1">
+          <span>Akompaniator</span>
+          <select
+            name="companion_id"
+            defaultValue={values.companion_id}
+            className={fieldControlClassName}
+            required
+          >
+            <option value="" className={selectOptionClassName}>
+              wybierz osobę...
             </option>
-          ))}
-        </select>
-        <FieldError message={state?.fieldErrors?.companion_id} className={surfaces.dangerText} />
-      </label>
+            {sortedMembers.map((member) => (
+              <option key={member.id} value={member.id} className={selectOptionClassName}>
+                {formatMemberName(member)}
+              </option>
+            ))}
+          </select>
+          <FieldError message={state?.fieldErrors?.companion_id} className={surfaces.dangerText} />
+        </label>
 
-      <label className="flex flex-col gap-1">
-        <span>Data rozpoczęcia</span>
-        <input
-          name="start_date"
-          type="date"
-          defaultValue={values.start_date}
-          className={fieldControlClassName}
-        />
-        <FieldError message={state?.fieldErrors?.start_date} className={surfaces.dangerText} />
-      </label>
+        <label className="flex flex-col gap-1">
+          <span>Data rozpoczęcia</span>
+          <input
+            name="start_date"
+            type="date"
+            defaultValue={values.start_date}
+            className={fieldControlClassName}
+          />
+          <FieldError message={state?.fieldErrors?.start_date} className={surfaces.dangerText} />
+        </label>
 
-      <label className="flex flex-col gap-1">
-        <span>Data zakończenia (opcjonalnie)</span>
-        <input
-          name="end_date"
-          type="date"
-          defaultValue={values.end_date}
-          className={fieldControlClassName}
-        />
-        <FieldError message={state?.fieldErrors?.end_date} className={surfaces.dangerText} />
-      </label>
+        <label className="flex flex-col gap-1">
+          <span>Data zakończenia (opcjonalnie)</span>
+          <input
+            name="end_date"
+            type="date"
+            defaultValue={values.end_date}
+            className={fieldControlClassName}
+          />
+          <FieldError message={state?.fieldErrors?.end_date} className={surfaces.dangerText} />
+        </label>
 
-      <label className="flex flex-col gap-1">
-        <span>Notatki (opcjonalnie)</span>
-        <textarea
-          name="notes"
-          defaultValue={values.notes}
-          rows={4}
-          className={fieldControlClassName}
-        />
-        <FieldError message={state?.fieldErrors?.notes} className={surfaces.dangerText} />
-      </label>
+        <label className="flex flex-col gap-1">
+          <span>Notatki (opcjonalnie)</span>
+          <textarea
+            name="notes"
+            defaultValue={values.notes}
+            rows={4}
+            className={fieldControlClassName}
+          />
+          <FieldError message={state?.fieldErrors?.notes} className={surfaces.dangerText} />
+        </label>
 
-      <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:justify-end">
-        <Link
-          href={cancelHref}
-          className={surfaces.secondaryButton}
-        >
-          Anuluj
-        </Link>
-        <button
-          type="submit"
-          className={surfaces.primaryButton}
-        >
-          Zapisz
-        </button>
-      </div>
-    </form>
+        <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:justify-end">
+          <Link
+            href={cancelHref}
+            className={surfaces.secondaryButton}
+          >
+            Anuluj
+          </Link>
+          <button
+            type="submit"
+            className={surfaces.primaryButton}
+          >
+            Zapisz
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }
