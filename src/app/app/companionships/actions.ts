@@ -2,12 +2,20 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { companionshipRelationWriteSchema } from '@/schemas/companionship-relation';
+import {
+  companionshipRelationWriteSchema,
+  coupleCompanionshipWriteSchema,
+} from '@/schemas/companionship-relation';
 import {
   addCompanionshipRelation,
   isCompanionAndAccompaniedAreSamePerson,
   isCompanionAndAccompaniedHaveDifferentGenders,
 } from '@/application/add-companionship-relation';
+import {
+  addCoupleCompanionshipRelations,
+  isCompanionAndAccompaniedAreSameCouple,
+  isCoupleCompanionshipParticipantsAreNotEligible,
+} from '@/application/add-couple-companionship-relations';
 import {
   updateCompanionshipRelation,
   isCompanionshipRelationNotFound,
@@ -23,14 +31,29 @@ import {
   companionshipRelationFormValuesFromForm,
   polishCompanionshipRelationWriteIssues,
   type CompanionshipRelationFormState,
+  type CompanionshipRelationFormValues,
 } from './companionship-relation-form-state';
 
-export async function submitNewCompanionshipRelation(
-  _previous: CompanionshipRelationFormState | undefined,
+function redirectAfterNewCompanionship(formData: FormData): never {
+  const returnTab = formData.get('return_tab')?.toString();
+  redirect(
+    returnTab === 'missing'
+      ? '/app/companionships?tab=missing'
+      : '/app/companionships'
+  );
+}
+
+async function submitNewPersonCompanionshipRelation(
+  values: CompanionshipRelationFormValues,
   formData: FormData
 ): Promise<CompanionshipRelationFormState> {
-  const values = companionshipRelationFormValuesFromForm(formData);
-  const parsed = companionshipRelationWriteSchema.safeParse(values);
+  const parsed = companionshipRelationWriteSchema.safeParse({
+    companion_id: values.companion_id,
+    accompanied_id: values.accompanied_id,
+    start_date: values.start_date,
+    end_date: values.end_date,
+    notes: values.notes,
+  });
 
   if (!parsed.success) {
     return companionshipRelationFormStateAfterFailedSubmit({
@@ -62,12 +85,84 @@ export async function submitNewCompanionshipRelation(
     });
   }
 
-  const returnTab = formData.get('return_tab')?.toString();
-  redirect(
-    returnTab === 'missing'
-      ? '/app/companionships?tab=missing'
-      : '/app/companionships'
-  );
+  return redirectAfterNewCompanionship(formData);
+}
+
+async function submitNewCoupleCompanionshipRelation(
+  values: CompanionshipRelationFormValues,
+  formData: FormData
+): Promise<CompanionshipRelationFormState> {
+  const parsed = coupleCompanionshipWriteSchema.safeParse({
+    companion_couple_id: values.companion_id,
+    accompanied_couple_id: values.accompanied_id,
+    start_date: values.start_date,
+    end_date: values.end_date,
+    notes: values.notes,
+  });
+
+  if (!parsed.success) {
+    const remappedIssues = parsed.error.issues.map((issue) => {
+      const path = [...issue.path];
+      if (path[0] === 'companion_couple_id') {
+        path[0] = 'companion_id';
+      }
+      if (path[0] === 'accompanied_couple_id') {
+        path[0] = 'accompanied_id';
+      }
+      return { ...issue, path };
+    });
+    return companionshipRelationFormStateAfterFailedSubmit({
+      values,
+      fieldErrors: polishCompanionshipRelationWriteIssues(remappedIssues),
+    });
+  }
+
+  try {
+    await addCoupleCompanionshipRelations(parsed.data);
+  } catch (error) {
+    if (isCompanionAndAccompaniedAreSameCouple(error)) {
+      return companionshipRelationFormStateAfterFailedSubmit({
+        values,
+        formError: 'Akompaniator i akompaniowany nie mogą być tym samym małżeństwem.',
+      });
+    }
+
+    if (isCoupleCompanionshipParticipantsAreNotEligible(error)) {
+      return companionshipRelationFormStateAfterFailedSubmit({
+        values,
+        formError:
+          'Wybrane małżeństwa nie mogą utworzyć akompaniamentu. Sprawdź, czy oboje małżonkowie akompaniowanego nadal czekają na akompaniatora.',
+      });
+    }
+
+    return companionshipRelationFormStateAfterFailedSubmit({
+      values,
+      formError: 'Nie udało się zapisać akompaniamentu. Spróbuj ponownie.',
+    });
+  }
+
+  return redirectAfterNewCompanionship(formData);
+}
+
+export async function submitNewCompanionshipRelation(
+  _previous: CompanionshipRelationFormState | undefined,
+  formData: FormData
+): Promise<CompanionshipRelationFormState> {
+  const values = companionshipRelationFormValuesFromForm(formData);
+
+  if (values.accompanied_kind === 'couple' && values.companion_kind === 'couple') {
+    return submitNewCoupleCompanionshipRelation(values, formData);
+  }
+
+  if (values.accompanied_kind === 'person' && values.companion_kind === 'person') {
+    return submitNewPersonCompanionshipRelation(values, formData);
+  }
+
+  return companionshipRelationFormStateAfterFailedSubmit({
+    values,
+    formError:
+      'Akompaniowany i akompaniator muszą być oboje osobami albo oboje małżeństwami.',
+  });
 }
 
 export async function submitEditCompanionshipRelation(
@@ -78,7 +173,15 @@ export async function submitEditCompanionshipRelation(
 ): Promise<CompanionshipRelationFormState> {
   const values = companionshipRelationFormValuesFromForm(formData);
   values.accompanied_id = lockedAccompaniedId;
-  const parsed = companionshipRelationWriteSchema.safeParse(values);
+  values.accompanied_kind = 'person';
+  values.companion_kind = 'person';
+  const parsed = companionshipRelationWriteSchema.safeParse({
+    companion_id: values.companion_id,
+    accompanied_id: values.accompanied_id,
+    start_date: values.start_date,
+    end_date: values.end_date,
+    notes: values.notes,
+  });
 
   if (!parsed.success) {
     return companionshipRelationFormStateAfterFailedSubmit({

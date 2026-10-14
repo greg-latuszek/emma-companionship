@@ -36,8 +36,10 @@ export default async function EditCompanionshipRelationPage({
   const accompanied = members.find((candidate) => candidate.id === relation.accompanied_id);
 
   const initialValues: CompanionshipRelationFormValues = {
-    companion_id: relation.companion_id,
+    accompanied_kind: 'person',
     accompanied_id: relation.accompanied_id,
+    companion_kind: 'person',
+    companion_id: relation.companion_id,
     start_date: relation.start_date ?? '',
     end_date: relation.end_date ?? '',
     notes: relation.notes ?? '',

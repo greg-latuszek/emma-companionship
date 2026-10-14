@@ -9,7 +9,6 @@ import { MemberId } from '@/types/auth';
 import type { CommunityMember } from '@/types/community-member';
 
 const memberA = { id: '550e8400-e29b-41d4-a716-446655440001' } as CommunityMember;
-const members = [memberA];
 
 function aMember(overrides: Partial<CommunityMember>): CommunityMember {
   return {
@@ -31,14 +30,42 @@ function aMember(overrides: Partial<CommunityMember>): CommunityMember {
 }
 
 describe('newCompanionshipRelationFormValues', () => {
-  it('newCompanionshipRelationFormValues preselects the accompanied member who is known', () => {
-    const values = newCompanionshipRelationFormValues(memberA.id, members);
+  it('newCompanionshipRelationFormValues preselects an accompanied person who is still a single option', () => {
+    const values = newCompanionshipRelationFormValues(memberA.id, [
+      {
+        kind: 'person',
+        id: memberA.id,
+        label: 'Kowalski, Jan',
+        gender: 'male',
+      },
+    ]);
 
+    expect(values.accompanied_kind).toBe('person');
     expect(values.accompanied_id).toBe(memberA.id);
   });
 
-  it('newCompanionshipRelationFormValues ignores an accompanied id that is not a member', () => {
-    const values = newCompanionshipRelationFormValues('unknown-id', members);
+  it('newCompanionshipRelationFormValues ignores an accompanied id that is only available as a couple spouse', () => {
+    const values = newCompanionshipRelationFormValues(memberA.id, [
+      {
+        kind: 'couple',
+        id: 'couple-1',
+        label: 'Kowalski, Jan + Anna',
+      },
+    ]);
+
+    expect(values.accompanied_kind).toBe('');
+    expect(values.accompanied_id).toBe('');
+  });
+
+  it('newCompanionshipRelationFormValues ignores an accompanied id that is not among the options', () => {
+    const values = newCompanionshipRelationFormValues('unknown-id', [
+      {
+        kind: 'person',
+        id: memberA.id,
+        label: 'Kowalski, Jan',
+        gender: 'male',
+      },
+    ]);
 
     expect(values.accompanied_id).toBe('');
   });
@@ -48,6 +75,8 @@ describe('companionshipRelationFormStateAfterFailedSubmit', () => {
   it('companionshipRelationFormStateAfterFailedSubmit keeps submitted people and issues a fresh restore key', () => {
     const first = companionshipRelationFormStateAfterFailedSubmit({
       values: {
+        accompanied_kind: 'person',
+        companion_kind: 'person',
         companion_id: '550e8400-e29b-41d4-a716-446655440000',
         accompanied_id: '550e8400-e29b-41d4-a716-446655440001',
         start_date: '2024-01-15',

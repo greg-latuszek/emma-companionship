@@ -2,6 +2,7 @@ import { describe, expect, it, vi, beforeEach, type Mock } from 'vitest';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import * as addCompanionshipRelationModule from '@/application/add-companionship-relation';
+import * as addCoupleCompanionshipRelationsModule from '@/application/add-couple-companionship-relations';
 import * as updateCompanionshipRelationModule from '@/application/update-companionship-relation';
 import * as deleteCompanionshipRelationModule from '@/application/delete-companionship-relation';
 import {
@@ -9,6 +10,23 @@ import {
   submitEditCompanionshipRelation,
   submitDeleteCompanionshipRelation,
 } from './actions';
+
+function aPersonCompanionshipFormData(
+  overrides: Record<string, string> = {}
+): FormData {
+  const formData = new FormData();
+  formData.set('accompanied_kind', 'person');
+  formData.set('companion_kind', 'person');
+  formData.set('companion_id', '550e8400-e29b-41d4-a716-446655440000');
+  formData.set('accompanied_id', '550e8400-e29b-41d4-a716-446655440001');
+  formData.set('start_date', '2024-01-15');
+  formData.set('end_date', '');
+  formData.set('notes', '');
+  for (const [key, value] of Object.entries(overrides)) {
+    formData.set(key, value);
+  }
+  return formData;
+}
 
 vi.mock('next/navigation', () => ({
   redirect: vi.fn(),
@@ -24,6 +42,14 @@ vi.mock('@/application/add-companionship-relation', () => ({
   isCompanionAndAccompaniedHaveDifferentGenders: vi.fn(),
   CompanionAndAccompaniedAreSamePerson: class CompanionAndAccompaniedAreSamePerson extends Error {},
   CompanionAndAccompaniedHaveDifferentGenders: class CompanionAndAccompaniedHaveDifferentGenders extends Error {},
+}));
+
+vi.mock('@/application/add-couple-companionship-relations', () => ({
+  addCoupleCompanionshipRelations: vi.fn(),
+  isCompanionAndAccompaniedAreSameCouple: vi.fn(),
+  isCoupleCompanionshipParticipantsAreNotEligible: vi.fn(),
+  CompanionAndAccompaniedAreSameCouple: class CompanionAndAccompaniedAreSameCouple extends Error {},
+  CoupleCompanionshipParticipantsAreNotEligible: class CoupleCompanionshipParticipantsAreNotEligible extends Error {},
 }));
 
 vi.mock('@/application/update-companionship-relation', () => ({
@@ -46,19 +72,19 @@ describe('submitNewCompanionshipRelation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (addCompanionshipRelationModule.addCompanionshipRelation as Mock).mockResolvedValue(undefined);
+    (addCoupleCompanionshipRelationsModule.addCoupleCompanionshipRelations as Mock).mockResolvedValue(
+      undefined
+    );
     vi.mocked(addCompanionshipRelationModule.isCompanionAndAccompaniedAreSamePerson).mockReturnValue(false);
     vi.mocked(addCompanionshipRelationModule.isCompanionAndAccompaniedHaveDifferentGenders).mockReturnValue(false);
+    vi.mocked(addCoupleCompanionshipRelationsModule.isCompanionAndAccompaniedAreSameCouple).mockReturnValue(false);
+    vi.mocked(
+      addCoupleCompanionshipRelationsModule.isCoupleCompanionshipParticipantsAreNotEligible
+    ).mockReturnValue(false);
   });
 
-  it('submitNewCompanionshipRelation accepts valid data and redirects to the list', async () => {
-    const formData = new FormData();
-    formData.set('companion_id', '550e8400-e29b-41d4-a716-446655440000');
-    formData.set('accompanied_id', '550e8400-e29b-41d4-a716-446655440001');
-    formData.set('start_date', '2024-01-15');
-    formData.set('end_date', '');
-    formData.set('notes', '');
-
-    await submitNewCompanionshipRelation(undefined, formData);
+  it('submitNewCompanionshipRelation accepts valid person data and redirects to the list', async () => {
+    await submitNewCompanionshipRelation(undefined, aPersonCompanionshipFormData());
 
     expect(addCompanionshipRelationModule.addCompanionshipRelation).toHaveBeenCalledWith({
       companion_id: '550e8400-e29b-41d4-a716-446655440000',
@@ -70,15 +96,61 @@ describe('submitNewCompanionshipRelation', () => {
     expect(redirect).toHaveBeenCalledWith('/app/companionships');
   });
 
-  it('submitNewCompanionshipRelation refuses missing companion', async () => {
-    const formData = new FormData();
-    formData.set('companion_id', '');
-    formData.set('accompanied_id', '550e8400-e29b-41d4-a716-446655440001');
-    formData.set('start_date', '2024-01-15');
-    formData.set('end_date', '');
-    formData.set('notes', '');
+  it('submitNewCompanionshipRelation accepts couple-to-couple data and writes both relations', async () => {
+    const formData = aPersonCompanionshipFormData({
+      accompanied_kind: 'couple',
+      companion_kind: 'couple',
+      companion_id: '550e8400-e29b-41d4-a716-446655440010',
+      accompanied_id: '550e8400-e29b-41d4-a716-446655440020',
+    });
 
-    const result = await submitNewCompanionshipRelation(undefined, formData);
+    await submitNewCompanionshipRelation(undefined, formData);
+
+    expect(
+      addCoupleCompanionshipRelationsModule.addCoupleCompanionshipRelations
+    ).toHaveBeenCalledWith({
+      companion_couple_id: '550e8400-e29b-41d4-a716-446655440010',
+      accompanied_couple_id: '550e8400-e29b-41d4-a716-446655440020',
+      start_date: '2024-01-15',
+      end_date: null,
+      notes: null,
+    });
+    expect(addCompanionshipRelationModule.addCompanionshipRelation).not.toHaveBeenCalled();
+    expect(redirect).toHaveBeenCalledWith('/app/companionships');
+  });
+
+  it('submitNewCompanionshipRelation refuses when the companion couple is the accompanied couple', async () => {
+    vi.mocked(
+      addCoupleCompanionshipRelationsModule.isCompanionAndAccompaniedAreSameCouple
+    ).mockReturnValue(true);
+    (
+      addCoupleCompanionshipRelationsModule.addCoupleCompanionshipRelations as Mock
+    ).mockRejectedValue(
+      new addCoupleCompanionshipRelationsModule.CompanionAndAccompaniedAreSameCouple()
+    );
+
+    const sameCouple = '550e8400-e29b-41d4-a716-446655440010';
+    const result = await submitNewCompanionshipRelation(
+      undefined,
+      aPersonCompanionshipFormData({
+        accompanied_kind: 'couple',
+        companion_kind: 'couple',
+        companion_id: sameCouple,
+        accompanied_id: sameCouple,
+      })
+    );
+
+    expect(result.formError).toBe(
+      'Akompaniator i akompaniowany nie mogą być tym samym małżeństwem.'
+    );
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it('submitNewCompanionshipRelation refuses missing companion', async () => {
+    const result = await submitNewCompanionshipRelation(
+      undefined,
+      aPersonCompanionshipFormData({ companion_id: '' })
+    );
 
     expect(result.fieldErrors?.companion_id).toBeDefined();
     expect(addCompanionshipRelationModule.addCompanionshipRelation).not.toHaveBeenCalled();
@@ -90,15 +162,14 @@ describe('submitNewCompanionshipRelation', () => {
       new addCompanionshipRelationModule.CompanionAndAccompaniedAreSamePerson()
     );
 
-    const formData = new FormData();
     const samePerson = '550e8400-e29b-41d4-a716-446655440000';
-    formData.set('companion_id', samePerson);
-    formData.set('accompanied_id', samePerson);
-    formData.set('start_date', '2024-01-15');
-    formData.set('end_date', '');
-    formData.set('notes', '');
-
-    const result = await submitNewCompanionshipRelation(undefined, formData);
+    const result = await submitNewCompanionshipRelation(
+      undefined,
+      aPersonCompanionshipFormData({
+        companion_id: samePerson,
+        accompanied_id: samePerson,
+      })
+    );
 
     expect(result.formError).toBe('Akompaniator i akompaniowany nie mogą być tą samą osobą.');
     expect(redirect).not.toHaveBeenCalled();
@@ -110,14 +181,10 @@ describe('submitNewCompanionshipRelation', () => {
       new addCompanionshipRelationModule.CompanionAndAccompaniedHaveDifferentGenders()
     );
 
-    const formData = new FormData();
-    formData.set('companion_id', '550e8400-e29b-41d4-a716-446655440000');
-    formData.set('accompanied_id', '550e8400-e29b-41d4-a716-446655440001');
-    formData.set('start_date', '2024-01-15');
-    formData.set('end_date', '');
-    formData.set('notes', '');
-
-    const result = await submitNewCompanionshipRelation(undefined, formData);
+    const result = await submitNewCompanionshipRelation(
+      undefined,
+      aPersonCompanionshipFormData()
+    );
 
     expect(result.formError).toBe('Akompaniator i akompaniowany muszą być tej samej płci.');
     expect(result.values?.companion_id).toBe('550e8400-e29b-41d4-a716-446655440000');
@@ -127,41 +194,25 @@ describe('submitNewCompanionshipRelation', () => {
   });
 
   it('submitNewCompanionshipRelation returns to Brakujące Akompaniamenty when the relation was started there', async () => {
-    const formData = new FormData();
-    formData.set('companion_id', '550e8400-e29b-41d4-a716-446655440000');
-    formData.set('accompanied_id', '550e8400-e29b-41d4-a716-446655440001');
-    formData.set('start_date', '2024-01-15');
-    formData.set('end_date', '');
-    formData.set('notes', '');
-    formData.set('return_tab', 'missing');
-
-    await submitNewCompanionshipRelation(undefined, formData);
+    await submitNewCompanionshipRelation(
+      undefined,
+      aPersonCompanionshipFormData({ return_tab: 'missing' })
+    );
 
     expect(redirect).toHaveBeenCalledWith('/app/companionships?tab=missing');
   });
 
   it('submitNewCompanionshipRelation returns to Utworzone Akompaniamenty when started from the add button', async () => {
-    const formData = new FormData();
-    formData.set('companion_id', '550e8400-e29b-41d4-a716-446655440000');
-    formData.set('accompanied_id', '550e8400-e29b-41d4-a716-446655440001');
-    formData.set('start_date', '2024-01-15');
-    formData.set('end_date', '');
-    formData.set('notes', '');
-
-    await submitNewCompanionshipRelation(undefined, formData);
+    await submitNewCompanionshipRelation(undefined, aPersonCompanionshipFormData());
 
     expect(redirect).toHaveBeenCalledWith('/app/companionships');
   });
 
   it('submitNewCompanionshipRelation refuses invalid date format', async () => {
-    const formData = new FormData();
-    formData.set('companion_id', '550e8400-e29b-41d4-a716-446655440000');
-    formData.set('accompanied_id', '550e8400-e29b-41d4-a716-446655440001');
-    formData.set('start_date', 'not-a-date');
-    formData.set('end_date', '');
-    formData.set('notes', '');
-
-    const result = await submitNewCompanionshipRelation(undefined, formData);
+    const result = await submitNewCompanionshipRelation(
+      undefined,
+      aPersonCompanionshipFormData({ start_date: 'not-a-date' })
+    );
 
     expect(result.fieldErrors?.start_date).toBeDefined();
     expect(addCompanionshipRelationModule.addCompanionshipRelation).not.toHaveBeenCalled();

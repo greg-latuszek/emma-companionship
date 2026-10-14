@@ -14,6 +14,11 @@ export interface ICompanionshipRelationRepository {
   addCompanionshipRelation(
     write: CompanionshipRelationWriteWithDefaults
   ): Promise<CompanionshipRelation>;
+  /** Husband→husband and wife→wife inserts in one transaction. */
+  addCompanionshipRelationPair(
+    husbandWrite: CompanionshipRelationWriteWithDefaults,
+    wifeWrite: CompanionshipRelationWriteWithDefaults
+  ): Promise<[CompanionshipRelation, CompanionshipRelation]>;
   updateCompanionshipRelation(
     id: string,
     write: CompanionshipRelationWriteWithDefaults

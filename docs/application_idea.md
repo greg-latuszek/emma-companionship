@@ -10,9 +10,9 @@ The panel card shows how many people still need a companion.
 **Członkowie wspólnoty** has four tabs: person list, **Małżeństwa**, **+ Dodaj Małżeństwa**, **+ Dodaj Osobę**.
 The Akompaniamenty screen has three tabs: created relations, people without a companion (sorted, with toggleable detail columns),
 and an inline add form — including a direct shortcut from the missing list that pre-selects the accompanied person.
-Companionship relations remain person↔person (same-gender check on write); couples are not companionship participants yet.
+Companionship rows in the DB stay person↔person (same-gender check on person write). On **+ Dodaj Akompaniament**, Akompaniowany may be a person or an eligible couple; couple→couple saves as two rows (husband→husband, wife→wife).
 
-**Not built:** further business-rule validation (consecrated constraints, power separation), couple-as-companion/accompanied, geography, supervision relations, graphs, import, health views, roles UI, admin approval UI, password or Facebook login.
+**Not built:** further business-rule validation (consecrated constraints, power separation), couple grouping on Utworzone / Brakujące / edit, geography, supervision relations, graphs, import, health views, roles UI, admin approval UI, password or Facebook login.
 
 For the stack, hexagon, auth flow, page frame, and how to run the app, read [`current-architecture.md`](./current-architecture.md). Start from [`README.md`](./README.md). Do not treat the workflows below as a current backlog unless a story says so.
 

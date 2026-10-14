@@ -3,18 +3,27 @@
 import Link from 'next/link';
 import { useActionState, useState } from 'react';
 import type { JSX } from 'react';
+import {
+  findAccompaniedCompanionshipOption,
+  proposeCompanionCompanionshipOptions,
+  type CompanionshipParticipantOption,
+} from '@/application/companionship-add-participant-options';
 import type { CommunityMember } from '@/types/community-member';
+import type { CoupleListItem } from '@/types/couple';
 import { useVisualStyle } from '@/components/VisualStyleProvider';
 import { visualSurfaces } from '@/components/visual-style-surfaces';
 import {
   companionshipSelectOptions,
+  type CompanionshipParticipantKind,
   type CompanionshipRelationFormState,
   type CompanionshipRelationFormValues,
 } from './companionship-relation-form-state';
 
 const emptyFormValues: CompanionshipRelationFormValues = {
-  companion_id: '',
+  accompanied_kind: '',
   accompanied_id: '',
+  companion_kind: '',
+  companion_id: '',
   start_date: new Date().toISOString().slice(0, 10),
   end_date: '',
   notes: '',
@@ -50,10 +59,9 @@ function sortCommunityMembersByPolishName(members: CommunityMember[]): Community
   );
 }
 
-function CompanionshipParticipantSelects({
+function LockedPersonAccompaniedSelect({
   members,
   accompaniedCandidates,
-  accompaniedLocked,
   initialAccompaniedId,
   initialCompanionId,
   fieldControlClassName,
@@ -63,7 +71,6 @@ function CompanionshipParticipantSelects({
 }: {
   members: CommunityMember[];
   accompaniedCandidates: CommunityMember[];
-  accompaniedLocked: boolean;
   initialAccompaniedId: string;
   initialCompanionId: string;
   fieldControlClassName: string;
@@ -71,50 +78,26 @@ function CompanionshipParticipantSelects({
   accompaniedError?: string;
   companionError?: string;
 }): JSX.Element {
-  const [accompaniedId, setAccompaniedId] = useState(initialAccompaniedId);
   const [companionId, setCompanionId] = useState(initialCompanionId);
 
   const accompanied =
-    accompaniedCandidates.find((member) => member.id === accompaniedId) ??
-    members.find((member) => member.id === accompaniedId);
-  const companion = members.find((member) => member.id === companionId);
+    accompaniedCandidates.find((member) => member.id === initialAccompaniedId) ??
+    members.find((member) => member.id === initialAccompaniedId);
 
-  const accompaniedOptions = sortCommunityMembersByPolishName(
-    companionshipSelectOptions(accompaniedCandidates, companion, accompaniedId)
-  );
   const companionOptions = sortCommunityMembersByPolishName(
     companionshipSelectOptions(members, accompanied, companionId)
   );
 
   return (
     <>
+      <input type="hidden" name="accompanied_kind" value="person" />
+      <input type="hidden" name="companion_kind" value="person" />
       <label className="flex flex-col gap-1">
         <span>Akompaniowany</span>
-        {accompaniedLocked ? (
-          <>
-            <input type="hidden" name="accompanied_id" value={initialAccompaniedId} />
-            <p className={fieldControlClassName}>
-              {accompanied ? formatMemberName(accompanied) : '—'}
-            </p>
-          </>
-        ) : (
-          <select
-            name="accompanied_id"
-            value={accompaniedId}
-            onChange={(event) => setAccompaniedId(event.target.value)}
-            className={fieldControlClassName}
-            required
-          >
-            <option value="" className={selectOptionClassName}>
-              wybierz osobę...
-            </option>
-            {accompaniedOptions.map((member) => (
-              <option key={member.id} value={member.id} className={selectOptionClassName}>
-                {formatMemberName(member)}
-              </option>
-            ))}
-          </select>
-        )}
+        <input type="hidden" name="accompanied_id" value={initialAccompaniedId} />
+        <p className={fieldControlClassName}>
+          {accompanied ? formatMemberName(accompanied) : '—'}
+        </p>
         <FieldError message={accompaniedError} className={dangerTextClassName} />
       </label>
 
@@ -142,18 +125,137 @@ function CompanionshipParticipantSelects({
   );
 }
 
+function MixedCompanionshipParticipantSelects({
+  members,
+  couples,
+  accompaniedOptions,
+  initialAccompaniedKind,
+  initialAccompaniedId,
+  initialCompanionKind,
+  initialCompanionId,
+  fieldControlClassName,
+  dangerTextClassName,
+  accompaniedError,
+  companionError,
+}: {
+  members: CommunityMember[];
+  couples: CoupleListItem[];
+  accompaniedOptions: CompanionshipParticipantOption[];
+  initialAccompaniedKind: CompanionshipParticipantKind | '';
+  initialAccompaniedId: string;
+  initialCompanionKind: CompanionshipParticipantKind | '';
+  initialCompanionId: string;
+  fieldControlClassName: string;
+  dangerTextClassName: string;
+  accompaniedError?: string;
+  companionError?: string;
+}): JSX.Element {
+  const [accompaniedId, setAccompaniedId] = useState(initialAccompaniedId);
+  const [accompaniedKind, setAccompaniedKind] = useState<
+    CompanionshipParticipantKind | ''
+  >(initialAccompaniedKind);
+  const [companionId, setCompanionId] = useState(initialCompanionId);
+  const [companionKind, setCompanionKind] = useState<
+    CompanionshipParticipantKind | ''
+  >(initialCompanionKind);
+
+  const accompanied = findAccompaniedCompanionshipOption(
+    accompaniedOptions,
+    accompaniedId
+  );
+  const companionOptions = proposeCompanionCompanionshipOptions(
+    accompanied,
+    members,
+    couples,
+    companionId
+  );
+
+  function chooseAccompanied(optionId: string): void {
+    const option = findAccompaniedCompanionshipOption(accompaniedOptions, optionId);
+    setAccompaniedId(optionId);
+    setAccompaniedKind(option?.kind ?? '');
+    setCompanionId('');
+    setCompanionKind('');
+  }
+
+  function chooseCompanion(optionId: string): void {
+    const option = companionOptions.find((candidate) => candidate.id === optionId);
+    setCompanionId(optionId);
+    setCompanionKind(option?.kind ?? '');
+  }
+
+  const companionPlaceholder =
+    accompanied?.kind === 'couple' ? 'wybierz małżeństwo...' : 'wybierz osobę...';
+
+  return (
+    <>
+      <input type="hidden" name="accompanied_kind" value={accompaniedKind} />
+      <input type="hidden" name="companion_kind" value={companionKind} />
+
+      <label className="flex flex-col gap-1">
+        <span>Akompaniowany</span>
+        <select
+          name="accompanied_id"
+          value={accompaniedId}
+          onChange={(event) => chooseAccompanied(event.target.value)}
+          className={fieldControlClassName}
+          required
+        >
+          <option value="" className={selectOptionClassName}>
+            wybierz...
+          </option>
+          {accompaniedOptions.map((option) => (
+            <option key={`${option.kind}-${option.id}`} value={option.id} className={selectOptionClassName}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <FieldError message={accompaniedError} className={dangerTextClassName} />
+      </label>
+
+      <label className="flex flex-col gap-1">
+        <span>Akompaniator</span>
+        <select
+          name="companion_id"
+          value={companionId}
+          onChange={(event) => chooseCompanion(event.target.value)}
+          className={fieldControlClassName}
+          required
+          disabled={!accompanied}
+        >
+          <option value="" className={selectOptionClassName}>
+            {companionPlaceholder}
+          </option>
+          {companionOptions.map((option) => (
+            <option key={`${option.kind}-${option.id}`} value={option.id} className={selectOptionClassName}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <FieldError message={companionError} className={dangerTextClassName} />
+      </label>
+    </>
+  );
+}
+
 export function CompanionshipRelationForm({
   action,
   members,
-  accompaniedCandidates,
+  accompaniedCandidates = [],
+  accompaniedOptions,
+  couples = [],
   accompaniedLocked = false,
   initialValues,
   returnTab,
 }: {
   action: CompanionshipRelationFormAction;
   members: CommunityMember[];
-  /** People who may be chosen as Akompaniowany (Brakujące on the add form). */
-  accompaniedCandidates: CommunityMember[];
+  /** Edit: locked accompanied person (and legacy person-only candidate list). */
+  accompaniedCandidates?: CommunityMember[];
+  /** Add: mixed person/couple Akompaniowany options. */
+  accompaniedOptions?: CompanionshipParticipantOption[];
+  /** Add: couples available for Akompaniator when accompanied is a couple. */
+  couples?: CoupleListItem[];
   /** Edit: show Akompaniowany as fixed text; only Akompaniator is choosable. */
   accompaniedLocked?: boolean;
   initialValues?: CompanionshipRelationFormValues;
@@ -183,18 +285,34 @@ export function CompanionshipRelationForm({
       <form key={formKey} action={formAction} className="flex flex-col gap-4 text-left">
         <input type="hidden" name="return_tab" value={returnTab ?? ''} />
 
-        <CompanionshipParticipantSelects
-          key={formKey}
-          members={members}
-          accompaniedCandidates={accompaniedCandidates}
-          accompaniedLocked={accompaniedLocked}
-          initialAccompaniedId={values.accompanied_id}
-          initialCompanionId={values.companion_id}
-          fieldControlClassName={fieldControlClassName}
-          dangerTextClassName={surfaces.dangerText}
-          accompaniedError={state?.fieldErrors?.accompanied_id}
-          companionError={state?.fieldErrors?.companion_id}
-        />
+        {accompaniedLocked ? (
+          <LockedPersonAccompaniedSelect
+            key={formKey}
+            members={members}
+            accompaniedCandidates={accompaniedCandidates}
+            initialAccompaniedId={values.accompanied_id}
+            initialCompanionId={values.companion_id}
+            fieldControlClassName={fieldControlClassName}
+            dangerTextClassName={surfaces.dangerText}
+            accompaniedError={state?.fieldErrors?.accompanied_id}
+            companionError={state?.fieldErrors?.companion_id}
+          />
+        ) : (
+          <MixedCompanionshipParticipantSelects
+            key={formKey}
+            members={members}
+            couples={couples}
+            accompaniedOptions={accompaniedOptions ?? []}
+            initialAccompaniedKind={values.accompanied_kind}
+            initialAccompaniedId={values.accompanied_id}
+            initialCompanionKind={values.companion_kind}
+            initialCompanionId={values.companion_id}
+            fieldControlClassName={fieldControlClassName}
+            dangerTextClassName={surfaces.dangerText}
+            accompaniedError={state?.fieldErrors?.accompanied_id}
+            companionError={state?.fieldErrors?.companion_id}
+          />
+        )}
 
         <label className="flex flex-col gap-1">
           <span>Data rozpoczęcia</span>

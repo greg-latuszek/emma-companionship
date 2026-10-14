@@ -23,7 +23,7 @@ flowchart LR
 
 ## What it is not yet
 
-Business-rule validation (gender, consecrated constraints, power separation), couple or geography assignment, supervision relations, graphs, Excel/CSV import, health views, role assignment UI, admin approval UI, password login, Facebook (or any second OAuth provider).
+Business-rule validation (consecrated constraints, power separation), couple grouping on Companionships Created / Missing / edit, geography assignment, supervision relations, graphs, Excel/CSV import, health views, role assignment UI, admin approval UI, password login, Facebook (or any second OAuth provider).
 
 ## Read order
 

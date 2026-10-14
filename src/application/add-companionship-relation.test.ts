@@ -69,6 +69,7 @@ function aCompanionshipRelationRepository(
     listPeopleWithoutCompanion: vi.fn(),
     findCompanionshipRelationById: vi.fn(),
     addCompanionshipRelation: vi.fn().mockResolvedValue(aCompanionshipRelation()),
+    addCompanionshipRelationPair: vi.fn(),
     updateCompanionshipRelation: vi.fn(),
     deleteCompanionshipRelation: vi.fn(),
     ...stubs,

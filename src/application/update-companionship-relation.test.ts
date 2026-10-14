@@ -72,6 +72,7 @@ function aCompanionshipRelationRepository(
       .fn()
       .mockResolvedValue(aCompanionshipRelation()),
     addCompanionshipRelation: vi.fn().mockResolvedValue(aCompanionshipRelation()),
+    addCompanionshipRelationPair: vi.fn(),
     updateCompanionshipRelation: vi
       .fn()
       .mockResolvedValue(aCompanionshipRelation()),

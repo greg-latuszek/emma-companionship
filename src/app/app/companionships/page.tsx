@@ -3,6 +3,8 @@ import { auth } from '@/lib/auth';
 import { listCompanionshipRelations } from '@/application/list-companionship-relations';
 import { listPeopleWithoutCompanion } from '@/application/list-people-without-companion';
 import { listCommunityMembers } from '@/application/list-community-members';
+import { listCouples } from '@/application/list-couples';
+import { proposeAccompaniedCompanionshipOptions } from '@/application/companionship-add-participant-options';
 import { PageBackground } from '@/components/PageBackground';
 import { AppArea } from '@/components/AppArea';
 import { Navbar } from '@/components/Navbar';
@@ -14,10 +16,7 @@ import { CompanionshipRelationList } from './CompanionshipRelationList';
 import { CompanionshipRelationForm } from './CompanionshipRelationForm';
 import { PeopleWithoutCompanionList } from './PeopleWithoutCompanionList';
 import { submitNewCompanionshipRelation } from './actions';
-import {
-  communityMembersNeedingCompanion,
-  newCompanionshipRelationFormValues,
-} from './companionship-relation-form-state';
+import { newCompanionshipRelationFormValues } from './companionship-relation-form-state';
 
 function companionshipsTabFrom(tab: string | string[] | undefined): 'created' | 'missing' | 'new' {
   if (tab === 'missing') return 'missing';
@@ -40,7 +39,7 @@ export default async function CompanionshipsPage({
   const selectedTab = companionshipsTabFrom(params.tab);
   const accompaniedId = params.accompanied?.toString();
 
-  const [member, members, peopleWithoutCompanion] = await Promise.all([
+  const [member, members, peopleWithoutCompanion, couples] = await Promise.all([
     signedInMemberFrom(session),
     selectedTab === 'new'
       ? listCommunityMembers()
@@ -48,16 +47,20 @@ export default async function CompanionshipsPage({
     selectedTab === 'new'
       ? listPeopleWithoutCompanion()
       : Promise.resolve([] as Awaited<ReturnType<typeof listPeopleWithoutCompanion>>),
+    selectedTab === 'new'
+      ? listCouples()
+      : Promise.resolve([] as Awaited<ReturnType<typeof listCouples>>),
   ]);
 
-  const accompaniedCandidates = communityMembersNeedingCompanion(
+  const accompaniedOptions = proposeAccompaniedCompanionshipOptions(
+    peopleWithoutCompanion,
     members,
-    peopleWithoutCompanion
+    couples
   );
 
   const initialFormValues =
     selectedTab === 'new'
-      ? newCompanionshipRelationFormValues(accompaniedId, accompaniedCandidates)
+      ? newCompanionshipRelationFormValues(accompaniedId, accompaniedOptions)
       : undefined;
 
   const returnTab = accompaniedId !== undefined ? 'missing' : undefined;
@@ -93,7 +96,8 @@ export default async function CompanionshipsPage({
                 <CompanionshipRelationForm
                   action={submitNewCompanionshipRelation}
                   members={members}
-                  accompaniedCandidates={accompaniedCandidates}
+                  accompaniedOptions={accompaniedOptions}
+                  couples={couples}
                   initialValues={initialFormValues!}
                   returnTab={returnTab}
                 />

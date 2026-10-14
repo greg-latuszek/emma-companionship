@@ -32,6 +32,7 @@ function aCompanionshipRelationRepository(
       .fn()
       .mockResolvedValue(aCompanionshipRelation()),
     addCompanionshipRelation: vi.fn(),
+    addCompanionshipRelationPair: vi.fn(),
     updateCompanionshipRelation: vi.fn(),
     deleteCompanionshipRelation: vi.fn().mockResolvedValue(undefined),
     ...stubs,

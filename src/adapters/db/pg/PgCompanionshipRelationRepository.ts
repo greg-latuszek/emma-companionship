@@ -1,4 +1,4 @@
-import { queryMany, queryOne } from '@/infrastructure/db/pg';
+import { queryMany, queryOne, withTransaction } from '@/infrastructure/db/pg';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import type { CompanionshipRelationWriteWithDefaults } from '@/schemas/companionship-relation';
 import { MemberId } from '@/types/auth';
@@ -9,6 +9,7 @@ import type {
   CompanionshipRelationStatus,
   PersonWithoutCompanion,
 } from '@/types/companionship-relation';
+import type { PoolClient } from 'pg';
 
 const COMPANIONSHIP_RELATION_COLUMNS = `
   cr.id,
@@ -94,6 +95,71 @@ function companionshipRelationListItemFromRow(
     end_date: row.end_date,
     notes: row.notes,
   };
+}
+
+type CompanionshipRelationInsertRow = {
+  id: string;
+  companion_id: string;
+  accompanied_id: string;
+  status: CompanionshipRelationStatus;
+  start_date: string | null;
+  end_date: string | null;
+  notes: string | null;
+};
+
+function companionshipRelationFromInsertRow(
+  row: CompanionshipRelationInsertRow
+): CompanionshipRelation {
+  return {
+    id: row.id,
+    companion_id: MemberId(row.companion_id),
+    accompanied_id: MemberId(row.accompanied_id),
+    status: row.status,
+    start_date: row.start_date,
+    end_date: row.end_date,
+    notes: row.notes,
+  };
+}
+
+async function insertCompanionshipRelationWithClient(
+  client: PoolClient,
+  write: CompanionshipRelationWriteWithDefaults
+): Promise<CompanionshipRelation> {
+  const result = await client.query<CompanionshipRelationInsertRow>(
+    `
+    INSERT INTO companionship_relations (
+      companion_id,
+      accompanied_id,
+      status,
+      start_date,
+      end_date,
+      notes
+    ) VALUES ($1, $2, $3, $4, $5, $6)
+    RETURNING
+      id,
+      companion_id,
+      accompanied_id,
+      status,
+      start_date::text,
+      end_date::text,
+      notes
+  `,
+    [
+      write.companion_id,
+      write.accompanied_id,
+      write.status,
+      write.start_date,
+      write.end_date,
+      write.notes,
+    ]
+  );
+
+  const row = result.rows[0];
+  if (!row) {
+    throw new Error('Failed to insert companionship relation');
+  }
+
+  return companionshipRelationFromInsertRow(row);
 }
 
 export class PgCompanionshipRelationRepository
@@ -192,15 +258,8 @@ export class PgCompanionshipRelationRepository
   async addCompanionshipRelation(
     write: CompanionshipRelationWriteWithDefaults
   ): Promise<CompanionshipRelation> {
-    const row = await queryOne<{
-      id: string;
-      companion_id: string;
-      accompanied_id: string;
-      status: CompanionshipRelationStatus;
-      start_date: string | null;
-      end_date: string | null;
-      notes: string | null;
-    }>(`
+    const row = await queryOne<CompanionshipRelationInsertRow>(
+      `
       INSERT INTO companionship_relations (
         companion_id,
         accompanied_id,
@@ -217,28 +276,39 @@ export class PgCompanionshipRelationRepository
         start_date::text,
         end_date::text,
         notes
-    `, [
-      write.companion_id,
-      write.accompanied_id,
-      write.status,
-      write.start_date,
-      write.end_date,
-      write.notes,
-    ]);
+    `,
+      [
+        write.companion_id,
+        write.accompanied_id,
+        write.status,
+        write.start_date,
+        write.end_date,
+        write.notes,
+      ]
+    );
 
     if (!row) {
       throw new Error('Failed to insert companionship relation');
     }
 
-    return {
-      id: row.id,
-      companion_id: MemberId(row.companion_id),
-      accompanied_id: MemberId(row.accompanied_id),
-      status: row.status,
-      start_date: row.start_date,
-      end_date: row.end_date,
-      notes: row.notes,
-    };
+    return companionshipRelationFromInsertRow(row);
+  }
+
+  async addCompanionshipRelationPair(
+    husbandWrite: CompanionshipRelationWriteWithDefaults,
+    wifeWrite: CompanionshipRelationWriteWithDefaults
+  ): Promise<[CompanionshipRelation, CompanionshipRelation]> {
+    return withTransaction(async (client) => {
+      const husbandRelation = await insertCompanionshipRelationWithClient(
+        client,
+        husbandWrite
+      );
+      const wifeRelation = await insertCompanionshipRelationWithClient(
+        client,
+        wifeWrite
+      );
+      return [husbandRelation, wifeRelation];
+    });
   }
 
   async updateCompanionshipRelation(
