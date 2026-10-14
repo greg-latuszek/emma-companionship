@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { listCompanionshipRelations } from '@/application/list-companionship-relations';
 import { listArchivedCompanionshipRelations } from '@/application/list-archived-companionship-relations';
+import { groupArchivedCompanionshipHistory } from '@/application/group-archived-companionship-history';
 import { listPeopleWithoutCompanion } from '@/application/list-people-without-companion';
 import { listCommunityMembers } from '@/application/list-community-members';
 import { listCouples } from '@/application/list-couples';
@@ -39,18 +40,35 @@ export default async function CompanionshipsPage({
   const selectedTab = companionshipsTabFrom(params.tab);
   const accompaniedId = params.accompanied?.toString();
 
-  const [member, members, peopleWithoutCompanion, couples] = await Promise.all([
-    signedInMemberFrom(session),
-    selectedTab === 'new'
-      ? listCommunityMembers()
-      : Promise.resolve([] as Awaited<ReturnType<typeof listCommunityMembers>>),
-    selectedTab === 'new'
-      ? listPeopleWithoutCompanion()
-      : Promise.resolve([] as Awaited<ReturnType<typeof listPeopleWithoutCompanion>>),
-    selectedTab === 'new'
-      ? listCouples()
-      : Promise.resolve([] as Awaited<ReturnType<typeof listCouples>>),
-  ]);
+  const needsCouples = selectedTab === 'new' || selectedTab === 'history';
+
+  const [member, members, peopleWithoutCompanion, couples, archivedRelations] =
+    await Promise.all([
+      signedInMemberFrom(session),
+      selectedTab === 'new'
+        ? listCommunityMembers()
+        : Promise.resolve(
+            [] as Awaited<ReturnType<typeof listCommunityMembers>>
+          ),
+      selectedTab === 'new'
+        ? listPeopleWithoutCompanion()
+        : Promise.resolve(
+            [] as Awaited<ReturnType<typeof listPeopleWithoutCompanion>>
+          ),
+      needsCouples
+        ? listCouples()
+        : Promise.resolve([] as Awaited<ReturnType<typeof listCouples>>),
+      selectedTab === 'history'
+        ? listArchivedCompanionshipRelations()
+        : Promise.resolve(
+            [] as Awaited<ReturnType<typeof listArchivedCompanionshipRelations>>
+          ),
+    ]);
+
+  const historyRows =
+    selectedTab === 'history'
+      ? groupArchivedCompanionshipHistory(archivedRelations, couples)
+      : [];
 
   const accompaniedOptions = proposeAccompaniedCompanionshipOptions(
     peopleWithoutCompanion,
@@ -123,10 +141,7 @@ export default async function CompanionshipsPage({
                   people={await listPeopleWithoutCompanion()}
                 />
               ) : selectedTab === 'history' ? (
-                <CompanionshipRelationList
-                  relations={await listArchivedCompanionshipRelations()}
-                  readOnly
-                />
+                <CompanionshipRelationList historyRows={historyRows} readOnly />
               ) : (
                 <CompanionshipRelationList
                   relations={await listCompanionshipRelations()}

@@ -1,3 +1,4 @@
+import type { ArchivedCompanionshipHistoryRow } from '@/application/group-archived-companionship-history';
 import type { CompanionshipRelationListItem } from '@/types/companionship-relation';
 import {
   maritalStatusLabels,
@@ -224,6 +225,85 @@ export function sortCompanionshipRelations(
   return [...relations].sort((left, right) =>
     compareCompanionshipRelations(left, right, sortField, direction)
   );
+}
+
+export function archivedCompanionshipHistoryRowId(
+  row: ArchivedCompanionshipHistoryRow
+): string {
+  if (row.kind === 'person') {
+    return row.relation.id;
+  }
+  return `couple:${row.husbandRelationId}:${row.wifeRelationId}`;
+}
+
+export function archivedCompanionshipHistoryAccompaniedLabel(
+  row: ArchivedCompanionshipHistoryRow
+): string {
+  if (row.kind === 'person') {
+    return accompaniedFullName(row.relation);
+  }
+  return row.accompaniedLabel;
+}
+
+export function archivedCompanionshipHistoryCompanionLabel(
+  row: ArchivedCompanionshipHistoryRow
+): string {
+  if (row.kind === 'person') {
+    return companionFullName(row.relation);
+  }
+  return row.companionLabel;
+}
+
+function archivedCompanionshipHistorySortKey(
+  row: ArchivedCompanionshipHistoryRow,
+  field: CompanionshipRelationListSortField
+): string {
+  if (field === 'accompanied') {
+    return archivedCompanionshipHistoryAccompaniedLabel(row);
+  }
+  if (field === 'companion') {
+    return archivedCompanionshipHistoryCompanionLabel(row);
+  }
+  if (field === 'start_date') {
+    return row.kind === 'person'
+      ? (row.relation.start_date ?? '')
+      : (row.start_date ?? '');
+  }
+  if (field === 'end_date') {
+    return row.kind === 'person'
+      ? (row.relation.end_date ?? '')
+      : (row.end_date ?? '');
+  }
+  return '';
+}
+
+export function sortArchivedCompanionshipHistoryRows(
+  rows: ArchivedCompanionshipHistoryRow[],
+  sortField: CompanionshipRelationListSortField,
+  direction: CompanionshipRelationListSortDirection = 'asc'
+): ArchivedCompanionshipHistoryRow[] {
+  return [...rows].sort((left, right) => {
+    const leftKey = archivedCompanionshipHistorySortKey(left, sortField);
+    const rightKey = archivedCompanionshipHistorySortKey(right, sortField);
+
+    if (leftKey === '' && rightKey !== '') {
+      return 1;
+    }
+    if (rightKey === '' && leftKey !== '') {
+      return -1;
+    }
+
+    const byField = leftKey.localeCompare(rightKey, 'pl');
+    const directed = direction === 'desc' ? -byField : byField;
+    if (directed !== 0) {
+      return directed;
+    }
+
+    return archivedCompanionshipHistoryAccompaniedLabel(left).localeCompare(
+      archivedCompanionshipHistoryAccompaniedLabel(right),
+      'pl'
+    );
+  });
 }
 
 export function nextCompanionshipRelationListSort(

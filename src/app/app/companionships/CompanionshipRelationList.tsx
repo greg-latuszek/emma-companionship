@@ -5,11 +5,15 @@ import { useEffect, useState } from 'react';
 import type { JSX } from 'react';
 import { useVisualStyle } from '@/components/VisualStyleProvider';
 import { visualSurfaces } from '@/components/visual-style-surfaces';
+import type { ArchivedCompanionshipHistoryRow } from '@/application/group-archived-companionship-history';
 import type { CompanionshipRelationListItem } from '@/types/companionship-relation';
 import { MirroredHorizontalScroll } from '../members/MirroredHorizontalScroll';
 import { DeleteCompanionshipRelationButton } from './DeleteCompanionshipRelationButton';
 import {
   accompaniedFullName,
+  archivedCompanionshipHistoryAccompaniedLabel,
+  archivedCompanionshipHistoryCompanionLabel,
+  archivedCompanionshipHistoryRowId,
   companionFullName,
   companionshipRelationListFieldLabels,
   nextCompanionshipRelationListSort,
@@ -19,6 +23,7 @@ import {
   readStoredCompanionshipRelationListCompanionExtras,
   readStoredCompanionshipRelationListHistoryAkompaniamentExtras,
   readStoredCompanionshipRelationListSort,
+  sortArchivedCompanionshipHistoryRows,
   sortCompanionshipRelations,
   storeCompanionshipRelationListAccompaniedExtras,
   storeCompanionshipRelationListAkompaniamentExtras,
@@ -36,6 +41,17 @@ import {
   companionshipRelationListPersonExtraFields,
   defaultCompanionshipRelationListHistoryAkompaniamentExtras,
 } from './companionship-relation-list-state';
+
+type CompanionshipRelationListDisplayRow = {
+  id: string;
+  accompaniedLabel: string;
+  companionLabel: string;
+  start_date: string | null;
+  end_date: string | null;
+  status: string;
+  /** Present for person rows (Created, or History person); absent for History couple. */
+  relation: CompanionshipRelationListItem | null;
+};
 
 function sortAria(
   field: CompanionshipRelationListSortField,
@@ -94,11 +110,52 @@ function statusLabel(status: string): string {
   return status === 'active' ? 'Aktywny' : 'Zarchiwizowany';
 }
 
+function displayRowsFromRelations(
+  relations: CompanionshipRelationListItem[],
+  sortField: CompanionshipRelationListSortField,
+  sortDirection: CompanionshipRelationListSortDirection
+): CompanionshipRelationListDisplayRow[] {
+  return sortCompanionshipRelations(relations, sortField, sortDirection).map(
+    (relation) => ({
+      id: relation.id,
+      accompaniedLabel: accompaniedFullName(relation),
+      companionLabel: companionFullName(relation),
+      start_date: relation.start_date,
+      end_date: relation.end_date,
+      status: relation.status,
+      relation,
+    })
+  );
+}
+
+function displayRowsFromHistory(
+  historyRows: ArchivedCompanionshipHistoryRow[],
+  sortField: CompanionshipRelationListSortField,
+  sortDirection: CompanionshipRelationListSortDirection
+): CompanionshipRelationListDisplayRow[] {
+  return sortArchivedCompanionshipHistoryRows(
+    historyRows,
+    sortField,
+    sortDirection
+  ).map((row) => ({
+    id: archivedCompanionshipHistoryRowId(row),
+    accompaniedLabel: archivedCompanionshipHistoryAccompaniedLabel(row),
+    companionLabel: archivedCompanionshipHistoryCompanionLabel(row),
+    start_date: row.kind === 'person' ? row.relation.start_date : row.start_date,
+    end_date: row.kind === 'person' ? row.relation.end_date : row.end_date,
+    status: 'archived',
+    relation: row.kind === 'person' ? row.relation : null,
+  }));
+}
+
 export function CompanionshipRelationList({
   relations,
+  historyRows,
   readOnly = false,
 }: {
-  relations: CompanionshipRelationListItem[];
+  relations?: CompanionshipRelationListItem[];
+  /** History: grouped person/couple rows (read-only). */
+  historyRows?: ArchivedCompanionshipHistoryRow[];
   /** History: hide Edit / Delete; Created keeps mutations. */
   readOnly?: boolean;
 }): JSX.Element {
@@ -154,7 +211,9 @@ export function CompanionshipRelationList({
     );
   }, [readOnly]);
 
-  if (relations.length === 0) {
+  const sourceCount = historyRows?.length ?? relations?.length ?? 0;
+
+  if (sourceCount === 0) {
     return (
       <p className={`text-center ${surfaces.mutedText}`}>
         {readOnly
@@ -164,11 +223,9 @@ export function CompanionshipRelationList({
     );
   }
 
-  const sortedRelations = sortCompanionshipRelations(
-    relations,
-    sortField,
-    sortDirection
-  );
+  const displayRows = historyRows
+    ? displayRowsFromHistory(historyRows, sortField, sortDirection)
+    : displayRowsFromRelations(relations ?? [], sortField, sortDirection);
 
   function rememberSort(
     field: CompanionshipRelationListSortField,
@@ -343,67 +400,87 @@ export function CompanionshipRelationList({
 
       {/* Mobile card view */}
       <ul className={`divide-y ${surfaces.rowDivider} text-left lg:hidden`}>
-        {sortedRelations.map((relation) => (
-          <li key={relation.id} className="flex flex-col gap-3 py-4">
+        {displayRows.map((row) => (
+          <li key={row.id} className="flex flex-col gap-3 py-4">
             <div className="flex flex-col gap-2">
               <div className="flex flex-col gap-1">
                 <span className="text-xs font-medium text-white/60">
                   Akompaniowany
                 </span>
                 <span className={`font-medium ${surfaces.strongText}`}>
-                  {accompaniedFullName(relation)}
+                  {row.accompaniedLabel}
                 </span>
-                {companionshipRelationListPersonExtraFields.filter((f) => accompaniedExtras.includes(f)).map((field) => {
-                  const text = personFieldText(relation.accompanied, field);
-                  if (!text) return null;
-                  return (
-                    <span key={field} className={`text-sm ${surfaces.secondaryText}`}>
-                      {text}
-                    </span>
-                  );
-                })}
+                {row.relation
+                  ? companionshipRelationListPersonExtraFields
+                      .filter((f) => accompaniedExtras.includes(f))
+                      .map((field) => {
+                        const text = personFieldText(
+                          row.relation!.accompanied,
+                          field
+                        );
+                        if (!text) return null;
+                        return (
+                          <span
+                            key={field}
+                            className={`text-sm ${surfaces.secondaryText}`}
+                          >
+                            {text}
+                          </span>
+                        );
+                      })
+                  : null}
               </div>
               <div className="flex flex-col gap-1">
                 <span className="text-xs font-medium text-white/60">
                   Akompaniator
                 </span>
                 <span className={`font-medium ${surfaces.strongText}`}>
-                  {companionFullName(relation)}
+                  {row.companionLabel}
                 </span>
-                {companionshipRelationListPersonExtraFields.filter((f) => companionExtras.includes(f)).map((field) => {
-                  const text = personFieldText(relation.companion, field);
-                  if (!text) return null;
-                  return (
-                    <span key={field} className={`text-sm ${surfaces.secondaryText}`}>
-                      {text}
-                    </span>
-                  );
-                })}
+                {row.relation
+                  ? companionshipRelationListPersonExtraFields
+                      .filter((f) => companionExtras.includes(f))
+                      .map((field) => {
+                        const text = personFieldText(
+                          row.relation!.companion,
+                          field
+                        );
+                        if (!text) return null;
+                        return (
+                          <span
+                            key={field}
+                            className={`text-sm ${surfaces.secondaryText}`}
+                          >
+                            {text}
+                          </span>
+                        );
+                      })
+                  : null}
               </div>
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-white/60">
-              {akompaniamentExtras.includes('start_date') && relation.start_date ? (
-                <span>Od {formatDate(relation.start_date)}</span>
+              {akompaniamentExtras.includes('start_date') && row.start_date ? (
+                <span>Od {formatDate(row.start_date)}</span>
               ) : null}
-              {akompaniamentExtras.includes('end_date') && relation.end_date ? (
-                <span>Do {formatDate(relation.end_date)}</span>
+              {akompaniamentExtras.includes('end_date') && row.end_date ? (
+                <span>Do {formatDate(row.end_date)}</span>
               ) : null}
               {!readOnly && akompaniamentExtras.includes('status') ? (
-                <span>{statusLabel(relation.status)}</span>
+                <span>{statusLabel(row.status)}</span>
               ) : null}
             </div>
-            {readOnly ? null : (
+            {readOnly || !row.relation ? null : (
               <div className="flex justify-end gap-4">
                 <Link
-                  href={`/app/companionships/${relation.id}/edit`}
+                  href={`/app/companionships/${row.relation.id}/edit`}
                   className={`text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
                 >
                   Edytuj
                 </Link>
                 <DeleteCompanionshipRelationButton
-                  relationId={relation.id}
-                  accompaniedName={accompaniedFullName(relation)}
-                  companionName={companionFullName(relation)}
+                  relationId={row.relation.id}
+                  accompaniedName={row.accompaniedLabel}
+                  companionName={row.companionLabel}
                 />
               </div>
             )}
@@ -548,68 +625,76 @@ export function CompanionshipRelationList({
               </tr>
             </thead>
             <tbody className={`divide-y ${surfaces.rowDivider}`}>
-              {sortedRelations.map((relation) => (
-                <tr key={relation.id}>
+              {displayRows.map((row) => (
+                <tr key={row.id}>
                   <td
                     className={`${surfaces.importantArea} sticky left-0 z-10 whitespace-nowrap px-3 py-3 ${surfaces.importantText}`}
                   >
-                    {accompaniedFullName(relation)}
+                    {row.accompaniedLabel}
                   </td>
                   <td
                     className={`${surfaces.importantArea} sticky left-[14rem] z-10 whitespace-nowrap px-3 py-3 ${surfaces.importantText}`}
                   >
-                    {companionFullName(relation)}
+                    {row.companionLabel}
                   </td>
                   {akompaniamentExtras.includes('start_date') ? (
                     <td
                       className={`whitespace-nowrap px-3 py-3 ${surfaces.mutedText}`}
                     >
-                      {formatDate(relation.start_date)}
+                      {formatDate(row.start_date)}
                     </td>
                   ) : null}
                   {akompaniamentExtras.includes('end_date') ? (
                     <td
                       className={`whitespace-nowrap px-3 py-3 ${surfaces.mutedText}`}
                     >
-                      {formatDate(relation.end_date)}
+                      {formatDate(row.end_date)}
                     </td>
                   ) : null}
                   {!readOnly && akompaniamentExtras.includes('status') ? (
                     <td
                       className={`whitespace-nowrap px-3 py-3 ${surfaces.mutedText}`}
                     >
-                      {statusLabel(relation.status)}
+                      {statusLabel(row.status)}
                     </td>
                   ) : null}
-                  {companionshipRelationListPersonExtraFields.filter((f) => accompaniedExtras.includes(f)).map((field) => (
-                    <td
-                      key={field}
-                      className={`whitespace-nowrap px-3 py-3 ${surfaces.mutedText}`}
-                    >
-                      {personFieldText(relation.accompanied, field)}
-                    </td>
-                  ))}
-                  {companionshipRelationListPersonExtraFields.filter((f) => companionExtras.includes(f)).map((field) => (
-                    <td
-                      key={field}
-                      className={`whitespace-nowrap px-3 py-3 ${surfaces.mutedText}`}
-                    >
-                      {personFieldText(relation.companion, field)}
-                    </td>
-                  ))}
-                  {readOnly ? null : (
+                  {row.relation
+                    ? companionshipRelationListPersonExtraFields
+                        .filter((f) => accompaniedExtras.includes(f))
+                        .map((field) => (
+                          <td
+                            key={field}
+                            className={`whitespace-nowrap px-3 py-3 ${surfaces.mutedText}`}
+                          >
+                            {personFieldText(row.relation!.accompanied, field)}
+                          </td>
+                        ))
+                    : null}
+                  {row.relation
+                    ? companionshipRelationListPersonExtraFields
+                        .filter((f) => companionExtras.includes(f))
+                        .map((field) => (
+                          <td
+                            key={field}
+                            className={`whitespace-nowrap px-3 py-3 ${surfaces.mutedText}`}
+                          >
+                            {personFieldText(row.relation!.companion, field)}
+                          </td>
+                        ))
+                    : null}
+                  {readOnly || !row.relation ? null : (
                     <td className="px-3 py-3 whitespace-nowrap">
                       <div className="flex gap-4">
                         <Link
-                          href={`/app/companionships/${relation.id}/edit`}
+                          href={`/app/companionships/${row.relation.id}/edit`}
                           className={`text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
                         >
                           Edytuj
                         </Link>
                         <DeleteCompanionshipRelationButton
-                          relationId={relation.id}
-                          accompaniedName={accompaniedFullName(relation)}
-                          companionName={companionFullName(relation)}
+                          relationId={row.relation.id}
+                          accompaniedName={row.accompaniedLabel}
+                          companionName={row.companionLabel}
                         />
                       </div>
                     </td>
