@@ -92,8 +92,11 @@ function statusLabel(status: string): string {
 
 export function CompanionshipRelationList({
   relations,
+  readOnly = false,
 }: {
   relations: CompanionshipRelationListItem[];
+  /** History: hide Edit / Delete; Created keeps mutations. */
+  readOnly?: boolean;
 }): JSX.Element {
   const [sortField, setSortField] =
     useState<CompanionshipRelationListSortField>('accompanied');
@@ -132,7 +135,9 @@ export function CompanionshipRelationList({
   if (relations.length === 0) {
     return (
       <p className={`text-center ${surfaces.mutedText}`}>
-        Nie ma jeszcze żadnych zapisanych akompaniamentów.
+        {readOnly
+          ? 'Nie ma jeszcze żadnych archiwalnych akompaniamentów.'
+          : 'Nie ma jeszcze żadnych zapisanych akompaniamentów.'}
       </p>
     );
   }
@@ -308,23 +313,28 @@ export function CompanionshipRelationList({
               {akompaniamentExtras.includes('start_date') && relation.start_date ? (
                 <span>Od {formatDate(relation.start_date)}</span>
               ) : null}
+              {relation.end_date ? (
+                <span>Do {formatDate(relation.end_date)}</span>
+              ) : null}
               {akompaniamentExtras.includes('status') ? (
                 <span>{statusLabel(relation.status)}</span>
               ) : null}
             </div>
-            <div className="flex justify-end gap-4">
-              <Link
-                href={`/app/companionships/${relation.id}/edit`}
-                className={`text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
-              >
-                Edytuj
-              </Link>
-              <DeleteCompanionshipRelationButton
-                relationId={relation.id}
-                accompaniedName={accompaniedFullName(relation)}
-                companionName={companionFullName(relation)}
-              />
-            </div>
+            {readOnly ? null : (
+              <div className="flex justify-end gap-4">
+                <Link
+                  href={`/app/companionships/${relation.id}/edit`}
+                  className={`text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
+                >
+                  Edytuj
+                </Link>
+                <DeleteCompanionshipRelationButton
+                  relationId={relation.id}
+                  accompaniedName={accompaniedFullName(relation)}
+                  companionName={companionFullName(relation)}
+                />
+              </div>
+            )}
           </li>
         ))}
       </ul>
@@ -443,9 +453,11 @@ export function CompanionshipRelationList({
                     />
                   </th>
                 ))}
-                <th className="px-3 py-3 whitespace-nowrap">
-                  <span className="sr-only">Działania</span>
-                </th>
+                {readOnly ? null : (
+                  <th className="px-3 py-3 whitespace-nowrap">
+                    <span className="sr-only">Działania</span>
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody className={`divide-y ${surfaces.rowDivider}`}>
@@ -491,21 +503,23 @@ export function CompanionshipRelationList({
                       {personFieldText(relation.companion, field)}
                     </td>
                   ))}
-                  <td className="px-3 py-3 whitespace-nowrap">
-                    <div className="flex gap-4">
-                      <Link
-                        href={`/app/companionships/${relation.id}/edit`}
-                        className={`text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
-                      >
-                        Edytuj
-                      </Link>
-                      <DeleteCompanionshipRelationButton
-                        relationId={relation.id}
-                        accompaniedName={accompaniedFullName(relation)}
-                        companionName={companionFullName(relation)}
-                      />
-                    </div>
-                  </td>
+                  {readOnly ? null : (
+                    <td className="px-3 py-3 whitespace-nowrap">
+                      <div className="flex gap-4">
+                        <Link
+                          href={`/app/companionships/${relation.id}/edit`}
+                          className={`text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
+                        >
+                          Edytuj
+                        </Link>
+                        <DeleteCompanionshipRelationButton
+                          relationId={relation.id}
+                          accompaniedName={accompaniedFullName(relation)}
+                          companionName={companionFullName(relation)}
+                        />
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

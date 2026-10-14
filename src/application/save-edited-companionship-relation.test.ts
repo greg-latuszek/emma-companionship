@@ -64,6 +64,7 @@ function aRelationsRepo(
 ): ICompanionshipRelationRepository {
   return {
     listCompanionshipRelations: vi.fn(),
+    listArchivedCompanionshipRelations: vi.fn(),
     listPeopleWithoutCompanion: vi.fn(),
     findCompanionshipRelationById: vi.fn().mockResolvedValue(aRelation()),
     findActiveCompanionshipRelationByAccompaniedId: vi.fn(),

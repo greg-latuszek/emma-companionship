@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { listCompanionshipRelations } from '@/application/list-companionship-relations';
+import { listArchivedCompanionshipRelations } from '@/application/list-archived-companionship-relations';
 import { listPeopleWithoutCompanion } from '@/application/list-people-without-companion';
 import { listCommunityMembers } from '@/application/list-community-members';
 import { listCouples } from '@/application/list-couples';
@@ -17,12 +18,11 @@ import { CompanionshipRelationForm } from './CompanionshipRelationForm';
 import { PeopleWithoutCompanionList } from './PeopleWithoutCompanionList';
 import { submitNewCompanionshipRelation } from './actions';
 import { newCompanionshipRelationFormValues } from './companionship-relation-form-state';
-
-function companionshipsTabFrom(tab: string | string[] | undefined): 'created' | 'missing' | 'new' {
-  if (tab === 'missing') return 'missing';
-  if (tab === 'new') return 'new';
-  return 'created';
-}
+import {
+  companionshipsTabFrom,
+  companionshipsTabHref,
+  companionshipsTabTitles,
+} from './companionships-tab';
 
 export default async function CompanionshipsPage({
   searchParams,
@@ -87,9 +87,26 @@ export default async function CompanionshipsPage({
             <TabbedPanel
               ariaLabel="Akompaniamenty"
               tabs={[
-                { href: '/app/companionships', label: 'Utworzone Akompaniamenty', isActive: selectedTab === 'created' },
-                { href: '/app/companionships?tab=missing', label: 'Brakujące Akompaniamenty', isActive: selectedTab === 'missing' },
-                { href: '/app/companionships?tab=new', label: '+ Dodaj Akompaniament', isActive: selectedTab === 'new' },
+                {
+                  href: companionshipsTabHref('created'),
+                  label: companionshipsTabTitles.created,
+                  isActive: selectedTab === 'created',
+                },
+                {
+                  href: companionshipsTabHref('missing'),
+                  label: companionshipsTabTitles.missing,
+                  isActive: selectedTab === 'missing',
+                },
+                {
+                  href: companionshipsTabHref('history'),
+                  label: companionshipsTabTitles.history,
+                  isActive: selectedTab === 'history',
+                },
+                {
+                  href: companionshipsTabHref('new'),
+                  label: companionshipsTabTitles.new,
+                  isActive: selectedTab === 'new',
+                },
               ]}
             >
               {selectedTab === 'new' ? (
@@ -102,9 +119,18 @@ export default async function CompanionshipsPage({
                   returnTab={returnTab}
                 />
               ) : selectedTab === 'missing' ? (
-                <PeopleWithoutCompanionList people={await listPeopleWithoutCompanion()} />
+                <PeopleWithoutCompanionList
+                  people={await listPeopleWithoutCompanion()}
+                />
+              ) : selectedTab === 'history' ? (
+                <CompanionshipRelationList
+                  relations={await listArchivedCompanionshipRelations()}
+                  readOnly
+                />
               ) : (
-                <CompanionshipRelationList relations={await listCompanionshipRelations()} />
+                <CompanionshipRelationList
+                  relations={await listCompanionshipRelations()}
+                />
               )}
             </TabbedPanel>
           </SemiTransparentPanel>

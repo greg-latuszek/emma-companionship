@@ -72,6 +72,7 @@ function aRelationsRepo(
   });
   return {
     listCompanionshipRelations: vi.fn(),
+    listArchivedCompanionshipRelations: vi.fn(),
     listPeopleWithoutCompanion: vi.fn(),
     findCompanionshipRelationById: vi.fn().mockImplementation(async (id: string) => {
       if (id === 'rel-h') return husband;

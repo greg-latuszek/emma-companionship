@@ -84,7 +84,7 @@ flowchart TB
 |---|---|---|
 | `IMemberRepository` | `Member` | `findMemberById` / `findMemberByEmail` / `findMemberByOAuth` / `createMember` (scoped to `member_type = 'app_user'`). Also `updateMemberVisualStyle` for the signed-in person’s look. |
 | `ICommunityMemberRepository` | `CommunityMember` | `listCommunityMembers` / `findCommunityMemberById` / `findCommunityMemberByEmail` / `addCommunityMember` / `updateCommunityMember` / `removeCommunityMember`. Lists **every** row. Writes omit OAuth, password, `is_active`, approval, `member_type`, and `profile_picture`. |
-| `ICompanionshipRelationRepository` | `CompanionshipRelation` / `CompanionshipRelationListItem` / `PersonWithoutCompanion` | `listCompanionshipRelations` (active only) / `findCompanionshipRelationById` / `findActiveCompanionshipRelationByAccompaniedId` / `addCompanionshipRelation` / `addCompanionshipRelationPair` / `updateCompanionshipRelation` / `updateCompanionshipRelationPair` / `archiveCompanionshipRelationAndAddReplacement` / `archiveCompanionshipRelationPairAndAddReplacement` / `deleteCompanionshipRelation` / `listPeopleWithoutCompanion`. Manages accompaniment tracking on `companionship_relations`. `listPeopleWithoutCompanion` excludes only people with an **active** `accompanied_id` row (archived history does not block). Couple add/edit pair writers keep husband→husband and wife→wife in one transaction. |
+| `ICompanionshipRelationRepository` | `CompanionshipRelation` / `CompanionshipRelationListItem` / `PersonWithoutCompanion` | `listCompanionshipRelations` (active) / `listArchivedCompanionshipRelations` / `findCompanionshipRelationById` / `findActiveCompanionshipRelationByAccompaniedId` / `addCompanionshipRelation` / `addCompanionshipRelationPair` / `updateCompanionshipRelation` / `updateCompanionshipRelationPair` / `archiveCompanionshipRelationAndAddReplacement` / `archiveCompanionshipRelationPairAndAddReplacement` / `deleteCompanionshipRelation` / `listPeopleWithoutCompanion`. Manages accompaniment tracking on `companionship_relations`. `listPeopleWithoutCompanion` excludes only people with an **active** `accompanied_id` row (archived history does not block). Couple add/edit pair writers keep husband→husband and wife→wife in one transaction. |
 | `ICoupleRepository` | `Couple` / `CoupleListItem` / `MarriedPersonWithoutCouple` | `listCouples` / `listMarriedPeopleWithoutCouple` / `findCoupleById` / `addCouple` / `removeCouple`. Manages `couples` plus both spouses’ `members.couple_id`. `member1_id` = husband (male), `member2_id` = wife (female). List sorts by husband’s then wife’s last name. Unpaired pool: `marital_status = 'married'`, gender set, `couple_id` null. |
 
 `hasLoginIdentity` is derived from `oauth_id`; it is not a column. Registry inserts leave `member_type` unset so Postgres defaults to `'companion'`. Dropping `member_type` is a later login-identity story, not a form story.
@@ -135,7 +135,7 @@ flowchart TD
 | `/app/members` | Four tabs: **Członkowie Wspólnoty** (list), **Małżeństwa** (`?tab=couples`), **+ Dodaj Małżeństwa** (`?tab=build-couples`), **+ Dodaj Osobę** (`?tab=new`) |
 | `/app/members/new` | Redirects to `/app/members?tab=new` |
 | `/app/members/[id]/edit` | **Edytuj**; missing id → 404 |
-| `/app/companionships` | Three tabs: **Utworzone Akompaniamenty** (default), **Brakujące Akompaniamenty** (`?tab=missing`), **+ Dodaj Akompaniament** (`?tab=new`); `?accompanied=<id>` pre-fills the accompanied person on the add form |
+| `/app/companionships` | Four tabs: **Utworzone Akompaniamenty** (default, active), **Brakujące Akompaniamenty** (`?tab=missing`), **Historia Akompaniamentów** (`?tab=history`, archived, read-only), **+ Dodaj Akompaniament** (`?tab=new`); `?accompanied=<id>` pre-fills the accompanied person on the add form |
 | `/app/companionships/new` | Redirects to `/app/companionships?tab=new` (preserving `?accompanied`) |
 | `/app/companionships/[id]/edit` | **Edytuj akompaniament**; missing id → 404 |
 
@@ -206,8 +206,9 @@ An approved member opens **Akompaniamenty** from the panel and manages accompani
 ```mermaid
 flowchart LR
   panel["Companionship panel\n(shows missing count)"] --> companionships["/app/companionships"]
-  companionships --> tabCreated["tab: Utworzone\n(listCompanionshipRelations)"]
+  companionships --> tabCreated["tab: Utworzone\n(listCompanionshipRelations active)"]
   companionships --> tabMissing["tab: Brakujące\n(listPeopleWithoutCompanion)"]
+  companionships --> tabHistory["tab: Historia\n(listArchivedCompanionshipRelations)"]
   companionships --> tabNew["tab: + Dodaj\n(inline form, ?accompanied pre-fills)"]
   tabCreated --> edit["/app/companionships/id/edit"]
   tabCreated --> remove[deleteCompanionshipRelation]
@@ -230,7 +231,8 @@ flowchart LR
 - The list loads all relations via JOIN with `members` to fetch participant names and member details (marital status, consecrated status, community engagement).
 - Member details from the JOIN are **read-only informational fields** — they must be edited in `/app/members`, not in companionship forms.
 - **Utworzone** tab: responsive table (desktop `lg:`) with two-tier headers showing groups "Akompaniament" / "Akompaniowany" / "Akompaniator". Toggleable columns for member details per person. Two sticky columns (Akompaniowany, Akompaniator). Mobile shows cards. Sort and column visibility stored in `localStorage`.
-- **Utworzone** tab: **active** relations only (person rows). Archived rows are history (History tab is the next slice; not built yet).
+- **Utworzone** tab: **active** relations only (person rows). Edit / Delete available.
+- **Historia** tab (`?tab=history`): **archived** relations only, read-only (no Edit / Delete). Ordered by `end_date` descending. Cards show end date when present.
 - **Brakujące** tab: every eligible member (non-Looker-On) with no **active** `accompanied_id` relation. Archived history alone still appears here as needing a companion. Fixed sort by last name, first name. Toggleable detail columns. Each row has a **Przypisz akompaniatora** link that opens the add tab with the person pre-selected.
 - **+ Dodaj** form: **Akompaniowany** mixes unpaired Brakujące people (`Nazwisko, Imię`) and eligible couples (`HusbandLastName, HusbandFirst + WifeFirst`). A person in the couple registry never appears as a single row. A couple appears only when **neither** spouse has an **active** accompanied relation. Choosing a person keeps **Akompaniator** as same-gender people from the full registry. Choosing a couple fills **Akompaniator** with other couples only; Zapisz runs `addCoupleCompanionshipRelations` (husband→husband and wife→wife, same dates/notes/status, one transaction). Same couple on both sides is refused. DB stays person↔person — no couple id on `companionship_relations`. `?accompanied=<id>` pre-selects only when that person is still a **single** accompanied option. After save, redirects to Brakujące if opened from there, otherwise Utworzone.
 - Edit form: Accompanied is locked. If the accompanied person is in the couple registry and **both** spouses have an **active** accompanied relation, the form shows the couple label and Companion couples only; Zapisz updates both spouse rows. Otherwise person edit (same-gender Companion list). **Companion unchanged** → in-place update of dates/notes on the active row(s). **Companion changed** → archive current active row(s) (`status = archived`, `end_date = today`) and insert new active row(s) in one transaction. Person edit still binds `accompanied_id` so a tampered form cannot reassign Accompanied.
@@ -345,5 +347,5 @@ npm run type-check
 
 - **Another OAuth provider:** add a branch in `oauthIdentityFromAuthJs` and an Auth.js provider. Do not fork `recognizeOAuthMember`.
 - **Password / Facebook / blacklist / admin UI:** not in the live product. Do not rebuild them from archived plans.
-- **History tab (`?tab=history`) / couple grouping on Utworzone·Brakujące:** next slices. Edit already archives on Companion change; History will list archived rows. + Dodaj and couple edit already expand couple→couple into two person rows. Person registry, companionship, and couples each have their own port. Do not hang the next slice on an existing port while "we are here".
+- **Couple grouping on Utworzone·Historia·Brakujące / graphs / geo / supervision / health:** next slices as needed. History already lists archived person rows. + Dodaj and couple edit expand couple→couple into two person rows. Person registry, companionship, and couples each have their own port. Do not hang the next slice on an existing port while "we are here".
 - **Docs:** update this file when the running system changes. Put product rules in `application_idea.md`. Do not revive `_archived_docs/` or [`db/SCHEMA.md`](../db/SCHEMA.md) as current architecture.

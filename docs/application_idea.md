@@ -10,9 +10,9 @@ The panel card shows how many people still need a companion.
 **Członkowie wspólnoty** has four tabs: person list, **Małżeństwa**, **+ Dodaj Małżeństwa**, **+ Dodaj Osobę**.
 The Akompaniamenty screen has three tabs: created relations, people without a companion (sorted, with toggleable detail columns),
 and an inline add form — including a direct shortcut from the missing list that pre-selects the accompanied person.
-Companionship rows in the DB stay person↔person (same-gender check on person write). On Add Companionship, Accompanied may be a person or an eligible couple; couple→couple saves as two rows (husband→husband, wife→wife). Edit uses couple UI when both spouses have an active accompanied relation; changing Companion archives the old active row(s) and inserts replacements (history). Created lists active only.
+Companionship rows in the DB stay person↔person (same-gender check on person write). On Add Companionship, Accompanied may be a person or an eligible couple; couple→couple saves as two rows (husband→husband, wife→wife). Edit uses couple UI when both spouses have an active accompanied relation; changing Companion archives the old active row(s) and inserts replacements. Created lists active; History lists archived (read-only).
 
-**Not built:** Companionship History tab, further business-rule validation (consecrated constraints, power separation), couple grouping on Created / Missing lists, geography, supervision relations, graphs, import, health views, roles UI, admin approval UI, password or Facebook login.
+**Not built:** further business-rule validation (consecrated constraints, power separation), couple grouping on Created / History / Missing lists, geography, supervision relations, graphs, import, health views, roles UI, admin approval UI, password or Facebook login.
 
 For the stack, hexagon, auth flow, page frame, and how to run the app, read [`current-architecture.md`](./current-architecture.md). Start from [`README.md`](./README.md). Do not treat the workflows below as a current backlog unless a story says so.
 

@@ -177,6 +177,23 @@ export class PgCompanionshipRelationRepository
     return rows.map(companionshipRelationListItemFromRow);
   }
 
+  async listArchivedCompanionshipRelations(): Promise<
+    CompanionshipRelationListItem[]
+  > {
+    const rows = await queryMany<CompanionshipRelationRow>(`
+      SELECT ${COMPANIONSHIP_RELATION_COLUMNS}
+      FROM companionship_relations cr
+      JOIN members accompanied ON accompanied.id = cr.accompanied_id
+      JOIN members companion ON companion.id = cr.companion_id
+      WHERE cr.status = 'archived'
+      ORDER BY cr.end_date DESC NULLS LAST,
+        accompanied.last_name,
+        accompanied.first_name,
+        cr.created_at DESC
+    `);
+    return rows.map(companionshipRelationListItemFromRow);
+  }
+
   async listPeopleWithoutCompanion(): Promise<PersonWithoutCompanion[]> {
     const rows = await queryMany<{
       id: string;

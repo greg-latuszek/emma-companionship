@@ -54,6 +54,7 @@ function aCompanionshipRelationRepository(
 ): ICompanionshipRelationRepository {
   return {
     listCompanionshipRelations: vi.fn(),
+    listArchivedCompanionshipRelations: vi.fn(),
     listPeopleWithoutCompanion: vi.fn().mockResolvedValue([
       { id: MemberId('550e8400-e29b-41d4-a716-446655440003') },
       { id: MemberId('550e8400-e29b-41d4-a716-446655440004') },

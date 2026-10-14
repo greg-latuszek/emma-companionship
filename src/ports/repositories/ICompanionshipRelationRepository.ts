@@ -6,8 +6,10 @@ import type {
 import type { CompanionshipRelationWriteWithDefaults } from '@/schemas/companionship-relation';
 
 export interface ICompanionshipRelationRepository {
-  /** Active relations only (Created Companionships). Archived history is a later tab. */
+  /** Active relations only (Created Companionships). */
   listCompanionshipRelations(): Promise<CompanionshipRelationListItem[]>;
+  /** Archived relations only (Companionship History). */
+  listArchivedCompanionshipRelations(): Promise<CompanionshipRelationListItem[]>;
   listPeopleWithoutCompanion(): Promise<PersonWithoutCompanion[]>;
   findCompanionshipRelationById(
     id: string
