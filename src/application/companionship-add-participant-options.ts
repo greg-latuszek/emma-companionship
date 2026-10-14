@@ -1,7 +1,7 @@
 /**
- * Participant options for + Dodaj Akompaniament: singles and eligible couples.
- * Couples appear only when neither spouse is already accompanied; paired people
- * never appear as single Akompaniowany rows.
+ * Participant options for Add Companionship: singles and eligible couples.
+ * Couples appear only when neither spouse has an active accompanied relation;
+ * paired people never appear as single Accompanied rows.
  */
 
 import type { CommunityMember, Gender } from '@/types/community-member';

@@ -5,6 +5,7 @@ import { useActionState, useState } from 'react';
 import type { JSX } from 'react';
 import {
   findAccompaniedCompanionshipOption,
+  formatCompanionshipCoupleOptionLabel,
   proposeCompanionCompanionshipOptions,
   type CompanionshipParticipantOption,
 } from '@/application/companionship-add-participant-options';
@@ -18,6 +19,12 @@ import {
   type CompanionshipRelationFormState,
   type CompanionshipRelationFormValues,
 } from './companionship-relation-form-state';
+
+export type LockedCoupleCompanionshipEdit = {
+  accompaniedCouple: CoupleListItem;
+  husbandRelationId: string;
+  wifeRelationId: string;
+};
 
 const emptyFormValues: CompanionshipRelationFormValues = {
   accompanied_kind: '',
@@ -116,6 +123,94 @@ function LockedPersonAccompaniedSelect({
           {companionOptions.map((member) => (
             <option key={member.id} value={member.id} className={selectOptionClassName}>
               {formatMemberName(member)}
+            </option>
+          ))}
+        </select>
+        <FieldError message={companionError} className={dangerTextClassName} />
+      </label>
+    </>
+  );
+}
+
+function LockedCoupleAccompaniedSelect({
+  couples,
+  lockedCoupleEdit,
+  initialCompanionCoupleId,
+  fieldControlClassName,
+  dangerTextClassName,
+  accompaniedError,
+  companionError,
+}: {
+  couples: CoupleListItem[];
+  lockedCoupleEdit: LockedCoupleCompanionshipEdit;
+  initialCompanionCoupleId: string;
+  fieldControlClassName: string;
+  dangerTextClassName: string;
+  accompaniedError?: string;
+  companionError?: string;
+}): JSX.Element {
+  const [companionCoupleId, setCompanionCoupleId] = useState(
+    initialCompanionCoupleId
+  );
+
+  const accompaniedOption: CompanionshipParticipantOption = {
+    kind: 'couple',
+    id: lockedCoupleEdit.accompaniedCouple.id,
+    label: formatCompanionshipCoupleOptionLabel(
+      lockedCoupleEdit.accompaniedCouple
+    ),
+  };
+  const companionOptions = proposeCompanionCompanionshipOptions(
+    accompaniedOption,
+    [],
+    couples,
+    companionCoupleId
+  );
+
+  return (
+    <>
+      <input type="hidden" name="accompanied_kind" value="couple" />
+      <input type="hidden" name="companion_kind" value="couple" />
+      <input
+        type="hidden"
+        name="husband_relation_id"
+        value={lockedCoupleEdit.husbandRelationId}
+      />
+      <input
+        type="hidden"
+        name="wife_relation_id"
+        value={lockedCoupleEdit.wifeRelationId}
+      />
+      <label className="flex flex-col gap-1">
+        <span>Akompaniowany</span>
+        <input
+          type="hidden"
+          name="accompanied_id"
+          value={lockedCoupleEdit.accompaniedCouple.id}
+        />
+        <p className={fieldControlClassName}>{accompaniedOption.label}</p>
+        <FieldError message={accompaniedError} className={dangerTextClassName} />
+      </label>
+
+      <label className="flex flex-col gap-1">
+        <span>Akompaniator</span>
+        <select
+          name="companion_id"
+          value={companionCoupleId}
+          onChange={(event) => setCompanionCoupleId(event.target.value)}
+          className={fieldControlClassName}
+          required
+        >
+          <option value="" className={selectOptionClassName}>
+            wybierz małżeństwo...
+          </option>
+          {companionOptions.map((option) => (
+            <option
+              key={`${option.kind}-${option.id}`}
+              value={option.id}
+              className={selectOptionClassName}
+            >
+              {option.label}
             </option>
           ))}
         </select>
@@ -245,6 +340,7 @@ export function CompanionshipRelationForm({
   accompaniedOptions,
   couples = [],
   accompaniedLocked = false,
+  lockedCoupleEdit,
   initialValues,
   returnTab,
 }: {
@@ -254,10 +350,12 @@ export function CompanionshipRelationForm({
   accompaniedCandidates?: CommunityMember[];
   /** Add: mixed person/couple Akompaniowany options. */
   accompaniedOptions?: CompanionshipParticipantOption[];
-  /** Add: couples available for Akompaniator when accompanied is a couple. */
+  /** Couples for Akompaniator when accompanied is a couple (add or couple edit). */
   couples?: CoupleListItem[];
-  /** Edit: show Akompaniowany as fixed text; only Akompaniator is choosable. */
+  /** Edit person: show Akompaniowany as fixed text; only Akompaniator is choosable. */
   accompaniedLocked?: boolean;
+  /** Edit couple: locked accompanied couple + Companion couples dropdown. */
+  lockedCoupleEdit?: LockedCoupleCompanionshipEdit;
   initialValues?: CompanionshipRelationFormValues;
   returnTab?: string;
 }): JSX.Element {
@@ -285,7 +383,18 @@ export function CompanionshipRelationForm({
       <form key={formKey} action={formAction} className="flex flex-col gap-4 text-left">
         <input type="hidden" name="return_tab" value={returnTab ?? ''} />
 
-        {accompaniedLocked ? (
+        {lockedCoupleEdit ? (
+          <LockedCoupleAccompaniedSelect
+            key={formKey}
+            couples={couples}
+            lockedCoupleEdit={lockedCoupleEdit}
+            initialCompanionCoupleId={values.companion_id}
+            fieldControlClassName={fieldControlClassName}
+            dangerTextClassName={surfaces.dangerText}
+            accompaniedError={state?.fieldErrors?.accompanied_id}
+            companionError={state?.fieldErrors?.companion_id}
+          />
+        ) : accompaniedLocked ? (
           <LockedPersonAccompaniedSelect
             key={formKey}
             members={members}

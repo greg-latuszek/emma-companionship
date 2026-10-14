@@ -60,6 +60,7 @@ function aCompanionshipRelationRepository(
     ]),
     findCompanionshipRelationById: vi.fn(),
     addCompanionshipRelation: vi.fn(),
+    findActiveCompanionshipRelationByAccompaniedId: vi.fn(),
     addCompanionshipRelationPair: vi.fn().mockResolvedValue([
       aCompanionshipRelation({ id: 'husband-relation' }),
       aCompanionshipRelation({
@@ -69,6 +70,9 @@ function aCompanionshipRelationRepository(
       }),
     ]),
     updateCompanionshipRelation: vi.fn(),
+    updateCompanionshipRelationPair: vi.fn(),
+    archiveCompanionshipRelationAndAddReplacement: vi.fn(),
+    archiveCompanionshipRelationPairAndAddReplacement: vi.fn(),
     deleteCompanionshipRelation: vi.fn(),
     ...stubs,
   };

@@ -19,8 +19,9 @@ export interface CompanionshipRelationParticipant {
 }
 
 /**
- * Member eligible for companionship (not Looker-On) who is nobody's accompanied
- * in any relation, active or archived.
+ * Member eligible for companionship (not Looker-On) who has no active
+ * companionship_relations row as accompanied_id. Archived history does not
+ * count as a current accompaniment.
  */
 export type PersonWithoutCompanion = CompanionshipRelationParticipant;
 

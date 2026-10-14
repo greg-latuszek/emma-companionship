@@ -17,11 +17,17 @@ import {
   isCoupleCompanionshipParticipantsAreNotEligible,
 } from '@/application/add-couple-companionship-relations';
 import {
-  updateCompanionshipRelation,
+  saveEditedCompanionshipRelation,
   isCompanionshipRelationNotFound,
   isCompanionAndAccompaniedAreSamePerson as isCompanionAndAccompaniedAreSamePersonUpdate,
   isCompanionAndAccompaniedHaveDifferentGenders as isCompanionAndAccompaniedHaveDifferentGendersUpdate,
-} from '@/application/update-companionship-relation';
+} from '@/application/save-edited-companionship-relation';
+import {
+  saveEditedCoupleCompanionshipRelations,
+  isCompanionAndAccompaniedAreSameCouple as isCompanionAndAccompaniedAreSameCoupleEdit,
+  isCoupleCompanionshipParticipantsAreNotEligible as isCoupleCompanionshipParticipantsAreNotEligibleEdit,
+  isCompanionshipRelationNotFound as isCompanionshipRelationNotFoundCoupleEdit,
+} from '@/application/save-edited-couple-companionship-relations';
 import {
   deleteCompanionshipRelation,
   isCompanionshipRelationNotFound as isCompanionshipRelationNotFoundDelete,
@@ -165,16 +171,15 @@ export async function submitNewCompanionshipRelation(
   });
 }
 
-export async function submitEditCompanionshipRelation(
+async function submitEditPersonCompanionshipRelation(
   relationId: string,
   lockedAccompaniedId: string,
-  _previous: CompanionshipRelationFormState | undefined,
-  formData: FormData
+  values: CompanionshipRelationFormValues
 ): Promise<CompanionshipRelationFormState> {
-  const values = companionshipRelationFormValuesFromForm(formData);
   values.accompanied_id = lockedAccompaniedId;
   values.accompanied_kind = 'person';
   values.companion_kind = 'person';
+
   const parsed = companionshipRelationWriteSchema.safeParse({
     companion_id: values.companion_id,
     accompanied_id: values.accompanied_id,
@@ -191,7 +196,7 @@ export async function submitEditCompanionshipRelation(
   }
 
   try {
-    await updateCompanionshipRelation(relationId, parsed.data);
+    await saveEditedCompanionshipRelation(relationId, parsed.data);
   } catch (error) {
     if (isCompanionAndAccompaniedAreSamePersonUpdate(error)) {
       return companionshipRelationFormStateAfterFailedSubmit({
@@ -221,6 +226,97 @@ export async function submitEditCompanionshipRelation(
   }
 
   redirect('/app/companionships');
+}
+
+async function submitEditCoupleCompanionshipRelation(
+  values: CompanionshipRelationFormValues,
+  formData: FormData
+): Promise<CompanionshipRelationFormState> {
+  const husbandRelationId =
+    formData.get('husband_relation_id')?.toString() ?? '';
+  const wifeRelationId = formData.get('wife_relation_id')?.toString() ?? '';
+
+  const parsed = coupleCompanionshipWriteSchema.safeParse({
+    companion_couple_id: values.companion_id,
+    accompanied_couple_id: values.accompanied_id,
+    start_date: values.start_date,
+    end_date: values.end_date,
+    notes: values.notes,
+  });
+
+  if (!parsed.success) {
+    const remappedIssues = parsed.error.issues.map((issue) => {
+      const path = [...issue.path];
+      if (path[0] === 'companion_couple_id') {
+        path[0] = 'companion_id';
+      }
+      if (path[0] === 'accompanied_couple_id') {
+        path[0] = 'accompanied_id';
+      }
+      return { ...issue, path };
+    });
+    return companionshipRelationFormStateAfterFailedSubmit({
+      values,
+      fieldErrors: polishCompanionshipRelationWriteIssues(remappedIssues),
+    });
+  }
+
+  try {
+    await saveEditedCoupleCompanionshipRelations(
+      husbandRelationId,
+      wifeRelationId,
+      parsed.data
+    );
+  } catch (error) {
+    if (isCompanionAndAccompaniedAreSameCoupleEdit(error)) {
+      return companionshipRelationFormStateAfterFailedSubmit({
+        values,
+        formError:
+          'Akompaniator i akompaniowany nie mogą być tym samym małżeństwem.',
+      });
+    }
+
+    if (isCoupleCompanionshipParticipantsAreNotEligibleEdit(error)) {
+      return companionshipRelationFormStateAfterFailedSubmit({
+        values,
+        formError:
+          'Wybrane małżeństwa nie mogą zaktualizować akompaniamentu.',
+      });
+    }
+
+    if (isCompanionshipRelationNotFoundCoupleEdit(error)) {
+      return companionshipRelationFormStateAfterFailedSubmit({
+        values,
+        formError: 'Akompaniament nie został znaleziony.',
+      });
+    }
+
+    return companionshipRelationFormStateAfterFailedSubmit({
+      values,
+      formError: 'Nie udało się zaktualizować akompaniamentu. Spróbuj ponownie.',
+    });
+  }
+
+  redirect('/app/companionships');
+}
+
+export async function submitEditCompanionshipRelation(
+  relationId: string,
+  lockedAccompaniedId: string,
+  _previous: CompanionshipRelationFormState | undefined,
+  formData: FormData
+): Promise<CompanionshipRelationFormState> {
+  const values = companionshipRelationFormValuesFromForm(formData);
+
+  if (values.accompanied_kind === 'couple' && values.companion_kind === 'couple') {
+    return submitEditCoupleCompanionshipRelation(values, formData);
+  }
+
+  return submitEditPersonCompanionshipRelation(
+    relationId,
+    lockedAccompaniedId,
+    values
+  );
 }
 
 export async function submitDeleteCompanionshipRelation(
