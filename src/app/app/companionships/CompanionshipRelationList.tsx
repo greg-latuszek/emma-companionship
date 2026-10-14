@@ -17,11 +17,13 @@ import {
   readStoredCompanionshipRelationListAccompaniedExtras,
   readStoredCompanionshipRelationListAkompaniamentExtras,
   readStoredCompanionshipRelationListCompanionExtras,
+  readStoredCompanionshipRelationListHistoryAkompaniamentExtras,
   readStoredCompanionshipRelationListSort,
   sortCompanionshipRelations,
   storeCompanionshipRelationListAccompaniedExtras,
   storeCompanionshipRelationListAkompaniamentExtras,
   storeCompanionshipRelationListCompanionExtras,
+  storeCompanionshipRelationListHistoryAkompaniamentExtras,
   storeCompanionshipRelationListSort,
   toggleCompanionshipRelationListAkompaniamentExtraField,
   toggleCompanionshipRelationListPersonExtraField,
@@ -29,8 +31,10 @@ import {
   type CompanionshipRelationListPersonExtraField,
   type CompanionshipRelationListSortDirection,
   type CompanionshipRelationListSortField,
-  companionshipRelationListAkompaniamentExtraFields,
+  companionshipRelationListCreatedAkompaniamentExtraFields,
+  companionshipRelationListHistoryAkompaniamentExtraFields,
   companionshipRelationListPersonExtraFields,
+  defaultCompanionshipRelationListHistoryAkompaniamentExtras,
 } from './companionship-relation-list-state';
 
 function sortAria(
@@ -105,7 +109,11 @@ export function CompanionshipRelationList({
   
   const [akompaniamentExtras, setAkompaniamentExtras] = useState<
     CompanionshipRelationListAkompaniamentExtraField[]
-  >([]);
+  >(
+    readOnly
+      ? defaultCompanionshipRelationListHistoryAkompaniamentExtras
+      : []
+  );
   const [accompaniedExtras, setAccompaniedExtras] = useState<
     CompanionshipRelationListPersonExtraField[]
   >([]);
@@ -113,6 +121,9 @@ export function CompanionshipRelationList({
     CompanionshipRelationListPersonExtraField[]
   >([]);
   const surfaces = visualSurfaces(useVisualStyle());
+  const akompaniamentExtraChoices = readOnly
+    ? companionshipRelationListHistoryAkompaniamentExtraFields
+    : companionshipRelationListCreatedAkompaniamentExtraFields;
 
   useEffect(() => {
     const storedSort = readStoredCompanionshipRelationListSort(
@@ -120,7 +131,18 @@ export function CompanionshipRelationList({
     );
     setSortField(storedSort.sortField);
     setSortDirection(storedSort.sortDirection);
-    
+
+    if (readOnly) {
+      setAkompaniamentExtras(
+        readStoredCompanionshipRelationListHistoryAkompaniamentExtras(
+          window.localStorage
+        )
+      );
+      setAccompaniedExtras([]);
+      setCompanionExtras([]);
+      return;
+    }
+
     setAkompaniamentExtras(
       readStoredCompanionshipRelationListAkompaniamentExtras(window.localStorage)
     );
@@ -130,7 +152,7 @@ export function CompanionshipRelationList({
     setCompanionExtras(
       readStoredCompanionshipRelationListCompanionExtras(window.localStorage)
     );
-  }, []);
+  }, [readOnly]);
 
   if (relations.length === 0) {
     return (
@@ -183,15 +205,29 @@ export function CompanionshipRelationList({
           <div className="flex flex-col gap-2">
             <p className={`text-xs font-semibold ${surfaces.mutedText}`}>Akompaniament</p>
             <div className="flex flex-wrap gap-x-4 gap-y-2">
-              {companionshipRelationListAkompaniamentExtraFields.map((field) => (
+              {akompaniamentExtraChoices.map((field) => (
                 <label key={field} className="flex items-center gap-2">
                   <input
                     type="checkbox"
                     checked={akompaniamentExtras.includes(field)}
                     onChange={() => {
                       setAkompaniamentExtras((current) => {
-                        const extras = toggleCompanionshipRelationListAkompaniamentExtraField(current, field);
-                        storeCompanionshipRelationListAkompaniamentExtras(extras, window.localStorage);
+                        const extras =
+                          toggleCompanionshipRelationListAkompaniamentExtraField(
+                            current,
+                            field
+                          );
+                        if (readOnly) {
+                          storeCompanionshipRelationListHistoryAkompaniamentExtras(
+                            extras,
+                            window.localStorage
+                          );
+                        } else {
+                          storeCompanionshipRelationListAkompaniamentExtras(
+                            extras,
+                            window.localStorage
+                          );
+                        }
                         return extras;
                       });
                     }}
@@ -201,48 +237,76 @@ export function CompanionshipRelationList({
               ))}
             </div>
           </div>
-          <div className="flex flex-col gap-2">
-            <p className={`text-xs font-semibold ${surfaces.mutedText}`}>Akompaniowany</p>
-            <div className="flex flex-wrap gap-x-4 gap-y-2">
-              {companionshipRelationListPersonExtraFields.map((field) => (
-                <label key={`accompanied-${field}`} className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={accompaniedExtras.includes(field)}
-                    onChange={() => {
-                      setAccompaniedExtras((current) => {
-                        const extras = toggleCompanionshipRelationListPersonExtraField(current, field);
-                        storeCompanionshipRelationListAccompaniedExtras(extras, window.localStorage);
-                        return extras;
-                      });
-                    }}
-                  />
-                  <span>{companionshipRelationListFieldLabels[field]}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-          <div className="flex flex-col gap-2">
-            <p className={`text-xs font-semibold ${surfaces.mutedText}`}>Akompaniator</p>
-            <div className="flex flex-wrap gap-x-4 gap-y-2">
-              {companionshipRelationListPersonExtraFields.map((field) => (
-                <label key={`companion-${field}`} className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={companionExtras.includes(field)}
-                    onChange={() => {
-                      setCompanionExtras((current) => {
-                        const extras = toggleCompanionshipRelationListPersonExtraField(current, field);
-                        storeCompanionshipRelationListCompanionExtras(extras, window.localStorage);
-                        return extras;
-                      });
-                    }}
-                  />
-                  <span>{companionshipRelationListFieldLabels[field]}</span>
-                </label>
-              ))}
-            </div>
-          </div>
+          {readOnly ? null : (
+            <>
+              <div className="flex flex-col gap-2">
+                <p className={`text-xs font-semibold ${surfaces.mutedText}`}>
+                  Akompaniowany
+                </p>
+                <div className="flex flex-wrap gap-x-4 gap-y-2">
+                  {companionshipRelationListPersonExtraFields.map((field) => (
+                    <label
+                      key={`accompanied-${field}`}
+                      className="flex items-center gap-2"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={accompaniedExtras.includes(field)}
+                        onChange={() => {
+                          setAccompaniedExtras((current) => {
+                            const extras =
+                              toggleCompanionshipRelationListPersonExtraField(
+                                current,
+                                field
+                              );
+                            storeCompanionshipRelationListAccompaniedExtras(
+                              extras,
+                              window.localStorage
+                            );
+                            return extras;
+                          });
+                        }}
+                      />
+                      <span>{companionshipRelationListFieldLabels[field]}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <p className={`text-xs font-semibold ${surfaces.mutedText}`}>
+                  Akompaniator
+                </p>
+                <div className="flex flex-wrap gap-x-4 gap-y-2">
+                  {companionshipRelationListPersonExtraFields.map((field) => (
+                    <label
+                      key={`companion-${field}`}
+                      className="flex items-center gap-2"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={companionExtras.includes(field)}
+                        onChange={() => {
+                          setCompanionExtras((current) => {
+                            const extras =
+                              toggleCompanionshipRelationListPersonExtraField(
+                                current,
+                                field
+                              );
+                            storeCompanionshipRelationListCompanionExtras(
+                              extras,
+                              window.localStorage
+                            );
+                            return extras;
+                          });
+                        }}
+                      />
+                      <span>{companionshipRelationListFieldLabels[field]}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </details>
 
@@ -263,7 +327,15 @@ export function CompanionshipRelationList({
             <option value="accompanied">{companionshipRelationListFieldLabels['accompanied']}</option>
             <option value="companion">{companionshipRelationListFieldLabels['companion']}</option>
             <option value="start_date">{companionshipRelationListFieldLabels['start_date']}</option>
-            <option value="status">{companionshipRelationListFieldLabels['status']}</option>
+            {readOnly ? (
+              <option value="end_date">
+                {companionshipRelationListFieldLabels['end_date']}
+              </option>
+            ) : (
+              <option value="status">
+                {companionshipRelationListFieldLabels['status']}
+              </option>
+            )}
           </select>
         </label>
         
@@ -313,10 +385,10 @@ export function CompanionshipRelationList({
               {akompaniamentExtras.includes('start_date') && relation.start_date ? (
                 <span>Od {formatDate(relation.start_date)}</span>
               ) : null}
-              {relation.end_date ? (
+              {akompaniamentExtras.includes('end_date') && relation.end_date ? (
                 <span>Do {formatDate(relation.end_date)}</span>
               ) : null}
-              {akompaniamentExtras.includes('status') ? (
+              {!readOnly && akompaniamentExtras.includes('status') ? (
                 <span>{statusLabel(relation.status)}</span>
               ) : null}
             </div>
@@ -368,9 +440,11 @@ export function CompanionshipRelationList({
                     Akompaniator
                   </th>
                 ) : null}
-                <th className="px-3 py-2">
-                  <span className="sr-only">Działania</span>
-                </th>
+                {readOnly ? null : (
+                  <th className="px-3 py-2">
+                    <span className="sr-only">Działania</span>
+                  </th>
+                )}
               </tr>
               
               {/* Bottom tier header - Individual columns */}
@@ -412,7 +486,20 @@ export function CompanionshipRelationList({
                     />
                   </th>
                 ) : null}
-                {akompaniamentExtras.includes('status') ? (
+                {akompaniamentExtras.includes('end_date') ? (
+                  <th
+                    aria-sort={sortAria('end_date', sortField, sortDirection)}
+                    className="whitespace-nowrap px-3 py-3"
+                  >
+                    <SortHeader
+                      field="end_date"
+                      sortField={sortField}
+                      sortDirection={sortDirection}
+                      onSort={sortBy}
+                    />
+                  </th>
+                ) : null}
+                {!readOnly && akompaniamentExtras.includes('status') ? (
                   <th
                     aria-sort={sortAria('status', sortField, sortDirection)}
                     className="whitespace-nowrap px-3 py-3"
@@ -480,7 +567,14 @@ export function CompanionshipRelationList({
                       {formatDate(relation.start_date)}
                     </td>
                   ) : null}
-                  {akompaniamentExtras.includes('status') ? (
+                  {akompaniamentExtras.includes('end_date') ? (
+                    <td
+                      className={`whitespace-nowrap px-3 py-3 ${surfaces.mutedText}`}
+                    >
+                      {formatDate(relation.end_date)}
+                    </td>
+                  ) : null}
+                  {!readOnly && akompaniamentExtras.includes('status') ? (
                     <td
                       className={`whitespace-nowrap px-3 py-3 ${surfaces.mutedText}`}
                     >
