@@ -84,3 +84,64 @@ export function companionshipFindDetailPeople(
   }
   return people;
 }
+
+export const companionshipFindDetailFoldsStorageKey =
+  'emma.companionship-find.detail-folds';
+
+const defaultCompanionshipFindDetailFoldOpen = true;
+
+function companionshipFindDetailFoldsFromStoredValue(
+  stored: string | null
+): Record<string, boolean> {
+  if (stored == null) {
+    return {};
+  }
+  try {
+    const parsed: unknown = JSON.parse(stored);
+    if (parsed == null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return {};
+    }
+    const folds: Record<string, boolean> = {};
+    for (const [foldKey, open] of Object.entries(
+      parsed as Record<string, unknown>
+    )) {
+      if (typeof open === 'boolean') {
+        folds[foldKey] = open;
+      }
+    }
+    return folds;
+  } catch {
+    return {};
+  }
+}
+
+export function readCompanionshipFindDetailFoldOpen(
+  foldKey: string,
+  storage: Pick<Storage, 'getItem'> | null
+): boolean {
+  if (!storage) {
+    return defaultCompanionshipFindDetailFoldOpen;
+  }
+  const folds = companionshipFindDetailFoldsFromStoredValue(
+    storage.getItem(companionshipFindDetailFoldsStorageKey)
+  );
+  return folds[foldKey] ?? defaultCompanionshipFindDetailFoldOpen;
+}
+
+export function storeCompanionshipFindDetailFoldOpen(
+  foldKey: string,
+  open: boolean,
+  storage: Pick<Storage, 'getItem' | 'setItem'> | null
+): void {
+  if (!storage) {
+    return;
+  }
+  const folds = companionshipFindDetailFoldsFromStoredValue(
+    storage.getItem(companionshipFindDetailFoldsStorageKey)
+  );
+  folds[foldKey] = open;
+  storage.setItem(
+    companionshipFindDetailFoldsStorageKey,
+    JSON.stringify(folds)
+  );
+}

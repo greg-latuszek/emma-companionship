@@ -29,7 +29,9 @@ import {
   companionshipFindVisibleFieldLabels,
   companionshipFindVisibleFields,
   defaultCompanionshipFindVisibleFields,
+  readCompanionshipFindDetailFoldOpen,
   readStoredCompanionshipFindVisibleFields,
+  storeCompanionshipFindDetailFoldOpen,
   storeCompanionshipFindVisibleFields,
   toggleCompanionshipFindVisibleField,
   type CompanionshipFindVisibleField,
@@ -72,6 +74,62 @@ function FieldError({
   return <p className={`text-sm ${className}`}>{message}</p>;
 }
 
+function CompanionshipFindDetailFold({
+  foldKey,
+  title,
+  member,
+  visibleFields,
+  mutedTextClassName,
+  strongTextClassName,
+}: {
+  foldKey: string;
+  title: string;
+  member: CommunityMember;
+  visibleFields: CompanionshipFindVisibleField[];
+  mutedTextClassName: string;
+  strongTextClassName: string;
+}): JSX.Element {
+  const [open, setOpen] = useState(() =>
+    typeof window === 'undefined'
+      ? true
+      : readCompanionshipFindDetailFoldOpen(foldKey, window.localStorage)
+  );
+
+  useEffect(() => {
+    setOpen(readCompanionshipFindDetailFoldOpen(foldKey, window.localStorage));
+  }, [foldKey]);
+
+  return (
+    <details
+      open={open}
+      onToggle={(event) => {
+        const nextOpen = event.currentTarget.open;
+        setOpen(nextOpen);
+        storeCompanionshipFindDetailFoldOpen(
+          foldKey,
+          nextOpen,
+          window.localStorage
+        );
+      }}
+      className="text-sm"
+    >
+      <summary className={`cursor-pointer select-none ${mutedTextClassName}`}>
+        {title}
+      </summary>
+      <div className="mt-2 flex flex-col gap-1 pl-1">
+        {visibleFields.map((field) => (
+          <p key={field} className={mutedTextClassName}>
+            <span className={strongTextClassName}>
+              {companionshipFindVisibleFieldLabels[field]}:{' '}
+            </span>
+            {companionshipFindParticipantFieldText(member, field)}
+          </p>
+        ))}
+      </div>
+    </details>
+  );
+}
+
 function CompanionshipFindParticipantDetails({
   option,
   members,
@@ -99,23 +157,15 @@ function CompanionshipFindParticipantDetails({
   return (
     <div className="flex flex-col gap-2">
       {detailPeople.map(({ title, member }) => (
-        <details key={member.id} open className="text-sm">
-          <summary
-            className={`cursor-pointer select-none ${mutedTextClassName}`}
-          >
-            {title}
-          </summary>
-          <div className="mt-2 flex flex-col gap-1 pl-1">
-            {visibleFields.map((field) => (
-              <p key={field} className={mutedTextClassName}>
-                <span className={strongTextClassName}>
-                  {companionshipFindVisibleFieldLabels[field]}:{' '}
-                </span>
-                {companionshipFindParticipantFieldText(member, field)}
-              </p>
-            ))}
-          </div>
-        </details>
+        <CompanionshipFindDetailFold
+          key={member.id}
+          foldKey={member.id}
+          title={title}
+          member={member}
+          visibleFields={visibleFields}
+          mutedTextClassName={mutedTextClassName}
+          strongTextClassName={strongTextClassName}
+        />
       ))}
     </div>
   );

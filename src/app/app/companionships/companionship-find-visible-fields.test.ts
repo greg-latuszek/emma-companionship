@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  companionshipFindDetailFoldsStorageKey,
   companionshipFindDetailPeople,
   companionshipFindVisibleFieldsStorageKey,
+  readCompanionshipFindDetailFoldOpen,
   readStoredCompanionshipFindVisibleFields,
+  storeCompanionshipFindDetailFoldOpen,
   storeCompanionshipFindVisibleFields,
 } from './companionship-find-visible-fields';
 import { MemberId } from '@/types/auth';
@@ -114,5 +117,34 @@ describe('companionshipFindVisibleFields storage', () => {
             : null,
       })
     ).toEqual(['notes']);
+  });
+});
+
+describe('companionshipFindDetailFoldOpen storage', () => {
+  it('readCompanionshipFindDetailFoldOpen defaults to open when nothing is stored', () => {
+    expect(
+      readCompanionshipFindDetailFoldOpen('member-1', {
+        getItem: () => null,
+      })
+    ).toBe(true);
+  });
+
+  it('storeCompanionshipFindDetailFoldOpen keeps a closed fold closed after reload', () => {
+    const written: Record<string, string> = {};
+    const storage = {
+      getItem: (key: string) => written[key] ?? null,
+      setItem: (key: string, value: string) => {
+        written[key] = value;
+      },
+    };
+
+    storeCompanionshipFindDetailFoldOpen('member-1', false, storage);
+
+    expect(written[companionshipFindDetailFoldsStorageKey]).toBe(
+      JSON.stringify({ 'member-1': false })
+    );
+    expect(readCompanionshipFindDetailFoldOpen('member-1', storage)).toBe(
+      false
+    );
   });
 });
