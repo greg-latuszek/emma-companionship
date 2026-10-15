@@ -16,9 +16,10 @@ flowchart LR
   pending -->|yes| panel["/app/companionship-panel\n(shows missing count)"]
   panel --> members["/app/members\n(lista | małżeństwa | dodaj)"]
   members --> edit["Edytuj / Usuń / Rozłącz"]
-  panel --> companionships["/app/companionships\n(tab: utworzone | brakujące | dodaj)"]
-  companionships --> editRel["Edytuj / Usuń akompaniament"]
-  companionships --> assign["Przypisz akompaniatora\n(pre-selects accompanied)"]
+  panel --> companionships["/app/companionships\n(tab: utworzone | brakujące | znajdź | historia | dodaj)"]
+  companionships --> editRel["Edytuj / Zmień / Usuń akompaniament"]
+  companionships --> assign["Przypisz / Znajdź akompaniatora"]
+  companionships --> find["Zapamiętaj propozycje → Wybierz → aktywuj"]
 ```
 
 ## What it is not yet

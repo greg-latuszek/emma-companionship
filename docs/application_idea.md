@@ -3,13 +3,13 @@
 This file is the **domain vision** for emmaCompanionship — terminology, constraints, personas, and Phase-1 workflows. Almost none of it is implemented yet.
 
 **Built today:** a closed Google OAuth gate, a companionship panel, community-member registry CRUD (list / add / edit / remove),
-companionship-relation CRUD (list / add / edit / delete), and couple registry (list confirmed marriages, surname-based builder with confirm / reject / drag, decouple).
+companionship-relation CRUD (list / add / edit / delete), Find Companion drafts (`proposed` → choose → activate), and couple registry (list confirmed marriages, surname-based builder with confirm / reject / drag, decouple).
 First sign-in creates a pending `app_user`; an operator flips `is_active`;
 an approved member reaches `/app/companionship-panel` and can open **Członkowie wspólnoty** or **Akompaniamenty**.
 The panel card shows how many people still need a companion.
 **Członkowie wspólnoty** has four tabs: person list, **Małżeństwa**, **+ Dodaj Małżeństwa**, **+ Dodaj Osobę**.
-The Companionships screen has created relations, people without a companion (sorted names + assign), History, and an inline add form — including a direct shortcut from the missing list that pre-selects the accompanied person.
-Companionship rows in the DB stay person↔person (same-gender check on person write). On Add Companionship, Accompanied may be a person or an eligible couple; couple→couple saves as two rows (husband→husband, wife→wife). Edit uses couple UI when both spouses have an active accompanied relation; changing Companion archives the old active row(s) and inserts replacements. Created lists active; History lists archived (read-only), collapsing couple↔couple archives when both sides are still in the couple registry and the rows share dates. Missing lists couples (both spouses waiting) or unpaired people — same eligibility as Add.
+The Companionships screen has created relations, people without a companion (sorted names + Przypisz / Znajdź), **Znajdź Akompaniatora** (remember several proposals, pick one, hand off to locked Dodaj that activates and cleans up other drafts), History, and an inline add form — including shortcuts from Missing and **Zmień** on Created.
+Companionship rows in the DB stay person↔person (same-gender check on person write). Status may be `active`, `archived`, or `proposed`; Missing ignores `proposed`. On Add Companionship, Accompanied may be a person or an eligible couple; couple→couple saves as two rows (husband→husband, wife→wife). Edit uses couple UI when both spouses have an active accompanied relation; changing Companion archives the old active row(s) and inserts replacements. Created lists active; History lists archived (read-only), collapsing couple↔couple archives when both sides are still in the couple registry and the rows share dates. Missing lists couples (both spouses waiting) or unpaired people — same eligibility as Add.
 
 **Not built:** further business-rule validation (consecrated constraints, power separation), couple grouping on Created list, geography, supervision relations, graphs, import, health views, roles UI, admin approval UI, password or Facebook login.
 
