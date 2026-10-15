@@ -80,7 +80,7 @@ function SortHeader({
   const active = sortField === field;
   const surfaces = visualSurfaces(useVisualStyle());
   const textClass = isImportant
-    ? surfaces.importantText
+    ? surfaces.headerText
     : `font-medium ${surfaces.strongText}`;
 
   return (
@@ -528,7 +528,7 @@ export function CompanionshipRelationList({
               <tr className={`border-b ${surfaces.hairline}`}>
                 <th
                   aria-sort={sortAria('accompanied', sortField, sortDirection)}
-                  className={`${surfaces.importantArea} sticky left-0 z-10 min-w-[14rem] px-3 py-3`}
+                  className={`${surfaces.importantArea} sticky left-0 z-10 min-w-[14rem] px-3 py-2`}
                 >
                   <SortHeader
                     field="accompanied"
@@ -540,7 +540,7 @@ export function CompanionshipRelationList({
                 </th>
                 <th
                   aria-sort={sortAria('companion', sortField, sortDirection)}
-                  className={`${surfaces.importantArea} sticky left-[14rem] z-10 min-w-[14rem] whitespace-nowrap px-3 py-3`}
+                  className={`${surfaces.importantArea} sticky left-[14rem] z-10 min-w-[14rem] whitespace-nowrap px-3 py-2`}
                 >
                   <SortHeader
                     field="companion"

@@ -1,20 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState, type JSX } from 'react';
+import type { JSX } from 'react';
 import { useVisualStyle } from '@/components/VisualStyleProvider';
 import { visualSurfaces } from '@/components/visual-style-surfaces';
 import type { PersonWithoutCompanion } from '@/types/companionship-relation';
-import { MirroredHorizontalScroll } from '../members/MirroredHorizontalScroll';
-import {
-  peopleWithoutCompanionColumnLabels,
-  peopleWithoutCompanionColumns,
-  personWithoutCompanionColumnText,
-  readStoredPeopleWithoutCompanionShownColumns,
-  storePeopleWithoutCompanionShownColumns,
-  togglePeopleWithoutCompanionColumn,
-  type PeopleWithoutCompanionColumn,
-} from './people-without-companion-list-state';
 
 function personFullName(person: PersonWithoutCompanion): string {
   return `${person.last_name} ${person.first_name}`;
@@ -27,24 +17,6 @@ export function PeopleWithoutCompanionList({
 }): JSX.Element {
   const surfaces = visualSurfaces(useVisualStyle());
 
-  const [shownColumns, setShownColumns] = useState<
-    PeopleWithoutCompanionColumn[]
-  >([]);
-
-  useEffect(() => {
-    setShownColumns(
-      readStoredPeopleWithoutCompanionShownColumns(window.localStorage)
-    );
-  }, []);
-
-  function toggleColumn(column: PeopleWithoutCompanionColumn): void {
-    setShownColumns((current) => {
-      const next = togglePeopleWithoutCompanionColumn(current, column);
-      storePeopleWithoutCompanionShownColumns(next, window.localStorage);
-      return next;
-    });
-  }
-
   if (people.length === 0) {
     return (
       <p className={`text-center ${surfaces.mutedText}`}>
@@ -55,25 +27,6 @@ export function PeopleWithoutCompanionList({
 
   return (
     <div className="flex min-w-0 flex-col gap-6">
-      {/* Column picker */}
-      <details className="text-sm">
-        <summary className={`cursor-pointer select-none ${surfaces.secondaryText}`}>
-          Widoczne pola
-        </summary>
-        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2 pl-1">
-          {peopleWithoutCompanionColumns.map((column) => (
-            <label key={column} className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={shownColumns.includes(column)}
-                onChange={() => toggleColumn(column)}
-              />
-              <span>{peopleWithoutCompanionColumnLabels[column]}</span>
-            </label>
-          ))}
-        </div>
-      </details>
-
       {/* Mobile cards */}
       <ul className={`divide-y ${surfaces.rowDivider} text-left lg:hidden`}>
         {people.map((person) => (
@@ -81,15 +34,6 @@ export function PeopleWithoutCompanionList({
             <span className={surfaces.importantText}>
               {personFullName(person)}
             </span>
-            {peopleWithoutCompanionColumns.filter((c) => shownColumns.includes(c)).map((column) => {
-              const text = personWithoutCompanionColumnText(person, column);
-              if (!text) return null;
-              return (
-                <span key={column} className={`text-sm ${surfaces.secondaryText}`}>
-                  {peopleWithoutCompanionColumnLabels[column]}: {text}
-                </span>
-              );
-            })}
             <Link
               href={`/app/companionships?tab=new&accompanied=${person.id}`}
               className={`mt-2 self-start text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
@@ -102,23 +46,14 @@ export function PeopleWithoutCompanionList({
 
       {/* Desktop table */}
       <div className="hidden min-w-0 max-w-full lg:block">
-        <MirroredHorizontalScroll>
-          <table className="w-max min-w-full border-collapse text-left text-sm">
-            <thead>
-              <tr className={`border-b ${surfaces.hairline}`}>
-                <th
-                  className={`${surfaces.importantArea} sticky left-0 z-10 min-w-[14rem] px-3 py-3 ${surfaces.importantText}`}
-                >
-                  Osoba
-                </th>
-                {peopleWithoutCompanionColumns.filter((c) => shownColumns.includes(c)).map((column) => (
-                <th
-                  key={column}
-                  className="min-w-[12rem] px-3 py-3 font-semibold"
-                >
-                  {peopleWithoutCompanionColumnLabels[column]}
-                </th>
-              ))}
+        <table className="w-full border-collapse text-left text-sm">
+          <thead>
+            <tr className={`border-b ${surfaces.hairline}`}>
+              <th
+                className={`${surfaces.importantArea} min-w-[14rem] px-3 py-2 font-bold`}
+              >
+                Osoba
+              </th>
               <th className="px-3 py-3">
                 <span className="sr-only">Działania</span>
               </th>
@@ -128,23 +63,10 @@ export function PeopleWithoutCompanionList({
             {people.map((person) => (
               <tr key={person.id}>
                 <td
-                  className={`${surfaces.importantArea} sticky left-0 z-10 whitespace-nowrap px-3 py-3 ${surfaces.importantText}`}
+                  className={`whitespace-nowrap px-3 py-3 ${surfaces.importantText}`}
                 >
                   {personFullName(person)}
                 </td>
-                {peopleWithoutCompanionColumns.filter((c) => shownColumns.includes(c)).map((column) => (
-                  <td
-                    key={column}
-                    className={`px-3 py-3 ${
-                      column === 'community_engagement_status' &&
-                      !person.community_engagement_status
-                        ? surfaces.mutedText
-                        : ''
-                    }`}
-                  >
-                    {personWithoutCompanionColumnText(person, column)}
-                  </td>
-                ))}
                 <td className="whitespace-nowrap px-3 py-3">
                   <Link
                     href={`/app/companionships?tab=new&accompanied=${person.id}`}
@@ -155,9 +77,8 @@ export function PeopleWithoutCompanionList({
                 </td>
               </tr>
             ))}
-            </tbody>
-          </table>
-        </MirroredHorizontalScroll>
+          </tbody>
+        </table>
       </div>
     </div>
   );

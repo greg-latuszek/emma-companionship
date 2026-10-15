@@ -8,8 +8,7 @@ First sign-in creates a pending `app_user`; an operator flips `is_active`;
 an approved member reaches `/app/companionship-panel` and can open **Członkowie wspólnoty** or **Akompaniamenty**.
 The panel card shows how many people still need a companion.
 **Członkowie wspólnoty** has four tabs: person list, **Małżeństwa**, **+ Dodaj Małżeństwa**, **+ Dodaj Osobę**.
-The Akompaniamenty screen has three tabs: created relations, people without a companion (sorted, with toggleable detail columns),
-and an inline add form — including a direct shortcut from the missing list that pre-selects the accompanied person.
+The Companionships screen has created relations, people without a companion (sorted names + assign), History, and an inline add form — including a direct shortcut from the missing list that pre-selects the accompanied person.
 Companionship rows in the DB stay person↔person (same-gender check on person write). On Add Companionship, Accompanied may be a person or an eligible couple; couple→couple saves as two rows (husband→husband, wife→wife). Edit uses couple UI when both spouses have an active accompanied relation; changing Companion archives the old active row(s) and inserts replacements. Created lists active; History lists archived (read-only), collapsing couple↔couple archives when both sides are still in the couple registry and the rows share dates.
 
 **Not built:** further business-rule validation (consecrated constraints, power separation), couple grouping on Created / Missing lists, geography, supervision relations, graphs, import, health views, roles UI, admin approval UI, password or Facebook login.
