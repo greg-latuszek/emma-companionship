@@ -10,6 +10,10 @@ describe('companionshipsTabFrom', () => {
     expect(companionshipsTabFrom('missing')).toBe('missing');
   });
 
+  it('companionshipsTabFrom opens Find Companion when tab is find', () => {
+    expect(companionshipsTabFrom('find')).toBe('find');
+  });
+
   it('companionshipsTabFrom opens Companionship History when tab is history', () => {
     expect(companionshipsTabFrom('history')).toBe('history');
   });
@@ -36,6 +40,10 @@ describe('companionshipsTabHref', () => {
     expect(companionshipsTabHref('missing')).toBe(
       '/app/companionships?tab=missing'
     );
+  });
+
+  it('companionshipsTabHref adds tab=find for Find Companion', () => {
+    expect(companionshipsTabHref('find')).toBe('/app/companionships?tab=find');
   });
 
   it('companionshipsTabHref adds tab=history for Companionship History', () => {

@@ -6,10 +6,15 @@ import * as addCoupleCompanionshipRelationsModule from '@/application/add-couple
 import * as saveEditedCompanionshipRelationModule from '@/application/save-edited-companionship-relation';
 import * as saveEditedCoupleCompanionshipRelationsModule from '@/application/save-edited-couple-companionship-relations';
 import * as deleteCompanionshipRelationModule from '@/application/delete-companionship-relation';
+import * as addProposedCompanionshipRelationModule from '@/application/add-proposed-companionship-relation';
+import * as addProposedCoupleCompanionshipRelationsModule from '@/application/add-proposed-couple-companionship-relations';
+import * as deleteProposedCompanionshipRelationModule from '@/application/delete-proposed-companionship-relation';
 import {
   submitNewCompanionshipRelation,
   submitEditCompanionshipRelation,
   submitDeleteCompanionshipRelation,
+  submitRememberProposedCompanionship,
+  submitDeleteProposedCompanionship,
 } from './actions';
 
 function aPersonCompanionshipFormData(
@@ -77,6 +82,30 @@ vi.mock('@/application/delete-companionship-relation', () => ({
   deleteCompanionshipRelation: vi.fn(),
   isCompanionshipRelationNotFound: vi.fn(),
   CompanionshipRelationNotFound: class CompanionshipRelationNotFound extends Error {},
+}));
+
+vi.mock('@/application/add-proposed-companionship-relation', () => ({
+  addProposedCompanionshipRelation: vi.fn(),
+  isCompanionAndAccompaniedAreSamePerson: vi.fn(),
+  isCompanionAndAccompaniedHaveDifferentGenders: vi.fn(),
+  isProposedCompanionshipAlreadyExists: vi.fn(),
+  CompanionAndAccompaniedAreSamePerson: class CompanionAndAccompaniedAreSamePerson extends Error {},
+  CompanionAndAccompaniedHaveDifferentGenders: class CompanionAndAccompaniedHaveDifferentGenders extends Error {},
+  ProposedCompanionshipAlreadyExists: class ProposedCompanionshipAlreadyExists extends Error {},
+}));
+
+vi.mock('@/application/add-proposed-couple-companionship-relations', () => ({
+  addProposedCoupleCompanionshipRelations: vi.fn(),
+  isCompanionAndAccompaniedAreSameCouple: vi.fn(),
+  isCoupleCompanionshipParticipantsAreNotEligible: vi.fn(),
+  isProposedCompanionshipAlreadyExists: vi.fn(),
+  CompanionAndAccompaniedAreSameCouple: class CompanionAndAccompaniedAreSameCouple extends Error {},
+  CoupleCompanionshipParticipantsAreNotEligible: class CoupleCompanionshipParticipantsAreNotEligible extends Error {},
+}));
+
+vi.mock('@/application/delete-proposed-companionship-relation', () => ({
+  deleteProposedCompanionshipRelation: vi.fn(),
+  deleteProposedCoupleCompanionshipRelations: vi.fn(),
 }));
 
 describe('submitNewCompanionshipRelation', () => {
@@ -470,5 +499,101 @@ describe('submitDeleteCompanionshipRelation', () => {
 
     expect(result.success).toBe(false);
     expect(result.error).toBe('Nie udało się usunąć akompaniamentu. Spróbuj ponownie.');
+  });
+});
+
+describe('submitRememberProposedCompanionship', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (
+      addProposedCompanionshipRelationModule.addProposedCompanionshipRelation as Mock
+    ).mockResolvedValue(undefined);
+    (
+      addProposedCoupleCompanionshipRelationsModule.addProposedCoupleCompanionshipRelations as Mock
+    ).mockResolvedValue(undefined);
+    vi.mocked(
+      addProposedCompanionshipRelationModule.isCompanionAndAccompaniedAreSamePerson
+    ).mockReturnValue(false);
+    vi.mocked(
+      addProposedCompanionshipRelationModule.isCompanionAndAccompaniedHaveDifferentGenders
+    ).mockReturnValue(false);
+    vi.mocked(
+      addProposedCompanionshipRelationModule.isProposedCompanionshipAlreadyExists
+    ).mockReturnValue(false);
+    vi.mocked(
+      addProposedCoupleCompanionshipRelationsModule.isCompanionAndAccompaniedAreSameCouple
+    ).mockReturnValue(false);
+    vi.mocked(
+      addProposedCoupleCompanionshipRelationsModule.isCoupleCompanionshipParticipantsAreNotEligible
+    ).mockReturnValue(false);
+    vi.mocked(
+      addProposedCoupleCompanionshipRelationsModule.isProposedCompanionshipAlreadyExists
+    ).mockReturnValue(false);
+  });
+
+  it('submitRememberProposedCompanionship remembers a person proposal and returns to Find', async () => {
+    await submitRememberProposedCompanionship(
+      undefined,
+      aPersonCompanionshipFormData()
+    );
+
+    expect(
+      addProposedCompanionshipRelationModule.addProposedCompanionshipRelation
+    ).toHaveBeenCalledWith({
+      companion_id: '550e8400-e29b-41d4-a716-446655440000',
+      accompanied_id: '550e8400-e29b-41d4-a716-446655440001',
+      start_date: null,
+      end_date: null,
+      notes: null,
+    });
+    expect(redirect).toHaveBeenCalledWith(
+      '/app/companionships?tab=find&accompanied=550e8400-e29b-41d4-a716-446655440001'
+    );
+  });
+
+  it('submitRememberProposedCompanionship refuses a duplicate person proposal', async () => {
+    (
+      addProposedCompanionshipRelationModule.addProposedCompanionshipRelation as Mock
+    ).mockRejectedValue(
+      new addProposedCompanionshipRelationModule.ProposedCompanionshipAlreadyExists()
+    );
+    vi.mocked(
+      addProposedCompanionshipRelationModule.isProposedCompanionshipAlreadyExists
+    ).mockReturnValue(true);
+
+    const result = await submitRememberProposedCompanionship(
+      undefined,
+      aPersonCompanionshipFormData()
+    );
+
+    expect(result.formError).toBe(
+      'Ta propozycja akompaniatora jest już zapamiętana.'
+    );
+  });
+});
+
+describe('submitDeleteProposedCompanionship', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (
+      deleteProposedCompanionshipRelationModule.deleteProposedCompanionshipRelation as Mock
+    ).mockResolvedValue(undefined);
+    (
+      deleteProposedCompanionshipRelationModule.deleteProposedCoupleCompanionshipRelations as Mock
+    ).mockResolvedValue(undefined);
+  });
+
+  it('submitDeleteProposedCompanionship removes a person proposal and refreshes companionships', async () => {
+    const formData = new FormData();
+    formData.set('proposal_kind', 'person');
+    formData.set('proposal_id', 'proposal-1');
+
+    const result = await submitDeleteProposedCompanionship(formData);
+
+    expect(
+      deleteProposedCompanionshipRelationModule.deleteProposedCompanionshipRelation
+    ).toHaveBeenCalledWith('proposal-1');
+    expect(revalidatePath).toHaveBeenCalledWith('/app/companionships');
+    expect(result).toEqual({ success: true });
   });
 });

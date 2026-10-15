@@ -33,12 +33,28 @@ import {
   isCompanionshipRelationNotFound as isCompanionshipRelationNotFoundDelete,
 } from '@/application/delete-companionship-relation';
 import {
+  addProposedCompanionshipRelation,
+  isCompanionAndAccompaniedAreSamePerson as isCompanionAndAccompaniedAreSamePersonProposed,
+  isCompanionAndAccompaniedHaveDifferentGenders as isCompanionAndAccompaniedHaveDifferentGendersProposed,
+  isProposedCompanionshipAlreadyExists,
+} from '@/application/add-proposed-companionship-relation';
+import {
+  addProposedCoupleCompanionshipRelations,
+  isCompanionAndAccompaniedAreSameCouple as isCompanionAndAccompaniedAreSameCoupleProposed,
+  isCoupleCompanionshipParticipantsAreNotEligible as isCoupleCompanionshipParticipantsAreNotEligibleProposed,
+} from '@/application/add-proposed-couple-companionship-relations';
+import {
+  deleteProposedCompanionshipRelation,
+  deleteProposedCoupleCompanionshipRelations,
+} from '@/application/delete-proposed-companionship-relation';
+import {
   companionshipRelationFormStateAfterFailedSubmit,
   companionshipRelationFormValuesFromForm,
   polishCompanionshipRelationWriteIssues,
   type CompanionshipRelationFormState,
   type CompanionshipRelationFormValues,
 } from './companionship-relation-form-state';
+import { companionshipFindHref } from './companionship-find-form-state';
 
 function redirectAfterNewCompanionship(formData: FormData): never {
   const returnTab = formData.get('return_tab')?.toString();
@@ -339,4 +355,177 @@ export async function submitDeleteCompanionshipRelation(
       error: 'Nie udało się usunąć akompaniamentu. Spróbuj ponownie.',
     };
   }
+}
+
+function redirectToFindCompanionship(accompaniedId: string): never {
+  redirect(companionshipFindHref(accompaniedId));
+}
+
+async function submitRememberPersonProposedCompanionship(
+  values: CompanionshipRelationFormValues
+): Promise<CompanionshipRelationFormState> {
+  const parsed = companionshipRelationWriteSchema.safeParse({
+    companion_id: values.companion_id,
+    accompanied_id: values.accompanied_id,
+    start_date: null,
+    end_date: null,
+    notes: null,
+  });
+
+  if (!parsed.success) {
+    return companionshipRelationFormStateAfterFailedSubmit({
+      values,
+      fieldErrors: polishCompanionshipRelationWriteIssues(parsed.error.issues),
+    });
+  }
+
+  try {
+    await addProposedCompanionshipRelation(parsed.data);
+  } catch (error) {
+    if (isCompanionAndAccompaniedAreSamePersonProposed(error)) {
+      return companionshipRelationFormStateAfterFailedSubmit({
+        values,
+        formError: 'Akompaniator i akompaniowany nie mogą być tą samą osobą.',
+      });
+    }
+
+    if (isCompanionAndAccompaniedHaveDifferentGendersProposed(error)) {
+      return companionshipRelationFormStateAfterFailedSubmit({
+        values,
+        formError: 'Akompaniator i akompaniowany muszą być tej samej płci.',
+      });
+    }
+
+    if (isProposedCompanionshipAlreadyExists(error)) {
+      return companionshipRelationFormStateAfterFailedSubmit({
+        values,
+        formError: 'Ta propozycja akompaniatora jest już zapamiętana.',
+      });
+    }
+
+    return companionshipRelationFormStateAfterFailedSubmit({
+      values,
+      formError: 'Nie udało się zapamiętać propozycji. Spróbuj ponownie.',
+    });
+  }
+
+  return redirectToFindCompanionship(values.accompanied_id);
+}
+
+async function submitRememberCoupleProposedCompanionship(
+  values: CompanionshipRelationFormValues
+): Promise<CompanionshipRelationFormState> {
+  const parsed = coupleCompanionshipWriteSchema.safeParse({
+    companion_couple_id: values.companion_id,
+    accompanied_couple_id: values.accompanied_id,
+    start_date: null,
+    end_date: null,
+    notes: null,
+  });
+
+  if (!parsed.success) {
+    const remappedIssues = parsed.error.issues.map((issue) => {
+      const path = [...issue.path];
+      if (path[0] === 'companion_couple_id') {
+        path[0] = 'companion_id';
+      }
+      if (path[0] === 'accompanied_couple_id') {
+        path[0] = 'accompanied_id';
+      }
+      return { ...issue, path };
+    });
+    return companionshipRelationFormStateAfterFailedSubmit({
+      values,
+      fieldErrors: polishCompanionshipRelationWriteIssues(remappedIssues),
+    });
+  }
+
+  try {
+    await addProposedCoupleCompanionshipRelations(parsed.data);
+  } catch (error) {
+    if (isCompanionAndAccompaniedAreSameCoupleProposed(error)) {
+      return companionshipRelationFormStateAfterFailedSubmit({
+        values,
+        formError:
+          'Akompaniator i akompaniowany nie mogą być tym samym małżeństwem.',
+      });
+    }
+
+    if (isCoupleCompanionshipParticipantsAreNotEligibleProposed(error)) {
+      return companionshipRelationFormStateAfterFailedSubmit({
+        values,
+        formError:
+          'Wybrane małżeństwa nie mogą utworzyć propozycji akompaniamentu.',
+      });
+    }
+
+    if (isProposedCompanionshipAlreadyExists(error)) {
+      return companionshipRelationFormStateAfterFailedSubmit({
+        values,
+        formError: 'Ta propozycja akompaniatora jest już zapamiętana.',
+      });
+    }
+
+    return companionshipRelationFormStateAfterFailedSubmit({
+      values,
+      formError: 'Nie udało się zapamiętać propozycji. Spróbuj ponownie.',
+    });
+  }
+
+  return redirectToFindCompanionship(values.accompanied_id);
+}
+
+export async function submitRememberProposedCompanionship(
+  _previous: CompanionshipRelationFormState | undefined,
+  formData: FormData
+): Promise<CompanionshipRelationFormState> {
+  const values = companionshipRelationFormValuesFromForm(formData);
+
+  if (values.accompanied_kind === 'couple' && values.companion_kind === 'couple') {
+    return submitRememberCoupleProposedCompanionship(values);
+  }
+
+  if (values.accompanied_kind === 'person' && values.companion_kind === 'person') {
+    return submitRememberPersonProposedCompanionship(values);
+  }
+
+  return companionshipRelationFormStateAfterFailedSubmit({
+    values,
+    formError:
+      'Akompaniowany i proponowany akompaniator muszą być oboje osobami albo oboje małżeństwami.',
+  });
+}
+
+export async function submitDeleteProposedCompanionship(
+  formData: FormData
+): Promise<{ success: boolean; error?: string }> {
+  const proposalKind = formData.get('proposal_kind')?.toString();
+
+  try {
+    if (proposalKind === 'person') {
+      const proposalId = formData.get('proposal_id')?.toString() ?? '';
+      await deleteProposedCompanionshipRelation(proposalId);
+    } else if (proposalKind === 'couple') {
+      const husbandProposalId =
+        formData.get('husband_proposal_id')?.toString() ?? '';
+      const wifeProposalId = formData.get('wife_proposal_id')?.toString() ?? '';
+      await deleteProposedCoupleCompanionshipRelations(
+        husbandProposalId,
+        wifeProposalId
+      );
+    } else {
+      return {
+        success: false,
+        error: 'Nie udało się usunąć propozycji. Spróbuj ponownie.',
+      };
+    }
+  } catch {
+    return {
+      success: false,
+      error: 'Nie udało się usunąć propozycji. Spróbuj ponownie.',
+    };
+  }
+
+  revalidatePath('/app/companionships');
+  return { success: true };
 }

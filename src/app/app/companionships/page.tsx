@@ -4,10 +4,15 @@ import { listCompanionshipRelations } from '@/application/list-companionship-rel
 import { listArchivedCompanionshipRelations } from '@/application/list-archived-companionship-relations';
 import { groupArchivedCompanionshipHistory } from '@/application/group-archived-companionship-history';
 import { groupPeopleWithoutCompanion } from '@/application/group-people-without-companion';
+import { groupProposedCompanionshipChoices } from '@/application/group-proposed-companionship-choices';
 import { listPeopleWithoutCompanion } from '@/application/list-people-without-companion';
+import { listProposedCompanionshipRelationsForAccompanied } from '@/application/list-proposed-companionship-relations';
 import { listCommunityMembers } from '@/application/list-community-members';
 import { listCouples } from '@/application/list-couples';
-import { proposeAccompaniedCompanionshipOptions } from '@/application/companionship-add-participant-options';
+import {
+  findAccompaniedCompanionshipOption,
+  proposeAccompaniedCompanionshipOptions,
+} from '@/application/companionship-add-participant-options';
 import { PageBackground } from '@/components/PageBackground';
 import { AppArea } from '@/components/AppArea';
 import { Navbar } from '@/components/Navbar';
@@ -17,8 +22,10 @@ import { TabbedPanel } from '@/components/TabbedPanel';
 import { signedInMemberFrom } from '@/app/app/companionship-panel/signed-in-member';
 import { CompanionshipRelationList } from './CompanionshipRelationList';
 import { CompanionshipRelationForm } from './CompanionshipRelationForm';
+import { CompanionshipFindForm } from './CompanionshipFindForm';
 import { PeopleWithoutCompanionList } from './PeopleWithoutCompanionList';
 import { submitNewCompanionshipRelation } from './actions';
+import { newCompanionshipFindFormValues } from './companionship-find-form-state';
 import { newCompanionshipRelationFormValues } from './companionship-relation-form-state';
 import {
   companionshipsTabFrom,
@@ -43,15 +50,19 @@ export default async function CompanionshipsPage({
 
   const needsCouples =
     selectedTab === 'new' ||
+    selectedTab === 'find' ||
     selectedTab === 'history' ||
     selectedTab === 'missing';
   const needsPeopleWithoutCompanion =
-    selectedTab === 'new' || selectedTab === 'missing';
+    selectedTab === 'new' ||
+    selectedTab === 'find' ||
+    selectedTab === 'missing';
+  const needsMembers = selectedTab === 'new' || selectedTab === 'find';
 
   const [member, members, peopleWithoutCompanion, couples, archivedRelations] =
     await Promise.all([
       signedInMemberFrom(session),
-      selectedTab === 'new'
+      needsMembers
         ? listCommunityMembers()
         : Promise.resolve(
             [] as Awaited<ReturnType<typeof listCommunityMembers>>
@@ -92,6 +103,38 @@ export default async function CompanionshipsPage({
       ? newCompanionshipRelationFormValues(accompaniedId, accompaniedOptions)
       : undefined;
 
+  const findFormValues =
+    selectedTab === 'find'
+      ? newCompanionshipFindFormValues(accompaniedId, accompaniedOptions)
+      : undefined;
+
+  const findAccompaniedOption =
+    selectedTab === 'find' && findFormValues?.accompanied_id
+      ? findAccompaniedCompanionshipOption(
+          accompaniedOptions,
+          findFormValues.accompanied_id
+        )
+      : undefined;
+
+  const findAccompaniedCouple =
+    findAccompaniedOption?.kind === 'couple'
+      ? couples.find((couple) => couple.id === findAccompaniedOption.id)
+      : undefined;
+
+  const proposedRelations =
+    selectedTab === 'find' && findAccompaniedOption
+      ? await listProposedCompanionshipRelationsForAccompanied(
+          findAccompaniedCouple
+            ? [findAccompaniedCouple.husband.id, findAccompaniedCouple.wife.id]
+            : [findAccompaniedOption.id]
+        )
+      : [];
+
+  const proposalChoices =
+    selectedTab === 'find'
+      ? groupProposedCompanionshipChoices(proposedRelations, couples)
+      : [];
+
   const returnTab = accompaniedId !== undefined ? 'missing' : undefined;
 
   return (
@@ -127,6 +170,11 @@ export default async function CompanionshipsPage({
                   isActive: selectedTab === 'missing',
                 },
                 {
+                  href: companionshipsTabHref('find'),
+                  label: companionshipsTabTitles.find,
+                  isActive: selectedTab === 'find',
+                },
+                {
                   href: companionshipsTabHref('history'),
                   label: companionshipsTabTitles.history,
                   isActive: selectedTab === 'history',
@@ -146,6 +194,14 @@ export default async function CompanionshipsPage({
                   couples={couples}
                   initialValues={initialFormValues!}
                   returnTab={returnTab}
+                />
+              ) : selectedTab === 'find' ? (
+                <CompanionshipFindForm
+                  members={members}
+                  couples={couples}
+                  accompaniedOptions={accompaniedOptions}
+                  proposalChoices={proposalChoices}
+                  initialValues={findFormValues!}
                 />
               ) : selectedTab === 'missing' ? (
                 <PeopleWithoutCompanionList rows={missingRows} />
