@@ -44,6 +44,21 @@ export function companionshipFindHref(accompaniedId?: string): string {
   return '/app/companionships?tab=find';
 }
 
+export function companionshipFindChangeHref(relationId: string): string {
+  return `/app/companionships?tab=find&change=${relationId}`;
+}
+
+/** Prefer change-companion entry so Accompanied stays locked after Remember. */
+export function companionshipFindReturnHref(input: {
+  accompaniedId?: string;
+  changeRelationId?: string;
+}): string {
+  if (input.changeRelationId) {
+    return companionshipFindChangeHref(input.changeRelationId);
+  }
+  return companionshipFindHref(input.accompaniedId);
+}
+
 export function companionshipChooseFromFindHref(input: {
   accompaniedKind: CompanionshipParticipantKind;
   accompaniedId: string;
@@ -52,6 +67,7 @@ export function companionshipChooseFromFindHref(input: {
   proposalId?: string;
   husbandProposalId?: string;
   wifeProposalId?: string;
+  changeRelationId?: string;
 }): string {
   const params = new URLSearchParams({
     tab: 'new',
@@ -69,6 +85,9 @@ export function companionshipChooseFromFindHref(input: {
   }
   if (input.wifeProposalId) {
     params.set('proposal_wife', input.wifeProposalId);
+  }
+  if (input.changeRelationId) {
+    params.set('change', input.changeRelationId);
   }
   return `/app/companionships?${params.toString()}`;
 }

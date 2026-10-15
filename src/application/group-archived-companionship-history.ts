@@ -75,9 +75,9 @@ function findMatchingSpouseArchivedRelation(
 }
 
 /**
- * Groups archived companionship list items for Historia: couple↔couple when
- * both accompanied and both companions are registered couples and rows share
- * start_date / end_date; otherwise one person row each.
+ * Groups archived companionship list items for Companionship History:
+ * couple↔couple when both accompanied and both companions are registered
+ * couples and rows share start_date / end_date; otherwise one person row each.
  */
 export function groupArchivedCompanionshipHistory(
   archivedRelations: readonly CompanionshipRelationListItem[],

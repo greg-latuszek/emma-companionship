@@ -1,6 +1,6 @@
 /**
  * Activates a chosen Find Companion proposal and drops leftover proposals.
- * Archives any current active relation for the Accompanied (Zmień path).
+ * Archives any current active relation for the Accompanied (change-companion path).
  */
 
 import { startDatabasePool } from '@/infrastructure/db/startup';

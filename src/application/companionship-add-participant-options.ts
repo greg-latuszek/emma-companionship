@@ -54,8 +54,8 @@ function sortCompanionshipParticipantOptions(
 }
 
 /**
- * Akompaniowany choices: Brakujące singles not in a couple, plus couples where
- * both spouses still need a companion.
+ * Accompanied choices: Missing Companionships singles not in a couple, plus
+ * couples where both spouses still need a companion.
  */
 export function proposeAccompaniedCompanionshipOptions(
   peopleWithoutCompanion: ReadonlyArray<{ id: string }>,
@@ -116,7 +116,7 @@ function findCompanionshipParticipantOption(
 }
 
 /**
- * Akompaniator choices after Akompaniowany is known.
+ * Companion choices after Accompanied is known.
  * Person → same-gender people from the full registry (keep current selection).
  * Couple → every other couple.
  */

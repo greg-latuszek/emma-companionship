@@ -6,7 +6,7 @@ import {
   communityEngagementLabels,
 } from '@/app/app/members/community-member-labels';
 
-// Base fields in the Akompaniament group
+// Base fields in the Companionship group
 export const companionshipRelationListBaseFields = [
   'accompanied',
   'companion',
@@ -17,7 +17,7 @@ export const companionshipRelationListBaseFields = [
 export type CompanionshipRelationListBaseField =
   (typeof companionshipRelationListBaseFields)[number];
 
-// Toggleable fields for Akompaniament group
+// Toggleable fields for Companionship group
 export const companionshipRelationListAkompaniamentExtraFields = [
   'start_date',
   'end_date',
@@ -27,19 +27,19 @@ export const companionshipRelationListAkompaniamentExtraFields = [
 export type CompanionshipRelationListAkompaniamentExtraField =
   (typeof companionshipRelationListAkompaniamentExtraFields)[number];
 
-/** Utworzone: start + status (active list; end date is unused). */
+/** Created Companionships: start + status (active list; end date is unused). */
 export const companionshipRelationListCreatedAkompaniamentExtraFields = [
   'start_date',
   'status',
 ] as const;
 
-/** Historia: start + end (status is always archived). */
+/** Companionship History: start + end (status is always archived). */
 export const companionshipRelationListHistoryAkompaniamentExtraFields = [
   'start_date',
   'end_date',
 ] as const;
 
-// Toggleable fields for Akompaniowany and Akompaniator groups
+// Toggleable fields for Accompanied and Companion groups
 export const companionshipRelationListPersonExtraFields = [
   'marital_status',
   'consecrated_status',
@@ -415,7 +415,7 @@ export function storeCompanionshipRelationListSort(
   );
 }
 
-// Akompaniament extras storage functions
+// Companionship extras storage functions
 function akompaniamentExtrasFromStoredValue(
   stored: string | null,
   allowedFields: readonly CompanionshipRelationListAkompaniamentExtraField[],

@@ -6,9 +6,16 @@ import type { PersonWithoutCompanionRow } from '@/application/group-people-witho
 import { useVisualStyle } from '@/components/VisualStyleProvider';
 import { visualSurfaces } from '@/components/visual-style-surfaces';
 
+function accompaniedIdFrom(row: PersonWithoutCompanionRow): string {
+  return row.kind === 'person' ? row.person.id : row.couple.id;
+}
+
 function assignHref(row: PersonWithoutCompanionRow): string {
-  const accompaniedId = row.kind === 'person' ? row.person.id : row.couple.id;
-  return `/app/companionships?tab=new&accompanied=${accompaniedId}`;
+  return `/app/companionships?tab=new&accompanied=${accompaniedIdFrom(row)}`;
+}
+
+function findHref(row: PersonWithoutCompanionRow): string {
+  return `/app/companionships?tab=find&accompanied=${accompaniedIdFrom(row)}`;
 }
 
 export function PeopleWithoutCompanionList({
@@ -36,12 +43,20 @@ export function PeopleWithoutCompanionList({
             className="flex flex-col gap-1 py-4"
           >
             <span className={surfaces.importantText}>{row.label}</span>
-            <Link
-              href={assignHref(row)}
-              className={`mt-2 self-start text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
-            >
-              Przypisz akompaniatora
-            </Link>
+            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+              <Link
+                href={assignHref(row)}
+                className={`text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
+              >
+                Przypisz akompaniatora
+              </Link>
+              <Link
+                href={findHref(row)}
+                className={`text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
+              >
+                Znajdź akompaniatora
+              </Link>
+            </div>
           </li>
         ))}
       </ul>
@@ -72,12 +87,20 @@ export function PeopleWithoutCompanionList({
                   {row.label}
                 </td>
                 <td className="whitespace-nowrap px-3 py-3">
-                  <Link
-                    href={assignHref(row)}
-                    className={`text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
-                  >
-                    Przypisz akompaniatora
-                  </Link>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1">
+                    <Link
+                      href={assignHref(row)}
+                      className={`text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
+                    >
+                      Przypisz akompaniatora
+                    </Link>
+                    <Link
+                      href={findHref(row)}
+                      className={`text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
+                    >
+                      Znajdź akompaniatora
+                    </Link>
+                  </div>
                 </td>
               </tr>
             ))}

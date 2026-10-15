@@ -477,6 +477,12 @@ export function CompanionshipRelationList({
                 >
                   Edytuj
                 </Link>
+                <Link
+                  href={`/app/companionships?tab=find&change=${row.relation.id}`}
+                  className={`text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
+                >
+                  Zmień
+                </Link>
                 <DeleteCompanionshipRelationButton
                   relationId={row.relation.id}
                   accompaniedName={row.accompaniedLabel}
@@ -690,6 +696,12 @@ export function CompanionshipRelationList({
                           className={`text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
                         >
                           Edytuj
+                        </Link>
+                        <Link
+                          href={`/app/companionships?tab=find&change=${row.relation.id}`}
+                          className={`text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
+                        >
+                          Zmień
                         </Link>
                         <DeleteCompanionshipRelationButton
                           relationId={row.relation.id}

@@ -132,7 +132,7 @@ describe('proposeAccompaniedCompanionshipOptions', () => {
     }),
   });
 
-  it('proposeAccompaniedCompanionshipOptions lists unpaired Brakujące people as singles and omits spouses who are in a couple', () => {
+  it('proposeAccompaniedCompanionshipOptions lists unpaired Missing people as singles and omits spouses who are in a couple', () => {
     const options = proposeAccompaniedCompanionshipOptions(
       [{ id: piotr.id }, { id: jan.id }, { id: anna.id }],
       [piotr, jan, anna, maria],
@@ -238,7 +238,7 @@ describe('proposeCompanionCompanionshipOptions', () => {
     }),
   });
 
-  it('proposeCompanionCompanionshipOptions lists same-gender people when Akompaniowany is a person', () => {
+  it('proposeCompanionCompanionshipOptions lists same-gender people when Accompanied is a person', () => {
     const options = proposeCompanionCompanionshipOptions(
       {
         kind: 'person',
@@ -266,7 +266,7 @@ describe('proposeCompanionCompanionshipOptions', () => {
     ]);
   });
 
-  it('proposeCompanionCompanionshipOptions lists other couples only when Akompaniowany is a couple', () => {
+  it('proposeCompanionCompanionshipOptions lists other couples only when Accompanied is a couple', () => {
     const options = proposeCompanionCompanionshipOptions(
       {
         kind: 'couple',

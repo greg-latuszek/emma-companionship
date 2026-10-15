@@ -1,6 +1,7 @@
 /**
  * Persists a Find Companion couple proposal (husband→husband + wife→wife, proposed).
- * Does not require Accompanied spouses to be without an active companion (Zmień path).
+ * Does not require Accompanied spouses to be without an active companion
+ * (change-companion entry from Created Companionships).
  */
 
 import { startDatabasePool } from '@/infrastructure/db/startup';

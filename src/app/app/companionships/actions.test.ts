@@ -9,12 +9,14 @@ import * as deleteCompanionshipRelationModule from '@/application/delete-compani
 import * as addProposedCompanionshipRelationModule from '@/application/add-proposed-companionship-relation';
 import * as addProposedCoupleCompanionshipRelationsModule from '@/application/add-proposed-couple-companionship-relations';
 import * as deleteProposedCompanionshipRelationModule from '@/application/delete-proposed-companionship-relation';
+import * as activateProposedCompanionshipRelationModule from '@/application/activate-proposed-companionship-relation';
 import {
   submitNewCompanionshipRelation,
   submitEditCompanionshipRelation,
   submitDeleteCompanionshipRelation,
   submitRememberProposedCompanionship,
   submitDeleteProposedCompanionship,
+  submitActivateProposedCompanionshipFromFind,
 } from './actions';
 
 function aPersonCompanionshipFormData(
@@ -106,6 +108,11 @@ vi.mock('@/application/add-proposed-couple-companionship-relations', () => ({
 vi.mock('@/application/delete-proposed-companionship-relation', () => ({
   deleteProposedCompanionshipRelation: vi.fn(),
   deleteProposedCoupleCompanionshipRelations: vi.fn(),
+}));
+
+vi.mock('@/application/activate-proposed-companionship-relation', () => ({
+  activateProposedCompanionshipRelation: vi.fn(),
+  activateProposedCoupleCompanionshipRelations: vi.fn(),
 }));
 
 describe('submitNewCompanionshipRelation', () => {
@@ -233,7 +240,7 @@ describe('submitNewCompanionshipRelation', () => {
     expect(redirect).not.toHaveBeenCalled();
   });
 
-  it('submitNewCompanionshipRelation returns to Brakujące Akompaniamenty when the relation was started there', async () => {
+  it('submitNewCompanionshipRelation returns to Missing Companionships when the relation was started there', async () => {
     await submitNewCompanionshipRelation(
       undefined,
       aPersonCompanionshipFormData({ return_tab: 'missing' })
@@ -242,7 +249,7 @@ describe('submitNewCompanionshipRelation', () => {
     expect(redirect).toHaveBeenCalledWith('/app/companionships?tab=missing');
   });
 
-  it('submitNewCompanionshipRelation returns to Utworzone Akompaniamenty when started from the add button', async () => {
+  it('submitNewCompanionshipRelation returns to Created Companionships when started from the add button', async () => {
     await submitNewCompanionshipRelation(undefined, aPersonCompanionshipFormData());
 
     expect(redirect).toHaveBeenCalledWith('/app/companionships');
@@ -551,6 +558,17 @@ describe('submitRememberProposedCompanionship', () => {
     );
   });
 
+  it('submitRememberProposedCompanionship keeps the change-companion entry after remembering', async () => {
+    await submitRememberProposedCompanionship(
+      undefined,
+      aPersonCompanionshipFormData({ change: 'active-relation-1' })
+    );
+
+    expect(redirect).toHaveBeenCalledWith(
+      '/app/companionships?tab=find&change=active-relation-1'
+    );
+  });
+
   it('submitRememberProposedCompanionship refuses a duplicate person proposal', async () => {
     (
       addProposedCompanionshipRelationModule.addProposedCompanionshipRelation as Mock
@@ -595,5 +613,57 @@ describe('submitDeleteProposedCompanionship', () => {
     ).toHaveBeenCalledWith('proposal-1');
     expect(revalidatePath).toHaveBeenCalledWith('/app/companionships');
     expect(result).toEqual({ success: true });
+  });
+});
+
+describe('submitActivateProposedCompanionshipFromFind', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (
+      activateProposedCompanionshipRelationModule.activateProposedCompanionshipRelation as Mock
+    ).mockResolvedValue(undefined);
+    (
+      activateProposedCompanionshipRelationModule.activateProposedCoupleCompanionshipRelations as Mock
+    ).mockResolvedValue(undefined);
+  });
+
+  it('submitActivateProposedCompanionshipFromFind activates a person proposal and opens Created Companionships', async () => {
+    const formData = aPersonCompanionshipFormData({
+      proposal: 'proposal-1',
+      start_date: '2024-06-01',
+      notes: 'wybór',
+    });
+
+    await submitActivateProposedCompanionshipFromFind(undefined, formData);
+
+    expect(
+      activateProposedCompanionshipRelationModule.activateProposedCompanionshipRelation
+    ).toHaveBeenCalledWith('proposal-1', {
+      start_date: '2024-06-01',
+      notes: 'wybór',
+    });
+    expect(redirect).toHaveBeenCalledWith('/app/companionships');
+  });
+
+  it('submitActivateProposedCompanionshipFromFind activates a couple proposal pair', async () => {
+    const formData = new FormData();
+    formData.set('accompanied_kind', 'couple');
+    formData.set('companion_kind', 'couple');
+    formData.set('accompanied_id', '550e8400-e29b-41d4-a716-446655440001');
+    formData.set('companion_id', '550e8400-e29b-41d4-a716-446655440000');
+    formData.set('proposal_husband', 'ph');
+    formData.set('proposal_wife', 'pw');
+    formData.set('start_date', '2024-06-01');
+    formData.set('notes', '');
+
+    await submitActivateProposedCompanionshipFromFind(undefined, formData);
+
+    expect(
+      activateProposedCompanionshipRelationModule.activateProposedCoupleCompanionshipRelations
+    ).toHaveBeenCalledWith('ph', 'pw', {
+      start_date: '2024-06-01',
+      notes: null,
+    });
+    expect(redirect).toHaveBeenCalledWith('/app/companionships');
   });
 });

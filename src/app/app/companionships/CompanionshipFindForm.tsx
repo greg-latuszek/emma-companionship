@@ -48,6 +48,7 @@ function FindParticipantSelects({
   couples,
   accompaniedOptions,
   proposalChoices,
+  lockedAccompanied,
   initialAccompaniedKind,
   initialAccompaniedId,
   initialCompanionKind,
@@ -61,6 +62,7 @@ function FindParticipantSelects({
   couples: CoupleListItem[];
   accompaniedOptions: CompanionshipParticipantOption[];
   proposalChoices: ProposedCompanionshipChoice[];
+  lockedAccompanied?: CompanionshipParticipantOption;
   initialAccompaniedKind: CompanionshipParticipantKind | '';
   initialAccompaniedId: string;
   initialCompanionKind: CompanionshipParticipantKind | '';
@@ -71,19 +73,20 @@ function FindParticipantSelects({
   companionError?: string;
 }): JSX.Element {
   const router = useRouter();
-  const [accompaniedId, setAccompaniedId] = useState(initialAccompaniedId);
+  const [accompaniedId, setAccompaniedId] = useState(
+    lockedAccompanied?.id ?? initialAccompaniedId
+  );
   const [accompaniedKind, setAccompaniedKind] = useState<
     CompanionshipParticipantKind | ''
-  >(initialAccompaniedKind);
+  >(lockedAccompanied?.kind ?? initialAccompaniedKind);
   const [companionId, setCompanionId] = useState(initialCompanionId);
   const [companionKind, setCompanionKind] = useState<
     CompanionshipParticipantKind | ''
   >(initialCompanionKind);
 
-  const accompanied = findAccompaniedCompanionshipOption(
-    accompaniedOptions,
-    accompaniedId
-  );
+  const accompanied =
+    lockedAccompanied ??
+    findAccompaniedCompanionshipOption(accompaniedOptions, accompaniedId);
   const proposedCompanionIds = new Set(
     proposalChoices.map((choice) =>
       choice.kind === 'person' ? choice.companionId : choice.companionCoupleId
@@ -129,26 +132,33 @@ function FindParticipantSelects({
 
       <label className="flex flex-col gap-1">
         <span>Akompaniowany</span>
-        <select
-          name="accompanied_id"
-          value={accompaniedId}
-          onChange={(event) => chooseAccompanied(event.target.value)}
-          className={fieldControlClassName}
-          required
-        >
-          <option value="" className={selectOptionClassName}>
-            wybierz...
-          </option>
-          {accompaniedOptions.map((option) => (
-            <option
-              key={`${option.kind}-${option.id}`}
-              value={option.id}
-              className={selectOptionClassName}
-            >
-              {option.label}
+        {lockedAccompanied ? (
+          <>
+            <input type="hidden" name="accompanied_id" value={lockedAccompanied.id} />
+            <p className={fieldControlClassName}>{lockedAccompanied.label}</p>
+          </>
+        ) : (
+          <select
+            name="accompanied_id"
+            value={accompaniedId}
+            onChange={(event) => chooseAccompanied(event.target.value)}
+            className={fieldControlClassName}
+            required
+          >
+            <option value="" className={selectOptionClassName}>
+              wybierz...
             </option>
-          ))}
-        </select>
+            {accompaniedOptions.map((option) => (
+              <option
+                key={`${option.kind}-${option.id}`}
+                value={option.id}
+                className={selectOptionClassName}
+              >
+                {option.label}
+              </option>
+            ))}
+          </select>
+        )}
         <FieldError message={accompaniedError} className={dangerTextClassName} />
       </label>
 
@@ -187,12 +197,18 @@ export function CompanionshipFindForm({
   accompaniedOptions,
   proposalChoices,
   initialValues,
+  lockedAccompanied,
+  changeRelationId,
 }: {
   members: CommunityMember[];
   couples: CoupleListItem[];
   accompaniedOptions: CompanionshipParticipantOption[];
   proposalChoices: ProposedCompanionshipChoice[];
   initialValues: CompanionshipFindFormValues;
+  /** Change-companion entry: Accompanied is fixed to the active relation's person/couple. */
+  lockedAccompanied?: CompanionshipParticipantOption;
+  /** Active relation id from Created Companionships "change" entry. */
+  changeRelationId?: string;
 }): JSX.Element {
   const router = useRouter();
   const [rememberState, rememberAction] = useActionState(
@@ -216,10 +232,9 @@ export function CompanionshipFindForm({
   const [deleteError, setDeleteError] = useState<string | undefined>();
   const [isDeleting, startDelete] = useTransition();
 
-  const accompanied = findAccompaniedCompanionshipOption(
-    accompaniedOptions,
-    values.accompanied_id
-  );
+  const accompanied =
+    lockedAccompanied ??
+    findAccompaniedCompanionshipOption(accompaniedOptions, values.accompanied_id);
 
   function chooseSelectedProposal(): void {
     const choice = proposedCompanionshipChoiceFromValue(
@@ -240,6 +255,7 @@ export function CompanionshipFindForm({
           companionKind: 'person',
           companionId: choice.companionId,
           proposalId: choice.relationId,
+          changeRelationId,
         })
       );
       return;
@@ -254,6 +270,7 @@ export function CompanionshipFindForm({
           companionId: choice.companionCoupleId,
           husbandProposalId: choice.husbandRelationId,
           wifeProposalId: choice.wifeRelationId,
+          changeRelationId,
         })
       );
       return;
@@ -300,12 +317,16 @@ export function CompanionshipFindForm({
         action={rememberAction}
         className="flex flex-col gap-4 text-left"
       >
+        {changeRelationId ? (
+          <input type="hidden" name="change" value={changeRelationId} />
+        ) : null}
         <FindParticipantSelects
           key={rememberFormKey}
           members={members}
           couples={couples}
           accompaniedOptions={accompaniedOptions}
           proposalChoices={proposalChoices}
+          lockedAccompanied={lockedAccompanied}
           initialAccompaniedKind={values.accompanied_kind}
           initialAccompaniedId={values.accompanied_id}
           initialCompanionKind={values.companion_kind}

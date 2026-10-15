@@ -26,6 +26,19 @@ export type LockedCoupleCompanionshipEdit = {
   wifeRelationId: string;
 };
 
+/** Add form after Find Companion choose: both sides fixed; save activates the proposal. */
+export type LockedFromFindCompanionship = {
+  accompaniedKind: CompanionshipParticipantKind;
+  accompaniedId: string;
+  accompaniedLabel: string;
+  companionKind: CompanionshipParticipantKind;
+  companionId: string;
+  companionLabel: string;
+  proposalId?: string;
+  husbandProposalId?: string;
+  wifeProposalId?: string;
+};
+
 const emptyFormValues: CompanionshipRelationFormValues = {
   accompanied_kind: '',
   accompanied_id: '',
@@ -126,6 +139,75 @@ function LockedPersonAccompaniedSelect({
             </option>
           ))}
         </select>
+        <FieldError message={companionError} className={dangerTextClassName} />
+      </label>
+    </>
+  );
+}
+
+function LockedFromFindParticipants({
+  lockedFromFind,
+  fieldControlClassName,
+  dangerTextClassName,
+  accompaniedError,
+  companionError,
+}: {
+  lockedFromFind: LockedFromFindCompanionship;
+  fieldControlClassName: string;
+  dangerTextClassName: string;
+  accompaniedError?: string;
+  companionError?: string;
+}): JSX.Element {
+  return (
+    <>
+      <input type="hidden" name="from" value="find" />
+      <input
+        type="hidden"
+        name="accompanied_kind"
+        value={lockedFromFind.accompaniedKind}
+      />
+      <input
+        type="hidden"
+        name="companion_kind"
+        value={lockedFromFind.companionKind}
+      />
+      <input
+        type="hidden"
+        name="accompanied_id"
+        value={lockedFromFind.accompaniedId}
+      />
+      <input
+        type="hidden"
+        name="companion_id"
+        value={lockedFromFind.companionId}
+      />
+      {lockedFromFind.proposalId ? (
+        <input type="hidden" name="proposal" value={lockedFromFind.proposalId} />
+      ) : null}
+      {lockedFromFind.husbandProposalId ? (
+        <input
+          type="hidden"
+          name="proposal_husband"
+          value={lockedFromFind.husbandProposalId}
+        />
+      ) : null}
+      {lockedFromFind.wifeProposalId ? (
+        <input
+          type="hidden"
+          name="proposal_wife"
+          value={lockedFromFind.wifeProposalId}
+        />
+      ) : null}
+
+      <label className="flex flex-col gap-1">
+        <span>Akompaniowany</span>
+        <p className={fieldControlClassName}>{lockedFromFind.accompaniedLabel}</p>
+        <FieldError message={accompaniedError} className={dangerTextClassName} />
+      </label>
+
+      <label className="flex flex-col gap-1">
+        <span>Akompaniator</span>
+        <p className={fieldControlClassName}>{lockedFromFind.companionLabel}</p>
         <FieldError message={companionError} className={dangerTextClassName} />
       </label>
     </>
@@ -341,23 +423,28 @@ export function CompanionshipRelationForm({
   couples = [],
   accompaniedLocked = false,
   lockedCoupleEdit,
+  lockedFromFind,
   initialValues,
   returnTab,
+  cancelHref: cancelHrefOverride,
 }: {
   action: CompanionshipRelationFormAction;
   members: CommunityMember[];
   /** Edit: locked accompanied person (and legacy person-only candidate list). */
   accompaniedCandidates?: CommunityMember[];
-  /** Add: mixed person/couple Akompaniowany options. */
+  /** Add: mixed person/couple Accompanied options. */
   accompaniedOptions?: CompanionshipParticipantOption[];
-  /** Couples for Akompaniator when accompanied is a couple (add or couple edit). */
+  /** Couples for Companion when Accompanied is a couple (add or couple edit). */
   couples?: CoupleListItem[];
-  /** Edit person: show Akompaniowany as fixed text; only Akompaniator is choosable. */
+  /** Edit person: show Accompanied as fixed text; only Companion is choosable. */
   accompaniedLocked?: boolean;
   /** Edit couple: locked accompanied couple + Companion couples dropdown. */
   lockedCoupleEdit?: LockedCoupleCompanionshipEdit;
+  /** Add from Find Companion: both participants fixed; hide end date. */
+  lockedFromFind?: LockedFromFindCompanionship;
   initialValues?: CompanionshipRelationFormValues;
   returnTab?: string;
+  cancelHref?: string;
 }): JSX.Element {
   const [state, formAction] = useActionState(action, undefined);
   const values = state?.values ?? initialValues ?? emptyFormValues;
@@ -365,12 +452,13 @@ export function CompanionshipRelationForm({
   const fieldControlClassName = surfaces.field;
 
   const cancelHref =
-    returnTab === 'missing'
+    cancelHrefOverride ??
+    (returnTab === 'missing'
       ? '/app/companionships?tab=missing'
-      : '/app/companionships';
+      : '/app/companionships');
 
   // React resets the form after a Server Action. Remount with submitted values so
-  // Akompaniowany / Akompaniator stay selected under validation errors.
+  // Accompanied / Companion stay selected under validation errors.
   const formKey = state?.restoreKey ?? 'pristine';
 
   return (
@@ -383,7 +471,15 @@ export function CompanionshipRelationForm({
       <form key={formKey} action={formAction} className="flex flex-col gap-4 text-left">
         <input type="hidden" name="return_tab" value={returnTab ?? ''} />
 
-        {lockedCoupleEdit ? (
+        {lockedFromFind ? (
+          <LockedFromFindParticipants
+            lockedFromFind={lockedFromFind}
+            fieldControlClassName={fieldControlClassName}
+            dangerTextClassName={surfaces.dangerText}
+            accompaniedError={state?.fieldErrors?.accompanied_id}
+            companionError={state?.fieldErrors?.companion_id}
+          />
+        ) : lockedCoupleEdit ? (
           <LockedCoupleAccompaniedSelect
             key={formKey}
             couples={couples}
@@ -434,16 +530,18 @@ export function CompanionshipRelationForm({
           <FieldError message={state?.fieldErrors?.start_date} className={surfaces.dangerText} />
         </label>
 
-        <label className="flex flex-col gap-1">
-          <span>Data zakończenia (opcjonalnie)</span>
-          <input
-            name="end_date"
-            type="date"
-            defaultValue={values.end_date}
-            className={fieldControlClassName}
-          />
-          <FieldError message={state?.fieldErrors?.end_date} className={surfaces.dangerText} />
-        </label>
+        {lockedFromFind ? null : (
+          <label className="flex flex-col gap-1">
+            <span>Data zakończenia (opcjonalnie)</span>
+            <input
+              name="end_date"
+              type="date"
+              defaultValue={values.end_date}
+              className={fieldControlClassName}
+            />
+            <FieldError message={state?.fieldErrors?.end_date} className={surfaces.dangerText} />
+          </label>
+        )}
 
         <label className="flex flex-col gap-1">
           <span>Notatki (opcjonalnie)</span>

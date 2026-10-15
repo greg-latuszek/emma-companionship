@@ -50,7 +50,7 @@ export function companionshipSelectOptions(
   );
 }
 
-/** Registry people who still appear on Brakujące Akompaniamenty (need a companion). */
+/** Registry people who still appear on Missing Companionships (need a companion). */
 export function communityMembersNeedingCompanion(
   members: CommunityMember[],
   peopleWithoutCompanion: ReadonlyArray<{ id: string }>
@@ -88,7 +88,7 @@ export function companionshipRelationFormValuesFromForm(
 
 /**
  * Prefills Accompanied when the id matches a current accompanied option
- * (single person or eligible couple from Brakujące / Przypisz).
+ * (single person or eligible couple from Missing Companionships / Assign).
  */
 export function newCompanionshipRelationFormValues(
   accompaniedId: string | undefined,
@@ -104,6 +104,27 @@ export function newCompanionshipRelationFormValues(
     accompanied_id: matchedOption ? matchedOption.id : '',
     companion_kind: '',
     companion_id: '',
+    start_date: new Date().toISOString().slice(0, 10),
+    end_date: '',
+    notes: '',
+  };
+}
+
+/**
+ * Prefills both participants for Add after Find Companion "choose".
+ * Kinds and ids come from the handoff query (not only Missing options).
+ */
+export function fromFindCompanionshipRelationFormValues(input: {
+  accompaniedKind: CompanionshipParticipantKind | '';
+  accompaniedId: string;
+  companionKind: CompanionshipParticipantKind | '';
+  companionId: string;
+}): CompanionshipRelationFormValues {
+  return {
+    accompanied_kind: input.accompaniedKind,
+    accompanied_id: input.accompaniedId,
+    companion_kind: input.companionKind,
+    companion_id: input.companionId,
     start_date: new Date().toISOString().slice(0, 10),
     end_date: '',
     notes: '',

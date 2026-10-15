@@ -9,9 +9,15 @@ import { listPeopleWithoutCompanion } from '@/application/list-people-without-co
 import { listProposedCompanionshipRelationsForAccompanied } from '@/application/list-proposed-companionship-relations';
 import { listCommunityMembers } from '@/application/list-community-members';
 import { listCouples } from '@/application/list-couples';
+import { findCompanionshipRelation } from '@/application/find-companionship-relation';
+import { findActiveCompanionshipRelationByAccompaniedId } from '@/application/find-active-companionship-relation-by-accompanied';
+import { resolveCoupleCompanionshipEditContext } from '@/application/couple-companionship-edit-context';
 import {
   findAccompaniedCompanionshipOption,
+  formatCompanionshipCoupleOptionLabel,
+  formatCompanionshipPersonOptionLabel,
   proposeAccompaniedCompanionshipOptions,
+  type CompanionshipParticipantOption,
 } from '@/application/companionship-add-participant-options';
 import { PageBackground } from '@/components/PageBackground';
 import { AppArea } from '@/components/AppArea';
@@ -24,14 +30,47 @@ import { CompanionshipRelationList } from './CompanionshipRelationList';
 import { CompanionshipRelationForm } from './CompanionshipRelationForm';
 import { CompanionshipFindForm } from './CompanionshipFindForm';
 import { PeopleWithoutCompanionList } from './PeopleWithoutCompanionList';
-import { submitNewCompanionshipRelation } from './actions';
-import { newCompanionshipFindFormValues } from './companionship-find-form-state';
-import { newCompanionshipRelationFormValues } from './companionship-relation-form-state';
+import {
+  submitActivateProposedCompanionshipFromFind,
+  submitNewCompanionshipRelation,
+} from './actions';
+import {
+  companionshipFindReturnHref,
+  newCompanionshipFindFormValues,
+} from './companionship-find-form-state';
+import {
+  fromFindCompanionshipRelationFormValues,
+  newCompanionshipRelationFormValues,
+  type CompanionshipParticipantKind,
+} from './companionship-relation-form-state';
 import {
   companionshipsTabFrom,
   companionshipsTabHref,
   companionshipsTabTitles,
 } from './companionships-tab';
+
+function participantKindFromParam(
+  value: string | undefined
+): CompanionshipParticipantKind | '' {
+  if (value === 'person' || value === 'couple') {
+    return value;
+  }
+  return '';
+}
+
+function companionshipParticipantLabel(
+  kind: CompanionshipParticipantKind,
+  id: string,
+  members: Awaited<ReturnType<typeof listCommunityMembers>>,
+  couples: Awaited<ReturnType<typeof listCouples>>
+): string {
+  if (kind === 'couple') {
+    const couple = couples.find((candidate) => candidate.id === id);
+    return couple ? formatCompanionshipCoupleOptionLabel(couple) : '—';
+  }
+  const member = members.find((candidate) => candidate.id === id);
+  return member ? formatCompanionshipPersonOptionLabel(member) : '—';
+}
 
 export default async function CompanionshipsPage({
   searchParams,
@@ -47,6 +86,18 @@ export default async function CompanionshipsPage({
   const params = await searchParams;
   const selectedTab = companionshipsTabFrom(params.tab);
   const accompaniedId = params.accompanied?.toString();
+  const changeRelationId = params.change?.toString();
+  const fromFind = params.from?.toString() === 'find';
+  const companionId = params.companion?.toString() ?? '';
+  const accompaniedKindParam = participantKindFromParam(
+    params.accompanied_kind?.toString()
+  );
+  const companionKindParam = participantKindFromParam(
+    params.companion_kind?.toString()
+  );
+  const proposalId = params.proposal?.toString();
+  const husbandProposalId = params.proposal_husband?.toString();
+  const wifeProposalId = params.proposal_wife?.toString();
 
   const needsCouples =
     selectedTab === 'new' ||
@@ -98,22 +149,118 @@ export default async function CompanionshipsPage({
     couples
   );
 
+  let lockedFindAccompanied: CompanionshipParticipantOption | undefined;
+  if (selectedTab === 'find' && changeRelationId) {
+    const openedRelation = await findCompanionshipRelation(changeRelationId);
+    if (openedRelation && openedRelation.status === 'active') {
+      const accompaniedCouple = couples.find(
+        (couple) =>
+          couple.husband.id === openedRelation.accompanied_id ||
+          couple.wife.id === openedRelation.accompanied_id
+      );
+      const [husbandActiveRelation, wifeActiveRelation] = accompaniedCouple
+        ? await Promise.all([
+            findActiveCompanionshipRelationByAccompaniedId(
+              accompaniedCouple.husband.id
+            ),
+            findActiveCompanionshipRelationByAccompaniedId(
+              accompaniedCouple.wife.id
+            ),
+          ])
+        : [null, null];
+      const coupleEdit = resolveCoupleCompanionshipEditContext(
+        openedRelation,
+        couples,
+        husbandActiveRelation,
+        wifeActiveRelation
+      );
+      if (coupleEdit) {
+        lockedFindAccompanied = {
+          kind: 'couple',
+          id: coupleEdit.accompaniedCouple.id,
+          label: coupleEdit.accompaniedLabel,
+        };
+      } else {
+        const accompaniedMember = members.find(
+          (candidate) => candidate.id === openedRelation.accompanied_id
+        );
+        if (accompaniedMember) {
+          lockedFindAccompanied = {
+            kind: 'person',
+            id: accompaniedMember.id,
+            label: formatCompanionshipPersonOptionLabel(accompaniedMember),
+            gender: accompaniedMember.gender,
+          };
+        }
+      }
+    }
+  }
+
   const initialFormValues =
     selectedTab === 'new'
-      ? newCompanionshipRelationFormValues(accompaniedId, accompaniedOptions)
+      ? fromFind &&
+        accompaniedId &&
+        companionId &&
+        accompaniedKindParam &&
+        companionKindParam
+        ? fromFindCompanionshipRelationFormValues({
+            accompaniedKind: accompaniedKindParam,
+            accompaniedId,
+            companionKind: companionKindParam,
+            companionId,
+          })
+        : newCompanionshipRelationFormValues(accompaniedId, accompaniedOptions)
+      : undefined;
+
+  const lockedFromFind =
+    selectedTab === 'new' &&
+    fromFind &&
+    accompaniedId &&
+    companionId &&
+    accompaniedKindParam &&
+    companionKindParam
+      ? {
+          accompaniedKind: accompaniedKindParam,
+          accompaniedId,
+          accompaniedLabel: companionshipParticipantLabel(
+            accompaniedKindParam,
+            accompaniedId,
+            members,
+            couples
+          ),
+          companionKind: companionKindParam,
+          companionId,
+          companionLabel: companionshipParticipantLabel(
+            companionKindParam,
+            companionId,
+            members,
+            couples
+          ),
+          proposalId,
+          husbandProposalId,
+          wifeProposalId,
+        }
       : undefined;
 
   const findFormValues =
     selectedTab === 'find'
-      ? newCompanionshipFindFormValues(accompaniedId, accompaniedOptions)
+      ? lockedFindAccompanied
+        ? {
+            accompanied_kind: lockedFindAccompanied.kind,
+            accompanied_id: lockedFindAccompanied.id,
+            companion_kind: '' as const,
+            companion_id: '',
+          }
+        : newCompanionshipFindFormValues(accompaniedId, accompaniedOptions)
       : undefined;
 
   const findAccompaniedOption =
     selectedTab === 'find' && findFormValues?.accompanied_id
-      ? findAccompaniedCompanionshipOption(
+      ? (lockedFindAccompanied ??
+        findAccompaniedCompanionshipOption(
           accompaniedOptions,
           findFormValues.accompanied_id
-        )
+        ))
       : undefined;
 
   const findAccompaniedCouple =
@@ -135,7 +282,15 @@ export default async function CompanionshipsPage({
       ? groupProposedCompanionshipChoices(proposedRelations, couples)
       : [];
 
-  const returnTab = accompaniedId !== undefined ? 'missing' : undefined;
+  const returnTab =
+    fromFind || accompaniedId !== undefined ? 'missing' : undefined;
+  const fromFindCancelHref =
+    lockedFromFind !== undefined
+      ? companionshipFindReturnHref({
+          accompaniedId: lockedFromFind.accompaniedId,
+          changeRelationId,
+        })
+      : undefined;
 
   return (
     <PageBackground
@@ -188,12 +343,18 @@ export default async function CompanionshipsPage({
             >
               {selectedTab === 'new' ? (
                 <CompanionshipRelationForm
-                  action={submitNewCompanionshipRelation}
+                  action={
+                    lockedFromFind
+                      ? submitActivateProposedCompanionshipFromFind
+                      : submitNewCompanionshipRelation
+                  }
                   members={members}
                   accompaniedOptions={accompaniedOptions}
                   couples={couples}
                   initialValues={initialFormValues!}
+                  lockedFromFind={lockedFromFind}
                   returnTab={returnTab}
+                  cancelHref={fromFindCancelHref}
                 />
               ) : selectedTab === 'find' ? (
                 <CompanionshipFindForm
@@ -202,6 +363,8 @@ export default async function CompanionshipsPage({
                   accompaniedOptions={accompaniedOptions}
                   proposalChoices={proposalChoices}
                   initialValues={findFormValues!}
+                  lockedAccompanied={lockedFindAccompanied}
+                  changeRelationId={changeRelationId}
                 />
               ) : selectedTab === 'missing' ? (
                 <PeopleWithoutCompanionList rows={missingRows} />

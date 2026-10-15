@@ -61,7 +61,7 @@ export interface ICompanionshipRelationRepository {
     husbandReplacement: CompanionshipRelationWriteWithDefaults,
     wifeReplacement: CompanionshipRelationWriteWithDefaults
   ): Promise<[CompanionshipRelation, CompanionshipRelation]>;
-  /** Delete only when status is proposed (Find Companion Usuń). */
+  /** Delete only when status is proposed (Find Companion remove). */
   deleteProposedCompanionshipRelation(id: string): Promise<void>;
   /** Delete both spouse proposed rows in one transaction. */
   deleteProposedCompanionshipRelationPair(

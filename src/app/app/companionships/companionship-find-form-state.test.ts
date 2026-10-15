@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   companionshipChooseFromFindHref,
   companionshipFindHref,
+  companionshipFindReturnHref,
   newCompanionshipFindFormValues,
   proposedCompanionshipChoiceFromValue,
   proposedCompanionshipChoiceValue,
@@ -19,8 +20,19 @@ describe('companionshipFindHref', () => {
   });
 });
 
+describe('companionshipFindReturnHref', () => {
+  it('companionshipFindReturnHref prefers the change-companion entry over Accompanied id', () => {
+    expect(
+      companionshipFindReturnHref({
+        accompaniedId: 'acc-1',
+        changeRelationId: 'rel-1',
+      })
+    ).toBe('/app/companionships?tab=find&change=rel-1');
+  });
+});
+
 describe('companionshipChooseFromFindHref', () => {
-  it('companionshipChooseFromFindHref hands a person proposal to Dodaj', () => {
+  it('companionshipChooseFromFindHref hands a person proposal to Add Companionship', () => {
     expect(
       companionshipChooseFromFindHref({
         accompaniedKind: 'person',

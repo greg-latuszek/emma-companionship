@@ -3,6 +3,7 @@ import {
   communityMembersNeedingCompanion,
   companionshipRelationFormStateAfterFailedSubmit,
   companionshipSelectOptions,
+  fromFindCompanionshipRelationFormValues,
   newCompanionshipRelationFormValues,
 } from './companionship-relation-form-state';
 import { MemberId } from '@/types/auth';
@@ -57,7 +58,7 @@ describe('newCompanionshipRelationFormValues', () => {
     expect(values.accompanied_id).toBe('');
   });
 
-  it('newCompanionshipRelationFormValues prefills an eligible couple from Brakujące Przypisz', () => {
+  it('newCompanionshipRelationFormValues prefills an eligible couple from Missing Companionships Assign', () => {
     const values = newCompanionshipRelationFormValues('couple-1', [
       {
         kind: 'couple',
@@ -81,6 +82,25 @@ describe('newCompanionshipRelationFormValues', () => {
     ]);
 
     expect(values.accompanied_id).toBe('');
+  });
+});
+
+describe('fromFindCompanionshipRelationFormValues', () => {
+  it('fromFindCompanionshipRelationFormValues prefills both participants from the Find handoff', () => {
+    expect(
+      fromFindCompanionshipRelationFormValues({
+        accompaniedKind: 'couple',
+        accompaniedId: 'acc-couple',
+        companionKind: 'couple',
+        companionId: 'comp-couple',
+      })
+    ).toMatchObject({
+      accompanied_kind: 'couple',
+      accompanied_id: 'acc-couple',
+      companion_kind: 'couple',
+      companion_id: 'comp-couple',
+      end_date: '',
+    });
   });
 });
 

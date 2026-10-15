@@ -48,13 +48,17 @@ import {
   deleteProposedCoupleCompanionshipRelations,
 } from '@/application/delete-proposed-companionship-relation';
 import {
+  activateProposedCompanionshipRelation,
+  activateProposedCoupleCompanionshipRelations,
+} from '@/application/activate-proposed-companionship-relation';
+import {
   companionshipRelationFormStateAfterFailedSubmit,
   companionshipRelationFormValuesFromForm,
   polishCompanionshipRelationWriteIssues,
   type CompanionshipRelationFormState,
   type CompanionshipRelationFormValues,
 } from './companionship-relation-form-state';
-import { companionshipFindHref } from './companionship-find-form-state';
+import { companionshipFindReturnHref } from './companionship-find-form-state';
 
 function redirectAfterNewCompanionship(formData: FormData): never {
   const returnTab = formData.get('return_tab')?.toString();
@@ -357,12 +361,21 @@ export async function submitDeleteCompanionshipRelation(
   }
 }
 
-function redirectToFindCompanionship(accompaniedId: string): never {
-  redirect(companionshipFindHref(accompaniedId));
+function redirectToFindCompanionship(input: {
+  accompaniedId: string;
+  changeRelationId?: string;
+}): never {
+  redirect(
+    companionshipFindReturnHref({
+      accompaniedId: input.accompaniedId,
+      changeRelationId: input.changeRelationId,
+    })
+  );
 }
 
 async function submitRememberPersonProposedCompanionship(
-  values: CompanionshipRelationFormValues
+  values: CompanionshipRelationFormValues,
+  changeRelationId?: string
 ): Promise<CompanionshipRelationFormState> {
   const parsed = companionshipRelationWriteSchema.safeParse({
     companion_id: values.companion_id,
@@ -409,11 +422,15 @@ async function submitRememberPersonProposedCompanionship(
     });
   }
 
-  return redirectToFindCompanionship(values.accompanied_id);
+  return redirectToFindCompanionship({
+    accompaniedId: values.accompanied_id,
+    changeRelationId,
+  });
 }
 
 async function submitRememberCoupleProposedCompanionship(
-  values: CompanionshipRelationFormValues
+  values: CompanionshipRelationFormValues,
+  changeRelationId?: string
 ): Promise<CompanionshipRelationFormState> {
   const parsed = coupleCompanionshipWriteSchema.safeParse({
     companion_couple_id: values.companion_id,
@@ -472,7 +489,10 @@ async function submitRememberCoupleProposedCompanionship(
     });
   }
 
-  return redirectToFindCompanionship(values.accompanied_id);
+  return redirectToFindCompanionship({
+    accompaniedId: values.accompanied_id,
+    changeRelationId,
+  });
 }
 
 export async function submitRememberProposedCompanionship(
@@ -480,13 +500,14 @@ export async function submitRememberProposedCompanionship(
   formData: FormData
 ): Promise<CompanionshipRelationFormState> {
   const values = companionshipRelationFormValuesFromForm(formData);
+  const changeRelationId = formData.get('change')?.toString() || undefined;
 
   if (values.accompanied_kind === 'couple' && values.companion_kind === 'couple') {
-    return submitRememberCoupleProposedCompanionship(values);
+    return submitRememberCoupleProposedCompanionship(values, changeRelationId);
   }
 
   if (values.accompanied_kind === 'person' && values.companion_kind === 'person') {
-    return submitRememberPersonProposedCompanionship(values);
+    return submitRememberPersonProposedCompanionship(values, changeRelationId);
   }
 
   return companionshipRelationFormStateAfterFailedSubmit({
@@ -528,4 +549,63 @@ export async function submitDeleteProposedCompanionship(
 
   revalidatePath('/app/companionships');
   return { success: true };
+}
+
+export async function submitActivateProposedCompanionshipFromFind(
+  _previous: CompanionshipRelationFormState | undefined,
+  formData: FormData
+): Promise<CompanionshipRelationFormState> {
+  const values = companionshipRelationFormValuesFromForm(formData);
+  const proposalId = formData.get('proposal')?.toString() ?? '';
+  const husbandProposalId = formData.get('proposal_husband')?.toString() ?? '';
+  const wifeProposalId = formData.get('proposal_wife')?.toString() ?? '';
+  const activation = {
+    start_date: values.start_date.trim() === '' ? null : values.start_date,
+    notes: values.notes.trim() === '' ? null : values.notes,
+  };
+
+  try {
+    if (
+      values.accompanied_kind === 'couple' &&
+      values.companion_kind === 'couple'
+    ) {
+      if (!husbandProposalId || !wifeProposalId) {
+        return companionshipRelationFormStateAfterFailedSubmit({
+          values,
+          formError: 'Brak wybranej propozycji akompaniatora.',
+        });
+      }
+      await activateProposedCoupleCompanionshipRelations(
+        husbandProposalId,
+        wifeProposalId,
+        activation
+      );
+    } else if (
+      values.accompanied_kind === 'person' &&
+      values.companion_kind === 'person'
+    ) {
+      if (!proposalId) {
+        return companionshipRelationFormStateAfterFailedSubmit({
+          values,
+          formError: 'Brak wybranej propozycji akompaniatora.',
+        });
+      }
+      await activateProposedCompanionshipRelation(proposalId, activation);
+    } else {
+      return companionshipRelationFormStateAfterFailedSubmit({
+        values,
+        formError:
+          'Akompaniowany i akompaniator muszą być oboje osobami albo oboje małżeństwami.',
+      });
+    }
+  } catch {
+    return companionshipRelationFormStateAfterFailedSubmit({
+      values,
+      formError:
+        'Nie udało się aktywować propozycji akompaniamentu. Spróbuj ponownie.',
+    });
+  }
+
+  revalidatePath('/app/companionships');
+  redirect('/app/companionships');
 }
