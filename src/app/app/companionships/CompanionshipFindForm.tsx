@@ -307,13 +307,6 @@ function FindParticipantSelects({
         <FieldError message={accompaniedError} className={dangerTextClassName} />
       </label>
 
-      {currentCompanionLabel ? (
-        <label className="flex flex-col gap-1">
-          <span>Obecny Akompaniator</span>
-          <p className={fieldControlClassName}>{currentCompanionLabel}</p>
-        </label>
-      ) : null}
-
       <CompanionshipFindParticipantDetails
         option={accompanied}
         members={members}
@@ -322,6 +315,13 @@ function FindParticipantSelects({
         mutedTextClassName={mutedTextClassName}
         strongTextClassName={strongTextClassName}
       />
+
+      {currentCompanionLabel ? (
+        <label className="flex flex-col gap-1">
+          <span>Obecny Akompaniator</span>
+          <p className={fieldControlClassName}>{currentCompanionLabel}</p>
+        </label>
+      ) : null}
 
       <label className="flex flex-col gap-1">
         <span>Proponowany Akompaniator</span>
@@ -380,7 +380,7 @@ export function CompanionshipFindForm({
   lockedAccompanied?: CompanionshipParticipantOption;
   /** Active relation id from Created Companionships "change" entry. */
   changeRelationId?: string;
-  /** Change-companion entry: current Companion shown under Accompanied. */
+  /** Change-companion entry: current Companion shown after Accompanied details. */
   currentCompanionLabel?: string;
 }): JSX.Element {
   const router = useRouter();
