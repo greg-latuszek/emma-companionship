@@ -24,6 +24,11 @@ function aCompanionshipRelationRepository(
   return {
     listCompanionshipRelations: vi.fn(),
     listArchivedCompanionshipRelations: vi.fn(),
+    listProposedCompanionshipRelationsForAccompanied: vi.fn(),
+    deleteProposedCompanionshipRelation: vi.fn(),
+    deleteProposedCompanionshipRelationPair: vi.fn(),
+    activateProposedCompanionshipRelation: vi.fn(),
+    activateProposedCompanionshipRelationPair: vi.fn(),
     listPeopleWithoutCompanion: vi.fn(),
     findCompanionshipRelationById: vi.fn(),
     addCompanionshipRelation: vi.fn(),

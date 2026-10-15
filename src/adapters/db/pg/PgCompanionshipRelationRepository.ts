@@ -194,6 +194,28 @@ export class PgCompanionshipRelationRepository
     return rows.map(companionshipRelationListItemFromRow);
   }
 
+  async listProposedCompanionshipRelationsForAccompanied(
+    accompaniedIds: string[]
+  ): Promise<CompanionshipRelationListItem[]> {
+    if (accompaniedIds.length === 0) {
+      return [];
+    }
+
+    const rows = await queryMany<CompanionshipRelationRow>(
+      `
+      SELECT ${COMPANIONSHIP_RELATION_COLUMNS}
+      FROM companionship_relations cr
+      JOIN members accompanied ON accompanied.id = cr.accompanied_id
+      JOIN members companion ON companion.id = cr.companion_id
+      WHERE cr.status = 'proposed'
+        AND cr.accompanied_id = ANY($1::uuid[])
+      ORDER BY companion.last_name, companion.first_name, cr.created_at
+    `,
+      [accompaniedIds]
+    );
+    return rows.map(companionshipRelationListItemFromRow);
+  }
+
   async listPeopleWithoutCompanion(): Promise<PersonWithoutCompanion[]> {
     const rows = await queryMany<{
       id: string;
@@ -528,6 +550,216 @@ export class PgCompanionshipRelationRepository
         status: 'active',
       });
       return [husbandRelation, wifeRelation];
+    });
+  }
+
+  async deleteProposedCompanionshipRelation(id: string): Promise<void> {
+    const row = await queryOne<{ id: string }>(
+      `
+      DELETE FROM companionship_relations
+      WHERE id = $1
+        AND status = 'proposed'
+      RETURNING id
+    `,
+      [id]
+    );
+    if (!row) {
+      throw new Error('Failed to delete proposed companionship relation');
+    }
+  }
+
+  async deleteProposedCompanionshipRelationPair(
+    husbandRelationId: string,
+    wifeRelationId: string
+  ): Promise<void> {
+    await withTransaction(async (client) => {
+      for (const relationId of [husbandRelationId, wifeRelationId]) {
+        const result = await client.query(
+          `
+          DELETE FROM companionship_relations
+          WHERE id = $1
+            AND status = 'proposed'
+          RETURNING id
+        `,
+          [relationId]
+        );
+        if (!result.rows[0]) {
+          throw new Error('Failed to delete proposed companionship relation');
+        }
+      }
+    });
+  }
+
+  async activateProposedCompanionshipRelation(
+    proposedRelationId: string,
+    activation: { start_date: string | null; notes: string | null }
+  ): Promise<CompanionshipRelation> {
+    const today = new Date().toISOString().slice(0, 10);
+    return withTransaction(async (client) => {
+      const proposedResult = await client.query<CompanionshipRelationInsertRow>(
+        `
+        SELECT
+          id,
+          companion_id,
+          accompanied_id,
+          status,
+          start_date::text,
+          end_date::text,
+          notes
+        FROM companionship_relations
+        WHERE id = $1
+          AND status = 'proposed'
+        FOR UPDATE
+      `,
+        [proposedRelationId]
+      );
+      const proposed = proposedResult.rows[0];
+      if (!proposed) {
+        throw new Error('Failed to find proposed companionship relation');
+      }
+
+      await client.query(
+        `
+        UPDATE companionship_relations
+        SET status = 'archived', end_date = $2
+        WHERE accompanied_id = $1
+          AND status = 'active'
+      `,
+        [proposed.accompanied_id, today]
+      );
+
+      const activatedResult =
+        await client.query<CompanionshipRelationInsertRow>(
+          `
+          UPDATE companionship_relations
+          SET
+            status = 'active',
+            start_date = $2,
+            end_date = NULL,
+            notes = $3
+          WHERE id = $1
+            AND status = 'proposed'
+          RETURNING
+            id,
+            companion_id,
+            accompanied_id,
+            status,
+            start_date::text,
+            end_date::text,
+            notes
+        `,
+          [proposedRelationId, activation.start_date, activation.notes]
+        );
+      const activated = activatedResult.rows[0];
+      if (!activated) {
+        throw new Error('Failed to activate proposed companionship relation');
+      }
+
+      await client.query(
+        `
+        DELETE FROM companionship_relations
+        WHERE accompanied_id = $1
+          AND status = 'proposed'
+          AND id <> $2
+      `,
+        [proposed.accompanied_id, proposedRelationId]
+      );
+
+      return companionshipRelationFromInsertRow(activated);
+    });
+  }
+
+  async activateProposedCompanionshipRelationPair(
+    husbandProposedRelationId: string,
+    wifeProposedRelationId: string,
+    activation: { start_date: string | null; notes: string | null }
+  ): Promise<[CompanionshipRelation, CompanionshipRelation]> {
+    const today = new Date().toISOString().slice(0, 10);
+    return withTransaction(async (client) => {
+      const proposedIds = [
+        husbandProposedRelationId,
+        wifeProposedRelationId,
+      ];
+      const proposedRows: CompanionshipRelationInsertRow[] = [];
+      for (const relationId of proposedIds) {
+        const proposedResult =
+          await client.query<CompanionshipRelationInsertRow>(
+            `
+            SELECT
+              id,
+              companion_id,
+              accompanied_id,
+              status,
+              start_date::text,
+              end_date::text,
+              notes
+            FROM companionship_relations
+            WHERE id = $1
+              AND status = 'proposed'
+            FOR UPDATE
+          `,
+            [relationId]
+          );
+        const proposed = proposedResult.rows[0];
+        if (!proposed) {
+          throw new Error('Failed to find proposed companionship relation');
+        }
+        proposedRows.push(proposed);
+      }
+
+      const accompaniedIds = proposedRows.map((row) => row.accompanied_id);
+      await client.query(
+        `
+        UPDATE companionship_relations
+        SET status = 'archived', end_date = $2
+        WHERE accompanied_id = ANY($1::uuid[])
+          AND status = 'active'
+      `,
+        [accompaniedIds, today]
+      );
+
+      const activated: CompanionshipRelation[] = [];
+      for (const relationId of proposedIds) {
+        const activatedResult =
+          await client.query<CompanionshipRelationInsertRow>(
+            `
+            UPDATE companionship_relations
+            SET
+              status = 'active',
+              start_date = $2,
+              end_date = NULL,
+              notes = $3
+            WHERE id = $1
+              AND status = 'proposed'
+            RETURNING
+              id,
+              companion_id,
+              accompanied_id,
+              status,
+              start_date::text,
+              end_date::text,
+              notes
+          `,
+            [relationId, activation.start_date, activation.notes]
+          );
+        const row = activatedResult.rows[0];
+        if (!row) {
+          throw new Error('Failed to activate proposed companionship relation');
+        }
+        activated.push(companionshipRelationFromInsertRow(row));
+      }
+
+      await client.query(
+        `
+        DELETE FROM companionship_relations
+        WHERE accompanied_id = ANY($1::uuid[])
+          AND status = 'proposed'
+          AND id <> ALL($2::uuid[])
+      `,
+        [accompaniedIds, proposedIds]
+      );
+
+      return [activated[0]!, activated[1]!];
     });
   }
 

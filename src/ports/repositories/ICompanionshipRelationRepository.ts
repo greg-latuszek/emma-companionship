@@ -10,6 +10,13 @@ export interface ICompanionshipRelationRepository {
   listCompanionshipRelations(): Promise<CompanionshipRelationListItem[]>;
   /** Archived relations only (Companionship History). */
   listArchivedCompanionshipRelations(): Promise<CompanionshipRelationListItem[]>;
+  /**
+   * Proposed drafts for Find Companion (one or more accompanied ids —
+   * pass both spouses for a couple).
+   */
+  listProposedCompanionshipRelationsForAccompanied(
+    accompaniedIds: string[]
+  ): Promise<CompanionshipRelationListItem[]>;
   listPeopleWithoutCompanion(): Promise<PersonWithoutCompanion[]>;
   findCompanionshipRelationById(
     id: string
@@ -53,6 +60,30 @@ export interface ICompanionshipRelationRepository {
     wifeRelationId: string,
     husbandReplacement: CompanionshipRelationWriteWithDefaults,
     wifeReplacement: CompanionshipRelationWriteWithDefaults
+  ): Promise<[CompanionshipRelation, CompanionshipRelation]>;
+  /** Delete only when status is proposed (Find Companion Usuń). */
+  deleteProposedCompanionshipRelation(id: string): Promise<void>;
+  /** Delete both spouse proposed rows in one transaction. */
+  deleteProposedCompanionshipRelationPair(
+    husbandRelationId: string,
+    wifeRelationId: string
+  ): Promise<void>;
+  /**
+   * Activate one proposed row: archive any current active for that accompanied,
+   * set chosen to active with start_date/notes, delete other proposed for them.
+   */
+  activateProposedCompanionshipRelation(
+    proposedRelationId: string,
+    activation: { start_date: string | null; notes: string | null }
+  ): Promise<CompanionshipRelation>;
+  /**
+   * Activate husband+wife proposed pair; archive actives; drop other proposals
+   * for both accompanied spouses.
+   */
+  activateProposedCompanionshipRelationPair(
+    husbandProposedRelationId: string,
+    wifeProposedRelationId: string,
+    activation: { start_date: string | null; notes: string | null }
   ): Promise<[CompanionshipRelation, CompanionshipRelation]>;
   deleteCompanionshipRelation(id: string): Promise<void>;
 }
