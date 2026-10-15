@@ -87,23 +87,21 @@ export function companionshipRelationFormValuesFromForm(
 }
 
 /**
- * Prefills Accompanied only when that person is still a single accompanied option
- * (not a couple registry spouse shown only as a couple row).
+ * Prefills Accompanied when the id matches a current accompanied option
+ * (single person or eligible couple from Brakujące / Przypisz).
  */
 export function newCompanionshipRelationFormValues(
   accompaniedId: string | undefined,
   accompaniedOptions: readonly CompanionshipParticipantOption[]
 ): CompanionshipRelationFormValues {
-  const matchedPerson =
+  const matchedOption =
     accompaniedId !== undefined
-      ? accompaniedOptions.find(
-          (option) => option.kind === 'person' && option.id === accompaniedId
-        )
+      ? accompaniedOptions.find((option) => option.id === accompaniedId)
       : undefined;
 
   return {
-    accompanied_kind: matchedPerson ? 'person' : '',
-    accompanied_id: matchedPerson ? matchedPerson.id : '',
+    accompanied_kind: matchedOption ? matchedOption.kind : '',
+    accompanied_id: matchedOption ? matchedOption.id : '',
     companion_kind: '',
     companion_id: '',
     start_date: new Date().toISOString().slice(0, 10),

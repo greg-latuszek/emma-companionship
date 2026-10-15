@@ -44,7 +44,7 @@ describe('newCompanionshipRelationFormValues', () => {
     expect(values.accompanied_id).toBe(memberA.id);
   });
 
-  it('newCompanionshipRelationFormValues ignores an accompanied id that is only available as a couple spouse', () => {
+  it('newCompanionshipRelationFormValues ignores a spouse id that is only available as a couple option', () => {
     const values = newCompanionshipRelationFormValues(memberA.id, [
       {
         kind: 'couple',
@@ -55,6 +55,19 @@ describe('newCompanionshipRelationFormValues', () => {
 
     expect(values.accompanied_kind).toBe('');
     expect(values.accompanied_id).toBe('');
+  });
+
+  it('newCompanionshipRelationFormValues prefills an eligible couple from Brakujące Przypisz', () => {
+    const values = newCompanionshipRelationFormValues('couple-1', [
+      {
+        kind: 'couple',
+        id: 'couple-1',
+        label: 'Kowalski, Jan + Anna',
+      },
+    ]);
+
+    expect(values.accompanied_kind).toBe('couple');
+    expect(values.accompanied_id).toBe('couple-1');
   });
 
   it('newCompanionshipRelationFormValues ignores an accompanied id that is not among the options', () => {

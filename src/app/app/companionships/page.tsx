@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { listCompanionshipRelations } from '@/application/list-companionship-relations';
 import { listArchivedCompanionshipRelations } from '@/application/list-archived-companionship-relations';
 import { groupArchivedCompanionshipHistory } from '@/application/group-archived-companionship-history';
+import { groupPeopleWithoutCompanion } from '@/application/group-people-without-companion';
 import { listPeopleWithoutCompanion } from '@/application/list-people-without-companion';
 import { listCommunityMembers } from '@/application/list-community-members';
 import { listCouples } from '@/application/list-couples';
@@ -40,7 +41,12 @@ export default async function CompanionshipsPage({
   const selectedTab = companionshipsTabFrom(params.tab);
   const accompaniedId = params.accompanied?.toString();
 
-  const needsCouples = selectedTab === 'new' || selectedTab === 'history';
+  const needsCouples =
+    selectedTab === 'new' ||
+    selectedTab === 'history' ||
+    selectedTab === 'missing';
+  const needsPeopleWithoutCompanion =
+    selectedTab === 'new' || selectedTab === 'missing';
 
   const [member, members, peopleWithoutCompanion, couples, archivedRelations] =
     await Promise.all([
@@ -50,7 +56,7 @@ export default async function CompanionshipsPage({
         : Promise.resolve(
             [] as Awaited<ReturnType<typeof listCommunityMembers>>
           ),
-      selectedTab === 'new'
+      needsPeopleWithoutCompanion
         ? listPeopleWithoutCompanion()
         : Promise.resolve(
             [] as Awaited<ReturnType<typeof listPeopleWithoutCompanion>>
@@ -68,6 +74,11 @@ export default async function CompanionshipsPage({
   const historyRows =
     selectedTab === 'history'
       ? groupArchivedCompanionshipHistory(archivedRelations, couples)
+      : [];
+
+  const missingRows =
+    selectedTab === 'missing'
+      ? groupPeopleWithoutCompanion(peopleWithoutCompanion, couples)
       : [];
 
   const accompaniedOptions = proposeAccompaniedCompanionshipOptions(
@@ -137,9 +148,7 @@ export default async function CompanionshipsPage({
                   returnTab={returnTab}
                 />
               ) : selectedTab === 'missing' ? (
-                <PeopleWithoutCompanionList
-                  people={await listPeopleWithoutCompanion()}
-                />
+                <PeopleWithoutCompanionList rows={missingRows} />
               ) : selectedTab === 'history' ? (
                 <CompanionshipRelationList historyRows={historyRows} readOnly />
               ) : (
