@@ -150,6 +150,7 @@ export default async function CompanionshipsPage({
   );
 
   let lockedFindAccompanied: CompanionshipParticipantOption | undefined;
+  let currentCompanionLabel: string | undefined;
   if (selectedTab === 'find' && changeRelationId) {
     const openedRelation = await findCompanionshipRelation(changeRelationId);
     if (openedRelation && openedRelation.status === 'active') {
@@ -180,6 +181,25 @@ export default async function CompanionshipsPage({
           id: coupleEdit.accompaniedCouple.id,
           label: coupleEdit.accompaniedLabel,
         };
+        if (coupleEdit.companionCoupleId) {
+          currentCompanionLabel = companionshipParticipantLabel(
+            'couple',
+            coupleEdit.companionCoupleId,
+            members,
+            couples
+          );
+        } else {
+          const husbandCompanion = members.find(
+            (candidate) =>
+              candidate.id === coupleEdit.husbandRelation.companion_id
+          );
+          const wifeCompanion = members.find(
+            (candidate) => candidate.id === coupleEdit.wifeRelation.companion_id
+          );
+          if (husbandCompanion && wifeCompanion) {
+            currentCompanionLabel = `${formatCompanionshipPersonOptionLabel(husbandCompanion)} + ${wifeCompanion.first_name}`;
+          }
+        }
       } else {
         const accompaniedMember = members.find(
           (candidate) => candidate.id === openedRelation.accompanied_id
@@ -192,6 +212,12 @@ export default async function CompanionshipsPage({
             gender: accompaniedMember.gender,
           };
         }
+        currentCompanionLabel = companionshipParticipantLabel(
+          'person',
+          openedRelation.companion_id,
+          members,
+          couples
+        );
       }
     }
   }
@@ -365,6 +391,7 @@ export default async function CompanionshipsPage({
                   initialValues={findFormValues!}
                   lockedAccompanied={lockedFindAccompanied}
                   changeRelationId={changeRelationId}
+                  currentCompanionLabel={currentCompanionLabel}
                 />
               ) : selectedTab === 'missing' ? (
                 <PeopleWithoutCompanionList rows={missingRows} />

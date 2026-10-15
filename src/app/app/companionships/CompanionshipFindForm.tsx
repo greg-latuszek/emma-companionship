@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useActionState, useState, useTransition } from 'react';
+import { useActionState, useEffect, useState, useTransition } from 'react';
 import type { JSX } from 'react';
 import {
   findAccompaniedCompanionshipOption,
@@ -24,11 +24,40 @@ import {
   type CompanionshipFindFormValues,
 } from './companionship-find-form-state';
 import {
+  companionshipFindDetailPeople,
+  companionshipFindParticipantFieldText,
+  companionshipFindVisibleFieldLabels,
+  companionshipFindVisibleFields,
+  defaultCompanionshipFindVisibleFields,
+  readStoredCompanionshipFindVisibleFields,
+  storeCompanionshipFindVisibleFields,
+  toggleCompanionshipFindVisibleField,
+  type CompanionshipFindVisibleField,
+} from './companionship-find-visible-fields';
+import {
   submitDeleteProposedCompanionship,
   submitRememberProposedCompanionship,
 } from './actions';
 
 const selectOptionClassName = 'bg-white text-gray-900';
+
+function companionshipParticipantOptionFromProposalChoice(
+  choice: ProposedCompanionshipChoice
+): CompanionshipParticipantOption {
+  if (choice.kind === 'person') {
+    return {
+      kind: 'person',
+      id: choice.companionId,
+      label: choice.label,
+      gender: null,
+    };
+  }
+  return {
+    kind: 'couple',
+    id: choice.companionCoupleId,
+    label: choice.label,
+  };
+}
 
 function FieldError({
   message,
@@ -43,18 +72,71 @@ function FieldError({
   return <p className={`text-sm ${className}`}>{message}</p>;
 }
 
+function CompanionshipFindParticipantDetails({
+  option,
+  members,
+  couples,
+  visibleFields,
+  mutedTextClassName,
+  strongTextClassName,
+}: {
+  option: CompanionshipParticipantOption | undefined;
+  members: CommunityMember[];
+  couples: CoupleListItem[];
+  visibleFields: CompanionshipFindVisibleField[];
+  mutedTextClassName: string;
+  strongTextClassName: string;
+}): JSX.Element | null {
+  const detailPeople = companionshipFindDetailPeople(
+    option,
+    members,
+    couples
+  );
+  if (detailPeople.length === 0 || visibleFields.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      {detailPeople.map(({ title, member }) => (
+        <details key={member.id} open className="text-sm">
+          <summary
+            className={`cursor-pointer select-none ${mutedTextClassName}`}
+          >
+            {title}
+          </summary>
+          <div className="mt-2 flex flex-col gap-1 pl-1">
+            {visibleFields.map((field) => (
+              <p key={field} className={mutedTextClassName}>
+                <span className={strongTextClassName}>
+                  {companionshipFindVisibleFieldLabels[field]}:{' '}
+                </span>
+                {companionshipFindParticipantFieldText(member, field)}
+              </p>
+            ))}
+          </div>
+        </details>
+      ))}
+    </div>
+  );
+}
+
 function FindParticipantSelects({
   members,
   couples,
   accompaniedOptions,
   proposalChoices,
   lockedAccompanied,
+  currentCompanionLabel,
+  visibleFields,
   initialAccompaniedKind,
   initialAccompaniedId,
   initialCompanionKind,
   initialCompanionId,
   fieldControlClassName,
   dangerTextClassName,
+  mutedTextClassName,
+  strongTextClassName,
   accompaniedError,
   companionError,
 }: {
@@ -63,12 +145,16 @@ function FindParticipantSelects({
   accompaniedOptions: CompanionshipParticipantOption[];
   proposalChoices: ProposedCompanionshipChoice[];
   lockedAccompanied?: CompanionshipParticipantOption;
+  currentCompanionLabel?: string;
+  visibleFields: CompanionshipFindVisibleField[];
   initialAccompaniedKind: CompanionshipParticipantKind | '';
   initialAccompaniedId: string;
   initialCompanionKind: CompanionshipParticipantKind | '';
   initialCompanionId: string;
   fieldControlClassName: string;
   dangerTextClassName: string;
+  mutedTextClassName: string;
+  strongTextClassName: string;
   accompaniedError?: string;
   companionError?: string;
 }): JSX.Element {
@@ -87,6 +173,15 @@ function FindParticipantSelects({
   const accompanied =
     lockedAccompanied ??
     findAccompaniedCompanionshipOption(accompaniedOptions, accompaniedId);
+  const proposedCompanion =
+    companionId === ''
+      ? undefined
+      : proposeCompanionCompanionshipOptions(
+          accompanied,
+          members,
+          couples,
+          companionId
+        ).find((option) => option.id === companionId);
   const proposedCompanionIds = new Set(
     proposalChoices.map((choice) =>
       choice.kind === 'person' ? choice.companionId : choice.companionCoupleId
@@ -162,6 +257,22 @@ function FindParticipantSelects({
         <FieldError message={accompaniedError} className={dangerTextClassName} />
       </label>
 
+      {currentCompanionLabel ? (
+        <label className="flex flex-col gap-1">
+          <span>Obecny Akompaniator</span>
+          <p className={fieldControlClassName}>{currentCompanionLabel}</p>
+        </label>
+      ) : null}
+
+      <CompanionshipFindParticipantDetails
+        option={accompanied}
+        members={members}
+        couples={couples}
+        visibleFields={visibleFields}
+        mutedTextClassName={mutedTextClassName}
+        strongTextClassName={strongTextClassName}
+      />
+
       <label className="flex flex-col gap-1">
         <span>Proponowany Akompaniator</span>
         <select
@@ -187,6 +298,15 @@ function FindParticipantSelects({
         </select>
         <FieldError message={companionError} className={dangerTextClassName} />
       </label>
+
+      <CompanionshipFindParticipantDetails
+        option={proposedCompanion}
+        members={members}
+        couples={couples}
+        visibleFields={visibleFields}
+        mutedTextClassName={mutedTextClassName}
+        strongTextClassName={strongTextClassName}
+      />
     </>
   );
 }
@@ -199,6 +319,7 @@ export function CompanionshipFindForm({
   initialValues,
   lockedAccompanied,
   changeRelationId,
+  currentCompanionLabel,
 }: {
   members: CommunityMember[];
   couples: CoupleListItem[];
@@ -209,6 +330,8 @@ export function CompanionshipFindForm({
   lockedAccompanied?: CompanionshipParticipantOption;
   /** Active relation id from Created Companionships "change" entry. */
   changeRelationId?: string;
+  /** Change-companion entry: current Companion shown under Accompanied. */
+  currentCompanionLabel?: string;
 }): JSX.Element {
   const router = useRouter();
   const [rememberState, rememberAction] = useActionState(
@@ -231,6 +354,15 @@ export function CompanionshipFindForm({
   const [chooseError, setChooseError] = useState<string | undefined>();
   const [deleteError, setDeleteError] = useState<string | undefined>();
   const [isDeleting, startDelete] = useTransition();
+  const [visibleFields, setVisibleFields] = useState<
+    CompanionshipFindVisibleField[]
+  >(defaultCompanionshipFindVisibleFields);
+
+  useEffect(() => {
+    setVisibleFields(
+      readStoredCompanionshipFindVisibleFields(window.localStorage)
+    );
+  }, []);
 
   const accompanied =
     lockedAccompanied ??
@@ -312,6 +444,36 @@ export function CompanionshipFindForm({
       {deleteError ? <p className={surfaces.formError}>{deleteError}</p> : null}
       {chooseError ? <p className={surfaces.formError}>{chooseError}</p> : null}
 
+      <details className="text-sm">
+        <summary className={`cursor-pointer select-none ${surfaces.secondaryText}`}>
+          Widoczne pola
+        </summary>
+        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2 pl-1">
+          {companionshipFindVisibleFields.map((field) => (
+            <label key={field} className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={visibleFields.includes(field)}
+                onChange={() => {
+                  setVisibleFields((current) => {
+                    const next = toggleCompanionshipFindVisibleField(
+                      current,
+                      field
+                    );
+                    storeCompanionshipFindVisibleFields(
+                      next,
+                      window.localStorage
+                    );
+                    return next;
+                  });
+                }}
+              />
+              <span>{companionshipFindVisibleFieldLabels[field]}</span>
+            </label>
+          ))}
+        </div>
+      </details>
+
       <form
         key={rememberFormKey}
         action={rememberAction}
@@ -327,12 +489,16 @@ export function CompanionshipFindForm({
           accompaniedOptions={accompaniedOptions}
           proposalChoices={proposalChoices}
           lockedAccompanied={lockedAccompanied}
+          currentCompanionLabel={currentCompanionLabel}
+          visibleFields={visibleFields}
           initialAccompaniedKind={values.accompanied_kind}
           initialAccompaniedId={values.accompanied_id}
           initialCompanionKind={values.companion_kind}
           initialCompanionId={values.companion_id}
           fieldControlClassName={fieldControlClassName}
           dangerTextClassName={surfaces.dangerText}
+          mutedTextClassName={surfaces.secondaryText}
+          strongTextClassName={surfaces.strongText}
           accompaniedError={rememberState?.fieldErrors?.accompanied_id}
           companionError={rememberState?.fieldErrors?.companion_id}
         />
@@ -351,35 +517,46 @@ export function CompanionshipFindForm({
             Brak zapamiętanych propozycji dla wybranego akompaniowanego.
           </p>
         ) : (
-          <ul className="flex flex-col gap-2">
+          <ul className="flex flex-col gap-4">
             {proposalChoices.map((choice) => {
               const value = proposedCompanionshipChoiceValue(choice);
               return (
-                <li
-                  key={value}
-                  className={`flex flex-wrap items-center justify-between gap-3 rounded border px-3 py-2 ${surfaces.choice(selectedChoiceValue === value)}`}
-                >
-                  <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-2">
-                    <input
-                      type="radio"
-                      name="selected_proposal"
-                      value={value}
-                      checked={selectedChoiceValue === value}
-                      onChange={() => {
-                        setSelectedChoiceValue(value);
-                        setChooseError(undefined);
-                      }}
-                    />
-                    <span className={surfaces.strongText}>{choice.label}</span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => removeProposal(choice)}
-                    disabled={isDeleting}
-                    className={`text-sm font-medium ${surfaces.dangerText} underline-offset-4 hover:underline disabled:opacity-50`}
+                <li key={value} className="flex flex-col gap-2">
+                  <div
+                    className={`flex flex-wrap items-center justify-between gap-3 rounded border px-3 py-2 ${surfaces.choice(selectedChoiceValue === value)}`}
                   >
-                    Usuń
-                  </button>
+                    <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-2">
+                      <input
+                        type="radio"
+                        name="selected_proposal"
+                        value={value}
+                        checked={selectedChoiceValue === value}
+                        onChange={() => {
+                          setSelectedChoiceValue(value);
+                          setChooseError(undefined);
+                        }}
+                      />
+                      <span className={surfaces.strongText}>{choice.label}</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => removeProposal(choice)}
+                      disabled={isDeleting}
+                      className={`text-sm font-medium ${surfaces.dangerText} underline-offset-4 hover:underline disabled:opacity-50`}
+                    >
+                      Usuń
+                    </button>
+                  </div>
+                  <CompanionshipFindParticipantDetails
+                    option={companionshipParticipantOptionFromProposalChoice(
+                      choice
+                    )}
+                    members={members}
+                    couples={couples}
+                    visibleFields={visibleFields}
+                    mutedTextClassName={surfaces.secondaryText}
+                    strongTextClassName={surfaces.strongText}
+                  />
                 </li>
               );
             })}
