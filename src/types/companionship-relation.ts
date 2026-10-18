@@ -5,7 +5,11 @@ import type {
   CommunityEngagementStatus,
 } from '@/types/community-member';
 
-export const companionshipRelationStatuses = ['active', 'archived'] as const;
+export const companionshipRelationStatuses = [
+  'active',
+  'archived',
+  'proposed',
+] as const;
 export type CompanionshipRelationStatus =
   (typeof companionshipRelationStatuses)[number];
 
@@ -19,8 +23,9 @@ export interface CompanionshipRelationParticipant {
 }
 
 /**
- * Member eligible for companionship (not Looker-On) who is nobody's accompanied
- * in any relation, active or archived.
+ * Member eligible for companionship (not Looker-On) who has no active
+ * companionship_relations row as accompanied_id. Archived history and
+ * proposed drafts do not count as a current accompaniment.
  */
 export type PersonWithoutCompanion = CompanionshipRelationParticipant;
 

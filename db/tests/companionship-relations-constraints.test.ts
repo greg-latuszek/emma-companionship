@@ -116,4 +116,81 @@ describe('Companionship Relations Constraints', () => {
 
     expect(error).toBeDefined();
   });
+
+  it('allows a proposed companionship relation', async () => {
+    const companionId = await addMember('Anna', 'Nowak');
+    const accompaniedId = await addMember('Piotr', 'Wiśniewski');
+
+    const result = await query(
+      `INSERT INTO companionship_relations (companion_id, accompanied_id, status)
+       VALUES ($1, $2, 'proposed')
+       RETURNING status`,
+      [companionId, accompaniedId]
+    );
+
+    expect(result.rows[0].status).toBe('proposed');
+  });
+
+  it('prevents duplicate proposed relations between the same two members', async () => {
+    const companionId = await addMember('Anna', 'Nowak');
+    const accompaniedId = await addMember('Piotr', 'Wiśniewski');
+
+    await query(
+      `INSERT INTO companionship_relations (companion_id, accompanied_id, status)
+       VALUES ($1, $2, 'proposed')`,
+      [companionId, accompaniedId]
+    );
+
+    let error: unknown;
+    try {
+      await query(
+        `INSERT INTO companionship_relations (companion_id, accompanied_id, status)
+         VALUES ($1, $2, 'proposed')`,
+        [companionId, accompaniedId]
+      );
+    } catch (e) {
+      error = e;
+    }
+
+    expect(error).toBeDefined();
+  });
+
+  it('allows proposed and active relations for different companions of the same accompanied person', async () => {
+    const firstCompanionId = await addMember('Anna', 'Nowak');
+    const secondCompanionId = await addMember('Ewa', 'Kowalska');
+    const accompaniedId = await addMember('Piotr', 'Wiśniewski');
+
+    await query(
+      `INSERT INTO companionship_relations (companion_id, accompanied_id, status)
+       VALUES ($1, $2, 'proposed')`,
+      [firstCompanionId, accompaniedId]
+    );
+
+    const active = await query(
+      `INSERT INTO companionship_relations (companion_id, accompanied_id, status)
+       VALUES ($1, $2, 'active')
+       RETURNING id`,
+      [secondCompanionId, accompaniedId]
+    );
+
+    expect(active.rows).toHaveLength(1);
+  });
+
+  it('rejects a companionship relation status outside active archived proposed', async () => {
+    const companionId = await addMember('Anna', 'Nowak');
+    const accompaniedId = await addMember('Piotr', 'Wiśniewski');
+
+    let error: unknown;
+    try {
+      await query(
+        `INSERT INTO companionship_relations (companion_id, accompanied_id, status)
+         VALUES ($1, $2, 'draft')`,
+        [companionId, accompaniedId]
+      );
+    } catch (e) {
+      error = e;
+    }
+
+    expect(error).toBeDefined();
+  });
 });

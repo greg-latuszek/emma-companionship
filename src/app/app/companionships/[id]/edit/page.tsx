@@ -1,7 +1,10 @@
 import { notFound, redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { listCommunityMembers } from '@/application/list-community-members';
+import { listCouples } from '@/application/list-couples';
 import { findCompanionshipRelation } from '@/application/find-companionship-relation';
+import { findActiveCompanionshipRelationByAccompaniedId } from '@/application/find-active-companionship-relation-by-accompanied';
+import { resolveCoupleCompanionshipEditContext } from '@/application/couple-companionship-edit-context';
 import { PageBackground } from '@/components/PageBackground';
 import { AppArea } from '@/components/AppArea';
 import { Navbar } from '@/components/Navbar';
@@ -27,21 +30,63 @@ export default async function EditCompanionshipRelationPage({
   const { id } = await params;
   const relation = await findCompanionshipRelation(id);
 
-  if (!relation) {
+  if (!relation || relation.status !== 'active') {
     notFound();
   }
 
   const member = await signedInMemberFrom(session);
-  const members = await listCommunityMembers();
-  const accompanied = members.find((candidate) => candidate.id === relation.accompanied_id);
+  const [members, couples] = await Promise.all([
+    listCommunityMembers(),
+    listCouples(),
+  ]);
 
-  const initialValues: CompanionshipRelationFormValues = {
-    companion_id: relation.companion_id,
-    accompanied_id: relation.accompanied_id,
-    start_date: relation.start_date ?? '',
-    end_date: relation.end_date ?? '',
-    notes: relation.notes ?? '',
-  };
+  const accompaniedCouple = couples.find(
+    (couple) =>
+      couple.husband.id === relation.accompanied_id ||
+      couple.wife.id === relation.accompanied_id
+  );
+
+  const [husbandActiveRelation, wifeActiveRelation] = accompaniedCouple
+    ? await Promise.all([
+        findActiveCompanionshipRelationByAccompaniedId(
+          accompaniedCouple.husband.id
+        ),
+        findActiveCompanionshipRelationByAccompaniedId(
+          accompaniedCouple.wife.id
+        ),
+      ])
+    : [null, null];
+
+  const coupleEdit = resolveCoupleCompanionshipEditContext(
+    relation,
+    couples,
+    husbandActiveRelation,
+    wifeActiveRelation
+  );
+
+  const accompanied = members.find(
+    (candidate) => candidate.id === relation.accompanied_id
+  );
+
+  const initialValues: CompanionshipRelationFormValues = coupleEdit
+    ? {
+        accompanied_kind: 'couple',
+        accompanied_id: coupleEdit.accompaniedCouple.id,
+        companion_kind: 'couple',
+        companion_id: coupleEdit.companionCoupleId ?? '',
+        start_date: relation.start_date ?? '',
+        end_date: relation.end_date ?? '',
+        notes: relation.notes ?? '',
+      }
+    : {
+        accompanied_kind: 'person',
+        accompanied_id: relation.accompanied_id,
+        companion_kind: 'person',
+        companion_id: relation.companion_id,
+        start_date: relation.start_date ?? '',
+        end_date: relation.end_date ?? '',
+        notes: relation.notes ?? '',
+      };
 
   return (
     <PageBackground
@@ -73,7 +118,17 @@ export default async function EditCompanionshipRelationPage({
               )}
               members={members}
               accompaniedCandidates={accompanied ? [accompanied] : []}
-              accompaniedLocked
+              accompaniedLocked={!coupleEdit}
+              lockedCoupleEdit={
+                coupleEdit
+                  ? {
+                      accompaniedCouple: coupleEdit.accompaniedCouple,
+                      husbandRelationId: coupleEdit.husbandRelation.id,
+                      wifeRelationId: coupleEdit.wifeRelation.id,
+                    }
+                  : undefined
+              }
+              couples={couples}
               initialValues={initialValues}
             />
           </SemiTransparentPanel>

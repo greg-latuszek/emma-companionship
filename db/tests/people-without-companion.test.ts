@@ -89,14 +89,15 @@ describe('PgCompanionshipRelationRepository.listPeopleWithoutCompanion', () => {
     expect(names).toEqual(['Nowak Anna']);
   });
 
-  it('listPeopleWithoutCompanion leaves out a member with an archived relation as accompanied', async () => {
+  it('listPeopleWithoutCompanion includes a member whose only accompanied relation is archived', async () => {
     const anna = await addMember('Anna', 'Nowak', 'Fraternity');
     const piotr = await addMember('Piotr', 'Wiśniewski', 'Commited');
     await addRelation(anna, piotr, 'archived');
 
     const names = await namesOfPeopleWithoutCompanion();
 
-    expect(names).not.toContain('Wiśniewski Piotr');
+    expect(names).toContain('Wiśniewski Piotr');
+    expect(names).toContain('Nowak Anna');
   });
 
   it('listPeopleWithoutCompanion includes a member who is only someone else\'s companion', async () => {

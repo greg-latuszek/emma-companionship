@@ -303,7 +303,8 @@ CREATE TABLE IF NOT EXISTS companionship_relations (
     companion_id  UUID NOT NULL REFERENCES members(id) ON DELETE RESTRICT,
     accompanied_id UUID NOT NULL REFERENCES members(id) ON DELETE RESTRICT,
 
-    status     VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'archived')),
+    status     VARCHAR(20) NOT NULL DEFAULT 'active'
+               CHECK (status IN ('active', 'archived', 'proposed')),
     start_date DATE,
     end_date   DATE,
     notes      TEXT,
@@ -328,6 +329,11 @@ CREATE INDEX IF NOT EXISTS idx_companionship_relations_status
 CREATE UNIQUE INDEX IF NOT EXISTS idx_companionship_relations_active_unique
     ON companionship_relations(companion_id, accompanied_id)
     WHERE status = 'active';
+
+-- Only one proposed relation between the same two members
+CREATE UNIQUE INDEX IF NOT EXISTS idx_companionship_relations_proposed_unique
+    ON companionship_relations(companion_id, accompanied_id)
+    WHERE status = 'proposed';
 
 -- ========== Record this migration ==========
 INSERT INTO _schema_migrations (version, description, executed_at)

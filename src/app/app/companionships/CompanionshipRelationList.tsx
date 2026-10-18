@@ -5,11 +5,15 @@ import { useEffect, useState } from 'react';
 import type { JSX } from 'react';
 import { useVisualStyle } from '@/components/VisualStyleProvider';
 import { visualSurfaces } from '@/components/visual-style-surfaces';
+import type { ArchivedCompanionshipHistoryRow } from '@/application/group-archived-companionship-history';
 import type { CompanionshipRelationListItem } from '@/types/companionship-relation';
 import { MirroredHorizontalScroll } from '../members/MirroredHorizontalScroll';
 import { DeleteCompanionshipRelationButton } from './DeleteCompanionshipRelationButton';
 import {
   accompaniedFullName,
+  archivedCompanionshipHistoryAccompaniedLabel,
+  archivedCompanionshipHistoryCompanionLabel,
+  archivedCompanionshipHistoryRowId,
   companionFullName,
   companionshipRelationListFieldLabels,
   nextCompanionshipRelationListSort,
@@ -17,11 +21,14 @@ import {
   readStoredCompanionshipRelationListAccompaniedExtras,
   readStoredCompanionshipRelationListAkompaniamentExtras,
   readStoredCompanionshipRelationListCompanionExtras,
+  readStoredCompanionshipRelationListHistoryAkompaniamentExtras,
   readStoredCompanionshipRelationListSort,
+  sortArchivedCompanionshipHistoryRows,
   sortCompanionshipRelations,
   storeCompanionshipRelationListAccompaniedExtras,
   storeCompanionshipRelationListAkompaniamentExtras,
   storeCompanionshipRelationListCompanionExtras,
+  storeCompanionshipRelationListHistoryAkompaniamentExtras,
   storeCompanionshipRelationListSort,
   toggleCompanionshipRelationListAkompaniamentExtraField,
   toggleCompanionshipRelationListPersonExtraField,
@@ -29,9 +36,22 @@ import {
   type CompanionshipRelationListPersonExtraField,
   type CompanionshipRelationListSortDirection,
   type CompanionshipRelationListSortField,
-  companionshipRelationListAkompaniamentExtraFields,
+  companionshipRelationListCreatedAkompaniamentExtraFields,
+  companionshipRelationListHistoryAkompaniamentExtraFields,
   companionshipRelationListPersonExtraFields,
+  defaultCompanionshipRelationListHistoryAkompaniamentExtras,
 } from './companionship-relation-list-state';
+
+type CompanionshipRelationListDisplayRow = {
+  id: string;
+  accompaniedLabel: string;
+  companionLabel: string;
+  start_date: string | null;
+  end_date: string | null;
+  status: string;
+  /** Present for person rows (Created, or History person); absent for History couple. */
+  relation: CompanionshipRelationListItem | null;
+};
 
 function sortAria(
   field: CompanionshipRelationListSortField,
@@ -60,7 +80,7 @@ function SortHeader({
   const active = sortField === field;
   const surfaces = visualSurfaces(useVisualStyle());
   const textClass = isImportant
-    ? surfaces.importantText
+    ? surfaces.headerText
     : `font-medium ${surfaces.strongText}`;
 
   return (
@@ -90,10 +110,54 @@ function statusLabel(status: string): string {
   return status === 'active' ? 'Aktywny' : 'Zarchiwizowany';
 }
 
+function displayRowsFromRelations(
+  relations: CompanionshipRelationListItem[],
+  sortField: CompanionshipRelationListSortField,
+  sortDirection: CompanionshipRelationListSortDirection
+): CompanionshipRelationListDisplayRow[] {
+  return sortCompanionshipRelations(relations, sortField, sortDirection).map(
+    (relation) => ({
+      id: relation.id,
+      accompaniedLabel: accompaniedFullName(relation),
+      companionLabel: companionFullName(relation),
+      start_date: relation.start_date,
+      end_date: relation.end_date,
+      status: relation.status,
+      relation,
+    })
+  );
+}
+
+function displayRowsFromHistory(
+  historyRows: ArchivedCompanionshipHistoryRow[],
+  sortField: CompanionshipRelationListSortField,
+  sortDirection: CompanionshipRelationListSortDirection
+): CompanionshipRelationListDisplayRow[] {
+  return sortArchivedCompanionshipHistoryRows(
+    historyRows,
+    sortField,
+    sortDirection
+  ).map((row) => ({
+    id: archivedCompanionshipHistoryRowId(row),
+    accompaniedLabel: archivedCompanionshipHistoryAccompaniedLabel(row),
+    companionLabel: archivedCompanionshipHistoryCompanionLabel(row),
+    start_date: row.kind === 'person' ? row.relation.start_date : row.start_date,
+    end_date: row.kind === 'person' ? row.relation.end_date : row.end_date,
+    status: 'archived',
+    relation: row.kind === 'person' ? row.relation : null,
+  }));
+}
+
 export function CompanionshipRelationList({
   relations,
+  historyRows,
+  readOnly = false,
 }: {
-  relations: CompanionshipRelationListItem[];
+  relations?: CompanionshipRelationListItem[];
+  /** History: grouped person/couple rows (read-only). */
+  historyRows?: ArchivedCompanionshipHistoryRow[];
+  /** History: hide Edit / Delete; Created keeps mutations. */
+  readOnly?: boolean;
 }): JSX.Element {
   const [sortField, setSortField] =
     useState<CompanionshipRelationListSortField>('accompanied');
@@ -102,7 +166,11 @@ export function CompanionshipRelationList({
   
   const [akompaniamentExtras, setAkompaniamentExtras] = useState<
     CompanionshipRelationListAkompaniamentExtraField[]
-  >([]);
+  >(
+    readOnly
+      ? defaultCompanionshipRelationListHistoryAkompaniamentExtras
+      : []
+  );
   const [accompaniedExtras, setAccompaniedExtras] = useState<
     CompanionshipRelationListPersonExtraField[]
   >([]);
@@ -110,6 +178,9 @@ export function CompanionshipRelationList({
     CompanionshipRelationListPersonExtraField[]
   >([]);
   const surfaces = visualSurfaces(useVisualStyle());
+  const akompaniamentExtraChoices = readOnly
+    ? companionshipRelationListHistoryAkompaniamentExtraFields
+    : companionshipRelationListCreatedAkompaniamentExtraFields;
 
   useEffect(() => {
     const storedSort = readStoredCompanionshipRelationListSort(
@@ -117,7 +188,18 @@ export function CompanionshipRelationList({
     );
     setSortField(storedSort.sortField);
     setSortDirection(storedSort.sortDirection);
-    
+
+    if (readOnly) {
+      setAkompaniamentExtras(
+        readStoredCompanionshipRelationListHistoryAkompaniamentExtras(
+          window.localStorage
+        )
+      );
+      setAccompaniedExtras([]);
+      setCompanionExtras([]);
+      return;
+    }
+
     setAkompaniamentExtras(
       readStoredCompanionshipRelationListAkompaniamentExtras(window.localStorage)
     );
@@ -127,21 +209,23 @@ export function CompanionshipRelationList({
     setCompanionExtras(
       readStoredCompanionshipRelationListCompanionExtras(window.localStorage)
     );
-  }, []);
+  }, [readOnly]);
 
-  if (relations.length === 0) {
+  const sourceCount = historyRows?.length ?? relations?.length ?? 0;
+
+  if (sourceCount === 0) {
     return (
       <p className={`text-center ${surfaces.mutedText}`}>
-        Nie ma jeszcze żadnych zapisanych akompaniamentów.
+        {readOnly
+          ? 'Nie ma jeszcze żadnych archiwalnych akompaniamentów.'
+          : 'Nie ma jeszcze żadnych zapisanych akompaniamentów.'}
       </p>
     );
   }
 
-  const sortedRelations = sortCompanionshipRelations(
-    relations,
-    sortField,
-    sortDirection
-  );
+  const displayRows = historyRows
+    ? displayRowsFromHistory(historyRows, sortField, sortDirection)
+    : displayRowsFromRelations(relations ?? [], sortField, sortDirection);
 
   function rememberSort(
     field: CompanionshipRelationListSortField,
@@ -178,15 +262,29 @@ export function CompanionshipRelationList({
           <div className="flex flex-col gap-2">
             <p className={`text-xs font-semibold ${surfaces.mutedText}`}>Akompaniament</p>
             <div className="flex flex-wrap gap-x-4 gap-y-2">
-              {companionshipRelationListAkompaniamentExtraFields.map((field) => (
+              {akompaniamentExtraChoices.map((field) => (
                 <label key={field} className="flex items-center gap-2">
                   <input
                     type="checkbox"
                     checked={akompaniamentExtras.includes(field)}
                     onChange={() => {
                       setAkompaniamentExtras((current) => {
-                        const extras = toggleCompanionshipRelationListAkompaniamentExtraField(current, field);
-                        storeCompanionshipRelationListAkompaniamentExtras(extras, window.localStorage);
+                        const extras =
+                          toggleCompanionshipRelationListAkompaniamentExtraField(
+                            current,
+                            field
+                          );
+                        if (readOnly) {
+                          storeCompanionshipRelationListHistoryAkompaniamentExtras(
+                            extras,
+                            window.localStorage
+                          );
+                        } else {
+                          storeCompanionshipRelationListAkompaniamentExtras(
+                            extras,
+                            window.localStorage
+                          );
+                        }
                         return extras;
                       });
                     }}
@@ -196,48 +294,76 @@ export function CompanionshipRelationList({
               ))}
             </div>
           </div>
-          <div className="flex flex-col gap-2">
-            <p className={`text-xs font-semibold ${surfaces.mutedText}`}>Akompaniowany</p>
-            <div className="flex flex-wrap gap-x-4 gap-y-2">
-              {companionshipRelationListPersonExtraFields.map((field) => (
-                <label key={`accompanied-${field}`} className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={accompaniedExtras.includes(field)}
-                    onChange={() => {
-                      setAccompaniedExtras((current) => {
-                        const extras = toggleCompanionshipRelationListPersonExtraField(current, field);
-                        storeCompanionshipRelationListAccompaniedExtras(extras, window.localStorage);
-                        return extras;
-                      });
-                    }}
-                  />
-                  <span>{companionshipRelationListFieldLabels[field]}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-          <div className="flex flex-col gap-2">
-            <p className={`text-xs font-semibold ${surfaces.mutedText}`}>Akompaniator</p>
-            <div className="flex flex-wrap gap-x-4 gap-y-2">
-              {companionshipRelationListPersonExtraFields.map((field) => (
-                <label key={`companion-${field}`} className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={companionExtras.includes(field)}
-                    onChange={() => {
-                      setCompanionExtras((current) => {
-                        const extras = toggleCompanionshipRelationListPersonExtraField(current, field);
-                        storeCompanionshipRelationListCompanionExtras(extras, window.localStorage);
-                        return extras;
-                      });
-                    }}
-                  />
-                  <span>{companionshipRelationListFieldLabels[field]}</span>
-                </label>
-              ))}
-            </div>
-          </div>
+          {readOnly ? null : (
+            <>
+              <div className="flex flex-col gap-2">
+                <p className={`text-xs font-semibold ${surfaces.mutedText}`}>
+                  Akompaniowany
+                </p>
+                <div className="flex flex-wrap gap-x-4 gap-y-2">
+                  {companionshipRelationListPersonExtraFields.map((field) => (
+                    <label
+                      key={`accompanied-${field}`}
+                      className="flex items-center gap-2"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={accompaniedExtras.includes(field)}
+                        onChange={() => {
+                          setAccompaniedExtras((current) => {
+                            const extras =
+                              toggleCompanionshipRelationListPersonExtraField(
+                                current,
+                                field
+                              );
+                            storeCompanionshipRelationListAccompaniedExtras(
+                              extras,
+                              window.localStorage
+                            );
+                            return extras;
+                          });
+                        }}
+                      />
+                      <span>{companionshipRelationListFieldLabels[field]}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <p className={`text-xs font-semibold ${surfaces.mutedText}`}>
+                  Akompaniator
+                </p>
+                <div className="flex flex-wrap gap-x-4 gap-y-2">
+                  {companionshipRelationListPersonExtraFields.map((field) => (
+                    <label
+                      key={`companion-${field}`}
+                      className="flex items-center gap-2"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={companionExtras.includes(field)}
+                        onChange={() => {
+                          setCompanionExtras((current) => {
+                            const extras =
+                              toggleCompanionshipRelationListPersonExtraField(
+                                current,
+                                field
+                              );
+                            storeCompanionshipRelationListCompanionExtras(
+                              extras,
+                              window.localStorage
+                            );
+                            return extras;
+                          });
+                        }}
+                      />
+                      <span>{companionshipRelationListFieldLabels[field]}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </details>
 
@@ -258,7 +384,15 @@ export function CompanionshipRelationList({
             <option value="accompanied">{companionshipRelationListFieldLabels['accompanied']}</option>
             <option value="companion">{companionshipRelationListFieldLabels['companion']}</option>
             <option value="start_date">{companionshipRelationListFieldLabels['start_date']}</option>
-            <option value="status">{companionshipRelationListFieldLabels['status']}</option>
+            {readOnly ? (
+              <option value="end_date">
+                {companionshipRelationListFieldLabels['end_date']}
+              </option>
+            ) : (
+              <option value="status">
+                {companionshipRelationListFieldLabels['status']}
+              </option>
+            )}
           </select>
         </label>
         
@@ -266,65 +400,96 @@ export function CompanionshipRelationList({
 
       {/* Mobile card view */}
       <ul className={`divide-y ${surfaces.rowDivider} text-left lg:hidden`}>
-        {sortedRelations.map((relation) => (
-          <li key={relation.id} className="flex flex-col gap-3 py-4">
+        {displayRows.map((row) => (
+          <li key={row.id} className="flex flex-col gap-3 py-4">
             <div className="flex flex-col gap-2">
               <div className="flex flex-col gap-1">
                 <span className="text-xs font-medium text-white/60">
                   Akompaniowany
                 </span>
                 <span className={`font-medium ${surfaces.strongText}`}>
-                  {accompaniedFullName(relation)}
+                  {row.accompaniedLabel}
                 </span>
-                {companionshipRelationListPersonExtraFields.filter((f) => accompaniedExtras.includes(f)).map((field) => {
-                  const text = personFieldText(relation.accompanied, field);
-                  if (!text) return null;
-                  return (
-                    <span key={field} className={`text-sm ${surfaces.secondaryText}`}>
-                      {text}
-                    </span>
-                  );
-                })}
+                {row.relation
+                  ? companionshipRelationListPersonExtraFields
+                      .filter((f) => accompaniedExtras.includes(f))
+                      .map((field) => {
+                        const text = personFieldText(
+                          row.relation!.accompanied,
+                          field
+                        );
+                        if (!text) return null;
+                        return (
+                          <span
+                            key={field}
+                            className={`text-sm ${surfaces.secondaryText}`}
+                          >
+                            {text}
+                          </span>
+                        );
+                      })
+                  : null}
               </div>
               <div className="flex flex-col gap-1">
                 <span className="text-xs font-medium text-white/60">
                   Akompaniator
                 </span>
                 <span className={`font-medium ${surfaces.strongText}`}>
-                  {companionFullName(relation)}
+                  {row.companionLabel}
                 </span>
-                {companionshipRelationListPersonExtraFields.filter((f) => companionExtras.includes(f)).map((field) => {
-                  const text = personFieldText(relation.companion, field);
-                  if (!text) return null;
-                  return (
-                    <span key={field} className={`text-sm ${surfaces.secondaryText}`}>
-                      {text}
-                    </span>
-                  );
-                })}
+                {row.relation
+                  ? companionshipRelationListPersonExtraFields
+                      .filter((f) => companionExtras.includes(f))
+                      .map((field) => {
+                        const text = personFieldText(
+                          row.relation!.companion,
+                          field
+                        );
+                        if (!text) return null;
+                        return (
+                          <span
+                            key={field}
+                            className={`text-sm ${surfaces.secondaryText}`}
+                          >
+                            {text}
+                          </span>
+                        );
+                      })
+                  : null}
               </div>
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-white/60">
-              {akompaniamentExtras.includes('start_date') && relation.start_date ? (
-                <span>Od {formatDate(relation.start_date)}</span>
+              {akompaniamentExtras.includes('start_date') && row.start_date ? (
+                <span>Od {formatDate(row.start_date)}</span>
               ) : null}
-              {akompaniamentExtras.includes('status') ? (
-                <span>{statusLabel(relation.status)}</span>
+              {akompaniamentExtras.includes('end_date') && row.end_date ? (
+                <span>Do {formatDate(row.end_date)}</span>
+              ) : null}
+              {!readOnly && akompaniamentExtras.includes('status') ? (
+                <span>{statusLabel(row.status)}</span>
               ) : null}
             </div>
-            <div className="flex justify-end gap-4">
-              <Link
-                href={`/app/companionships/${relation.id}/edit`}
-                className={`text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
-              >
-                Edytuj
-              </Link>
-              <DeleteCompanionshipRelationButton
-                relationId={relation.id}
-                accompaniedName={accompaniedFullName(relation)}
-                companionName={companionFullName(relation)}
-              />
-            </div>
+            {readOnly || !row.relation ? null : (
+              <div className="flex justify-end gap-4">
+                <Link
+                  href={`/app/companionships/${row.relation.id}/edit`}
+                  className={`text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
+                >
+                  Edytuj
+                </Link>
+                <Link
+                  href={`/app/companionships?tab=find&change=${row.relation.id}`}
+                  className={`text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
+                >
+                  Zmień
+                </Link>
+                <DeleteCompanionshipRelationButton
+                  relationId={row.relation.id}
+                  accompaniedName={row.accompaniedLabel}
+                  companionName={row.companionLabel}
+                />
+              </div>
+            )}
           </li>
         ))}
       </ul>
@@ -358,16 +523,18 @@ export function CompanionshipRelationList({
                     Akompaniator
                   </th>
                 ) : null}
-                <th className="px-3 py-2">
-                  <span className="sr-only">Działania</span>
-                </th>
+                {readOnly ? null : (
+                  <th className="px-3 py-2">
+                    <span className="sr-only">Działania</span>
+                  </th>
+                )}
               </tr>
               
               {/* Bottom tier header - Individual columns */}
               <tr className={`border-b ${surfaces.hairline}`}>
                 <th
                   aria-sort={sortAria('accompanied', sortField, sortDirection)}
-                  className={`${surfaces.importantArea} sticky left-0 z-10 min-w-[14rem] px-3 py-3`}
+                  className={`${surfaces.importantArea} sticky left-0 z-10 min-w-[14rem] px-3 py-2`}
                 >
                   <SortHeader
                     field="accompanied"
@@ -379,7 +546,7 @@ export function CompanionshipRelationList({
                 </th>
                 <th
                   aria-sort={sortAria('companion', sortField, sortDirection)}
-                  className={`${surfaces.importantArea} sticky left-[14rem] z-10 min-w-[14rem] whitespace-nowrap px-3 py-3`}
+                  className={`${surfaces.importantArea} sticky left-[14rem] z-10 min-w-[14rem] whitespace-nowrap px-3 py-2`}
                 >
                   <SortHeader
                     field="companion"
@@ -402,7 +569,20 @@ export function CompanionshipRelationList({
                     />
                   </th>
                 ) : null}
-                {akompaniamentExtras.includes('status') ? (
+                {akompaniamentExtras.includes('end_date') ? (
+                  <th
+                    aria-sort={sortAria('end_date', sortField, sortDirection)}
+                    className="whitespace-nowrap px-3 py-3"
+                  >
+                    <SortHeader
+                      field="end_date"
+                      sortField={sortField}
+                      sortDirection={sortDirection}
+                      onSort={sortBy}
+                    />
+                  </th>
+                ) : null}
+                {!readOnly && akompaniamentExtras.includes('status') ? (
                   <th
                     aria-sort={sortAria('status', sortField, sortDirection)}
                     className="whitespace-nowrap px-3 py-3"
@@ -443,69 +623,94 @@ export function CompanionshipRelationList({
                     />
                   </th>
                 ))}
-                <th className="px-3 py-3 whitespace-nowrap">
-                  <span className="sr-only">Działania</span>
-                </th>
+                {readOnly ? null : (
+                  <th className="px-3 py-3 whitespace-nowrap">
+                    <span className="sr-only">Działania</span>
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody className={`divide-y ${surfaces.rowDivider}`}>
-              {sortedRelations.map((relation) => (
-                <tr key={relation.id}>
+              {displayRows.map((row) => (
+                <tr key={row.id}>
                   <td
                     className={`${surfaces.importantArea} sticky left-0 z-10 whitespace-nowrap px-3 py-3 ${surfaces.importantText}`}
                   >
-                    {accompaniedFullName(relation)}
+                    {row.accompaniedLabel}
                   </td>
                   <td
                     className={`${surfaces.importantArea} sticky left-[14rem] z-10 whitespace-nowrap px-3 py-3 ${surfaces.importantText}`}
                   >
-                    {companionFullName(relation)}
+                    {row.companionLabel}
                   </td>
                   {akompaniamentExtras.includes('start_date') ? (
                     <td
                       className={`whitespace-nowrap px-3 py-3 ${surfaces.mutedText}`}
                     >
-                      {formatDate(relation.start_date)}
+                      {formatDate(row.start_date)}
                     </td>
                   ) : null}
-                  {akompaniamentExtras.includes('status') ? (
+                  {akompaniamentExtras.includes('end_date') ? (
                     <td
                       className={`whitespace-nowrap px-3 py-3 ${surfaces.mutedText}`}
                     >
-                      {statusLabel(relation.status)}
+                      {formatDate(row.end_date)}
                     </td>
                   ) : null}
-                  {companionshipRelationListPersonExtraFields.filter((f) => accompaniedExtras.includes(f)).map((field) => (
+                  {!readOnly && akompaniamentExtras.includes('status') ? (
                     <td
-                      key={field}
                       className={`whitespace-nowrap px-3 py-3 ${surfaces.mutedText}`}
                     >
-                      {personFieldText(relation.accompanied, field)}
+                      {statusLabel(row.status)}
                     </td>
-                  ))}
-                  {companionshipRelationListPersonExtraFields.filter((f) => companionExtras.includes(f)).map((field) => (
-                    <td
-                      key={field}
-                      className={`whitespace-nowrap px-3 py-3 ${surfaces.mutedText}`}
-                    >
-                      {personFieldText(relation.companion, field)}
+                  ) : null}
+                  {row.relation
+                    ? companionshipRelationListPersonExtraFields
+                        .filter((f) => accompaniedExtras.includes(f))
+                        .map((field) => (
+                          <td
+                            key={field}
+                            className={`whitespace-nowrap px-3 py-3 ${surfaces.mutedText}`}
+                          >
+                            {personFieldText(row.relation!.accompanied, field)}
+                          </td>
+                        ))
+                    : null}
+                  {row.relation
+                    ? companionshipRelationListPersonExtraFields
+                        .filter((f) => companionExtras.includes(f))
+                        .map((field) => (
+                          <td
+                            key={field}
+                            className={`whitespace-nowrap px-3 py-3 ${surfaces.mutedText}`}
+                          >
+                            {personFieldText(row.relation!.companion, field)}
+                          </td>
+                        ))
+                    : null}
+                  {readOnly || !row.relation ? null : (
+                    <td className="px-3 py-3 whitespace-nowrap">
+                      <div className="flex gap-4">
+                        <Link
+                          href={`/app/companionships/${row.relation.id}/edit`}
+                          className={`text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
+                        >
+                          Edytuj
+                        </Link>
+                        <Link
+                          href={`/app/companionships?tab=find&change=${row.relation.id}`}
+                          className={`text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
+                        >
+                          Zmień
+                        </Link>
+                        <DeleteCompanionshipRelationButton
+                          relationId={row.relation.id}
+                          accompaniedName={row.accompaniedLabel}
+                          companionName={row.companionLabel}
+                        />
+                      </div>
                     </td>
-                  ))}
-                  <td className="px-3 py-3 whitespace-nowrap">
-                    <div className="flex gap-4">
-                      <Link
-                        href={`/app/companionships/${relation.id}/edit`}
-                        className={`text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
-                      >
-                        Edytuj
-                      </Link>
-                      <DeleteCompanionshipRelationButton
-                        relationId={relation.id}
-                        accompaniedName={accompaniedFullName(relation)}
-                        companionName={companionFullName(relation)}
-                      />
-                    </div>
-                  </td>
+                  )}
                 </tr>
               ))}
             </tbody>

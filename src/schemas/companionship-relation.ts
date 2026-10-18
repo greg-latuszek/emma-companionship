@@ -23,17 +23,32 @@ const isoDate = z.preprocess(
     .nullable()
 );
 
-export const companionshipRelationWriteSchema = z.object({
-  companion_id: z.string().uuid(),
-  accompanied_id: z.string().uuid(),
+const companionshipRelationSharedFieldsSchema = z.object({
   status: z.enum(companionshipRelationStatuses).optional(),
   start_date: isoDate,
   end_date: isoDate,
   notes: z.preprocess(nullWhenBlank, z.string().nullable()),
 });
 
+export const companionshipRelationWriteSchema = companionshipRelationSharedFieldsSchema.extend({
+  companion_id: z.string().uuid(),
+  accompanied_id: z.string().uuid(),
+});
+
+export const coupleCompanionshipWriteSchema = companionshipRelationSharedFieldsSchema.extend({
+  companion_couple_id: z.string().uuid(),
+  accompanied_couple_id: z.string().uuid(),
+});
+
 export type CompanionshipRelationWrite = Omit<
   z.output<typeof companionshipRelationWriteSchema>,
+  'status'
+> & {
+  status?: CompanionshipRelationStatus;
+};
+
+export type CoupleCompanionshipWrite = Omit<
+  z.output<typeof coupleCompanionshipWriteSchema>,
   'status'
 > & {
   status?: CompanionshipRelationStatus;

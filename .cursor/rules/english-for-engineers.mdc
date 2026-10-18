@@ -1,0 +1,35 @@
+---
+description: English for commits, comments, docs, and code; Polish only in UI strings.
+alwaysApply: true
+---
+
+# English for engineers
+
+This repository may be read by non–Polish-speaking programmers. Keep engineer-facing language in English.
+
+Canonical domain terms live in `docs/application_idea.md` (Terminology). Use those, not Polish UI labels, in:
+
+- Commit titles and messages
+- Code comments
+- Tests (including `it('...')` titles)
+- Documentation (`docs/`, architecture notes, READMEs)
+- Identifiers, types, ports, logs aimed at operators/developers
+
+| Prefer (English) | Avoid in non-UI text |
+|---|---|
+| Companionship | Akompaniament / Akompaniamenty |
+| Accompanied | Akompaniowany |
+| Companion | Akompaniator |
+| Companionship relation | akompaniament (as a row/feature name) |
+
+```text
+# ❌ commit / comment / docs
+Add Akompaniowany couple options on + Dodaj Akompaniament
+
+# ✅
+Add Accompanied couple options on the Add Companionship form
+```
+
+**Polish is allowed only in user-visible UI strings** (labels, buttons, form errors shown to the delegate, `aria-label` copy that matches the screen). Do not invent a localization layer until a dedicated i18n story asks for it.
+
+When docs describe a screen, name it in English (route / tab purpose). Do not paste Polish chrome into docs unless you are documenting the exact UI string, and even then prefer English plus the path (`/app/companionships?tab=new`).

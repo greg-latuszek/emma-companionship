@@ -27,12 +27,23 @@ function aCompanionshipRelationRepository(
 ): ICompanionshipRelationRepository {
   return {
     listCompanionshipRelations: vi.fn(),
+    listArchivedCompanionshipRelations: vi.fn(),
+    listProposedCompanionshipRelationsForAccompanied: vi.fn(),
+    deleteProposedCompanionshipRelation: vi.fn(),
+    deleteProposedCompanionshipRelationPair: vi.fn(),
+    activateProposedCompanionshipRelation: vi.fn(),
+    activateProposedCompanionshipRelationPair: vi.fn(),
     listPeopleWithoutCompanion: vi.fn(),
     findCompanionshipRelationById: vi
       .fn()
       .mockResolvedValue(aCompanionshipRelation()),
     addCompanionshipRelation: vi.fn(),
+    findActiveCompanionshipRelationByAccompaniedId: vi.fn(),
+    addCompanionshipRelationPair: vi.fn(),
     updateCompanionshipRelation: vi.fn(),
+    updateCompanionshipRelationPair: vi.fn(),
+    archiveCompanionshipRelationAndAddReplacement: vi.fn(),
+    archiveCompanionshipRelationPairAndAddReplacement: vi.fn(),
     deleteCompanionshipRelation: vi.fn().mockResolvedValue(undefined),
     ...stubs,
   };

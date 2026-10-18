@@ -1,3 +1,4 @@
+import type { ArchivedCompanionshipHistoryRow } from '@/application/group-archived-companionship-history';
 import type { CompanionshipRelationListItem } from '@/types/companionship-relation';
 import {
   maritalStatusLabels,
@@ -5,7 +6,7 @@ import {
   communityEngagementLabels,
 } from '@/app/app/members/community-member-labels';
 
-// Base fields in the Akompaniament group
+// Base fields in the Companionship group
 export const companionshipRelationListBaseFields = [
   'accompanied',
   'companion',
@@ -16,16 +17,29 @@ export const companionshipRelationListBaseFields = [
 export type CompanionshipRelationListBaseField =
   (typeof companionshipRelationListBaseFields)[number];
 
-// Toggleable fields for Akompaniament group (start_date and status are toggleable)
+// Toggleable fields for Companionship group
 export const companionshipRelationListAkompaniamentExtraFields = [
   'start_date',
+  'end_date',
   'status',
 ] as const;
 
 export type CompanionshipRelationListAkompaniamentExtraField =
   (typeof companionshipRelationListAkompaniamentExtraFields)[number];
 
-// Toggleable fields for Akompaniowany and Akompaniator groups
+/** Created Companionships: start + status (active list; end date is unused). */
+export const companionshipRelationListCreatedAkompaniamentExtraFields = [
+  'start_date',
+  'status',
+] as const;
+
+/** Companionship History: start + end (status is always archived). */
+export const companionshipRelationListHistoryAkompaniamentExtraFields = [
+  'start_date',
+  'end_date',
+] as const;
+
+// Toggleable fields for Accompanied and Companion groups
 export const companionshipRelationListPersonExtraFields = [
   'marital_status',
   'consecrated_status',
@@ -40,6 +54,7 @@ export const companionshipRelationListSortFields = [
   'accompanied',
   'companion',
   'start_date',
+  'end_date',
   'status',
   'accompanied_marital_status',
   'accompanied_consecrated_status',
@@ -68,6 +83,9 @@ export const defaultCompanionshipRelationListSort: CompanionshipRelationListSort
 export const defaultCompanionshipRelationListAkompaniamentExtras: CompanionshipRelationListAkompaniamentExtraField[] =
   ['start_date', 'status'];
 
+export const defaultCompanionshipRelationListHistoryAkompaniamentExtras: CompanionshipRelationListAkompaniamentExtraField[] =
+  ['start_date', 'end_date'];
+
 export const defaultCompanionshipRelationListAccompaniedExtras: CompanionshipRelationListPersonExtraField[] =
   [];
 
@@ -76,6 +94,7 @@ export const defaultCompanionshipRelationListCompanionExtras: CompanionshipRelat
 
 export const companionshipRelationListFieldLabels: Record<
   | CompanionshipRelationListBaseField
+  | CompanionshipRelationListAkompaniamentExtraField
   | CompanionshipRelationListPersonExtraField
   | `accompanied_${CompanionshipRelationListPersonExtraField}`
   | `companion_${CompanionshipRelationListPersonExtraField}`,
@@ -84,6 +103,7 @@ export const companionshipRelationListFieldLabels: Record<
   accompanied: 'Akompaniowany',
   companion: 'Akompaniator',
   start_date: 'Data rozpoczęcia',
+  end_date: 'Data zakończenia',
   status: 'Status',
   marital_status: 'Stan cywilny',
   consecrated_status: 'Typ osoby konsekrowanej',
@@ -145,6 +165,9 @@ function companionshipRelationSortKey(
   if (field === 'start_date') {
     return relation.start_date ?? '';
   }
+  if (field === 'end_date') {
+    return relation.end_date ?? '';
+  }
   if (field === 'status') {
     return statusLabel(relation.status);
   }
@@ -204,6 +227,85 @@ export function sortCompanionshipRelations(
   );
 }
 
+export function archivedCompanionshipHistoryRowId(
+  row: ArchivedCompanionshipHistoryRow
+): string {
+  if (row.kind === 'person') {
+    return row.relation.id;
+  }
+  return `couple:${row.husbandRelationId}:${row.wifeRelationId}`;
+}
+
+export function archivedCompanionshipHistoryAccompaniedLabel(
+  row: ArchivedCompanionshipHistoryRow
+): string {
+  if (row.kind === 'person') {
+    return accompaniedFullName(row.relation);
+  }
+  return row.accompaniedLabel;
+}
+
+export function archivedCompanionshipHistoryCompanionLabel(
+  row: ArchivedCompanionshipHistoryRow
+): string {
+  if (row.kind === 'person') {
+    return companionFullName(row.relation);
+  }
+  return row.companionLabel;
+}
+
+function archivedCompanionshipHistorySortKey(
+  row: ArchivedCompanionshipHistoryRow,
+  field: CompanionshipRelationListSortField
+): string {
+  if (field === 'accompanied') {
+    return archivedCompanionshipHistoryAccompaniedLabel(row);
+  }
+  if (field === 'companion') {
+    return archivedCompanionshipHistoryCompanionLabel(row);
+  }
+  if (field === 'start_date') {
+    return row.kind === 'person'
+      ? (row.relation.start_date ?? '')
+      : (row.start_date ?? '');
+  }
+  if (field === 'end_date') {
+    return row.kind === 'person'
+      ? (row.relation.end_date ?? '')
+      : (row.end_date ?? '');
+  }
+  return '';
+}
+
+export function sortArchivedCompanionshipHistoryRows(
+  rows: ArchivedCompanionshipHistoryRow[],
+  sortField: CompanionshipRelationListSortField,
+  direction: CompanionshipRelationListSortDirection = 'asc'
+): ArchivedCompanionshipHistoryRow[] {
+  return [...rows].sort((left, right) => {
+    const leftKey = archivedCompanionshipHistorySortKey(left, sortField);
+    const rightKey = archivedCompanionshipHistorySortKey(right, sortField);
+
+    if (leftKey === '' && rightKey !== '') {
+      return 1;
+    }
+    if (rightKey === '' && leftKey !== '') {
+      return -1;
+    }
+
+    const byField = leftKey.localeCompare(rightKey, 'pl');
+    const directed = direction === 'desc' ? -byField : byField;
+    if (directed !== 0) {
+      return directed;
+    }
+
+    return archivedCompanionshipHistoryAccompaniedLabel(left).localeCompare(
+      archivedCompanionshipHistoryAccompaniedLabel(right),
+      'pl'
+    );
+  });
+}
+
 export function nextCompanionshipRelationListSort(
   currentField: CompanionshipRelationListSortField,
   currentDirection: CompanionshipRelationListSortDirection,
@@ -247,6 +349,8 @@ export const companionshipRelationListSortStorageKey =
   'emma.companionship-relation-list.sort';
 export const companionshipRelationListAkompaniamentExtrasStorageKey =
   'emma.companionship-relation-list.akompaniament-extras';
+export const companionshipRelationListHistoryAkompaniamentExtrasStorageKey =
+  'emma.companionship-relation-list.history-akompaniament-extras';
 export const companionshipRelationListAccompaniedExtrasStorageKey =
   'emma.companionship-relation-list.accompanied-extras';
 export const companionshipRelationListCompanionExtrasStorageKey =
@@ -311,36 +415,36 @@ export function storeCompanionshipRelationListSort(
   );
 }
 
-// Akompaniament extras storage functions
+// Companionship extras storage functions
 function akompaniamentExtrasFromStoredValue(
-  stored: string | null
+  stored: string | null,
+  allowedFields: readonly CompanionshipRelationListAkompaniamentExtraField[],
+  defaultValue: CompanionshipRelationListAkompaniamentExtraField[]
 ): CompanionshipRelationListAkompaniamentExtraField[] {
   if (stored == null) {
-    return defaultCompanionshipRelationListAkompaniamentExtras;
+    return defaultValue;
   }
 
   try {
     const parsed: unknown = JSON.parse(stored);
     if (!Array.isArray(parsed)) {
-      return defaultCompanionshipRelationListAkompaniamentExtras;
+      return defaultValue;
     }
 
     const extras = parsed.filter(
       (
         field
       ): field is CompanionshipRelationListAkompaniamentExtraField =>
-        (
-          companionshipRelationListAkompaniamentExtraFields as readonly string[]
-        ).includes(field)
+        (allowedFields as readonly string[]).includes(field)
     );
 
     if (parsed.length > 0 && extras.length === 0) {
-      return defaultCompanionshipRelationListAkompaniamentExtras;
+      return defaultValue;
     }
 
     return extras;
   } catch {
-    return defaultCompanionshipRelationListAkompaniamentExtras;
+    return defaultValue;
   }
 }
 
@@ -352,7 +456,9 @@ export function readStoredCompanionshipRelationListAkompaniamentExtras(
   }
 
   return akompaniamentExtrasFromStoredValue(
-    storage.getItem(companionshipRelationListAkompaniamentExtrasStorageKey)
+    storage.getItem(companionshipRelationListAkompaniamentExtrasStorageKey),
+    companionshipRelationListCreatedAkompaniamentExtraFields,
+    defaultCompanionshipRelationListAkompaniamentExtras
   );
 }
 
@@ -362,6 +468,32 @@ export function storeCompanionshipRelationListAkompaniamentExtras(
 ): void {
   storage?.setItem(
     companionshipRelationListAkompaniamentExtrasStorageKey,
+    JSON.stringify(extras)
+  );
+}
+
+export function readStoredCompanionshipRelationListHistoryAkompaniamentExtras(
+  storage: Pick<Storage, 'getItem'> | null
+): CompanionshipRelationListAkompaniamentExtraField[] {
+  if (!storage) {
+    return defaultCompanionshipRelationListHistoryAkompaniamentExtras;
+  }
+
+  return akompaniamentExtrasFromStoredValue(
+    storage.getItem(
+      companionshipRelationListHistoryAkompaniamentExtrasStorageKey
+    ),
+    companionshipRelationListHistoryAkompaniamentExtraFields,
+    defaultCompanionshipRelationListHistoryAkompaniamentExtras
+  );
+}
+
+export function storeCompanionshipRelationListHistoryAkompaniamentExtras(
+  extras: CompanionshipRelationListAkompaniamentExtraField[],
+  storage: Pick<Storage, 'setItem'> | null
+): void {
+  storage?.setItem(
+    companionshipRelationListHistoryAkompaniamentExtrasStorageKey,
     JSON.stringify(extras)
   );
 }
