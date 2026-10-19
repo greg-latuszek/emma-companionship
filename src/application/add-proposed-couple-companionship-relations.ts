@@ -5,6 +5,7 @@
  */
 
 import { openRegistry } from '@/application/open-registry';
+import { reportFailedRegistryOperation } from '@/application/report-failed-registry-operation';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import type { ICoupleRepository } from '@/ports/repositories/ICoupleRepository';
 import {
@@ -15,7 +16,6 @@ import { ProposedCompanionshipAlreadyExists } from '@/application/add-proposed-c
 import type { CoupleCompanionshipWrite } from '@/schemas/companionship-relation';
 import type { CompanionshipRelation } from '@/types/companionship-relation';
 import {
-  describeUnavailableDatabase,
   isUnavailableDatabase,
   UnavailableDatabase,
 } from '@/lib/unavailable-database';
@@ -31,20 +31,6 @@ export {
   ProposedCompanionshipAlreadyExists,
   isProposedCompanionshipAlreadyExists,
 } from '@/application/add-proposed-companionship-relation';
-
-function reportFailedProposedCoupleCompanionshipAdd(error: unknown): void {
-  if (isUnavailableDatabase(error)) {
-    console.error(
-      `[emma] The registry cannot add proposed couple companionships. ${describeUnavailableDatabase(error)}`
-    );
-    return;
-  }
-
-  console.error(
-    '[emma] The registry failed while adding proposed couple companionships.',
-    error
-  );
-}
 
 export async function addProposedCoupleCompanionshipRelations(
   write: CoupleCompanionshipWrite,
@@ -103,7 +89,11 @@ export async function addProposedCoupleCompanionshipRelations(
   try {
     return await relations.addCompanionshipRelationPair(husbandWrite, wifeWrite);
   } catch (error) {
-    reportFailedProposedCoupleCompanionshipAdd(error);
+    reportFailedRegistryOperation(error, {
+      actor: 'The registry',
+      cannot: 'add proposed couple companionships',
+      failedWhile: 'adding proposed couple companionships',
+    });
     if (isUnavailableDatabase(error)) {
       throw new UnavailableDatabase(error);
     }

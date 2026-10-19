@@ -1,11 +1,11 @@
 import { openRegistry } from '@/application/open-registry';
+import { reportFailedRegistryOperation } from '@/application/report-failed-registry-operation';
 import type { ICoupleRepository } from '@/ports/repositories/ICoupleRepository';
 import type { ICommunityMemberRepository } from '@/ports/repositories/ICommunityMemberRepository';
 import type { CoupleWrite } from '@/schemas/couple';
 import { MemberId } from '@/types/auth';
 import type { Couple } from '@/types/couple';
 import {
-  describeUnavailableDatabase,
   isUnavailableDatabase,
   UnavailableDatabase,
 } from '@/lib/unavailable-database';
@@ -34,17 +34,6 @@ export function isCoupleParticipantsAreNotEligible(
   error: unknown
 ): error is CoupleParticipantsAreNotEligible {
   return error instanceof CoupleParticipantsAreNotEligible;
-}
-
-function reportFailedCoupleAdd(error: unknown): void {
-  if (isUnavailableDatabase(error)) {
-    console.error(
-      `[emma] The registry cannot add a couple. ${describeUnavailableDatabase(error)}`
-    );
-    return;
-  }
-
-  console.error('[emma] The registry failed while adding a couple.', error);
 }
 
 export async function addCouple(
@@ -88,7 +77,11 @@ export async function addCouple(
   try {
     return await couples.addCouple(write);
   } catch (error) {
-    reportFailedCoupleAdd(error);
+    reportFailedRegistryOperation(error, {
+      actor: 'The registry',
+      cannot: 'add a couple',
+      failedWhile: 'adding a couple',
+    });
     if (isUnavailableDatabase(error)) {
       throw new UnavailableDatabase(error);
     }

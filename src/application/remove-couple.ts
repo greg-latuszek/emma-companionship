@@ -1,7 +1,7 @@
 import { openRegistry } from '@/application/open-registry';
+import { reportFailedRegistryOperation } from '@/application/report-failed-registry-operation';
 import type { ICoupleRepository } from '@/ports/repositories/ICoupleRepository';
 import {
-  describeUnavailableDatabase,
   isUnavailableDatabase,
   UnavailableDatabase,
 } from '@/lib/unavailable-database';
@@ -17,17 +17,6 @@ export function isCoupleNotFound(error: unknown): error is CoupleNotFound {
   return error instanceof CoupleNotFound;
 }
 
-function reportFailedCoupleRemove(error: unknown): void {
-  if (isUnavailableDatabase(error)) {
-    console.error(
-      `[emma] The registry cannot remove a couple. ${describeUnavailableDatabase(error)}`
-    );
-    return;
-  }
-
-  console.error('[emma] The registry failed while removing a couple.', error);
-}
-
 export async function removeCouple(
   id: string,
   couples: ICoupleRepository = openRegistry().getCoupleRepository()
@@ -40,7 +29,11 @@ export async function removeCouple(
   try {
     await couples.removeCouple(id);
   } catch (error) {
-    reportFailedCoupleRemove(error);
+    reportFailedRegistryOperation(error, {
+      actor: 'The registry',
+      cannot: 'remove a couple',
+      failedWhile: 'removing a couple',
+    });
     if (isUnavailableDatabase(error)) {
       throw new UnavailableDatabase(error);
     }

@@ -3,26 +3,12 @@
  */
 
 import { openRegistry } from '@/application/open-registry';
+import { reportFailedRegistryOperation } from '@/application/report-failed-registry-operation';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import {
-  describeUnavailableDatabase,
   isUnavailableDatabase,
   UnavailableDatabase,
 } from '@/lib/unavailable-database';
-
-function reportFailedProposedCompanionshipDelete(error: unknown): void {
-  if (isUnavailableDatabase(error)) {
-    console.error(
-      `[emma] The registry cannot delete a proposed companionship. ${describeUnavailableDatabase(error)}`
-    );
-    return;
-  }
-
-  console.error(
-    '[emma] The registry failed while deleting a proposed companionship.',
-    error
-  );
-}
 
 export async function deleteProposedCompanionshipRelation(
   relationId: string,
@@ -31,7 +17,11 @@ export async function deleteProposedCompanionshipRelation(
   try {
     await relations.deleteProposedCompanionshipRelation(relationId);
   } catch (error) {
-    reportFailedProposedCompanionshipDelete(error);
+    reportFailedRegistryOperation(error, {
+      actor: 'The registry',
+      cannot: 'delete a proposed companionship',
+      failedWhile: 'deleting a proposed companionship',
+    });
     if (isUnavailableDatabase(error)) {
       throw new UnavailableDatabase(error);
     }
@@ -50,7 +40,11 @@ export async function deleteProposedCoupleCompanionshipRelations(
       wifeRelationId
     );
   } catch (error) {
-    reportFailedProposedCompanionshipDelete(error);
+    reportFailedRegistryOperation(error, {
+      actor: 'The registry',
+      cannot: 'delete a proposed companionship',
+      failedWhile: 'deleting a proposed companionship',
+    });
     if (isUnavailableDatabase(error)) {
       throw new UnavailableDatabase(error);
     }

@@ -4,10 +4,10 @@
  */
 
 import { openRegistry } from '@/application/open-registry';
+import { reportFailedRegistryOperation } from '@/application/report-failed-registry-operation';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import type { CompanionshipRelation } from '@/types/companionship-relation';
 import {
-  describeUnavailableDatabase,
   isUnavailableDatabase,
   UnavailableDatabase,
 } from '@/lib/unavailable-database';
@@ -23,20 +23,6 @@ export function isProposedCompanionshipNotFound(
   error: unknown
 ): error is ProposedCompanionshipNotFound {
   return error instanceof ProposedCompanionshipNotFound;
-}
-
-function reportFailedProposedCompanionshipActivate(error: unknown): void {
-  if (isUnavailableDatabase(error)) {
-    console.error(
-      `[emma] The registry cannot activate a proposed companionship. ${describeUnavailableDatabase(error)}`
-    );
-    return;
-  }
-
-  console.error(
-    '[emma] The registry failed while activating a proposed companionship.',
-    error
-  );
 }
 
 export type ProposedCompanionshipActivation = {
@@ -55,7 +41,11 @@ export async function activateProposedCompanionshipRelation(
       activation
     );
   } catch (error) {
-    reportFailedProposedCompanionshipActivate(error);
+    reportFailedRegistryOperation(error, {
+      actor: 'The registry',
+      cannot: 'activate a proposed companionship',
+      failedWhile: 'activating a proposed companionship',
+    });
     if (isUnavailableDatabase(error)) {
       throw new UnavailableDatabase(error);
     }
@@ -76,7 +66,11 @@ export async function activateProposedCoupleCompanionshipRelations(
       activation
     );
   } catch (error) {
-    reportFailedProposedCompanionshipActivate(error);
+    reportFailedRegistryOperation(error, {
+      actor: 'The registry',
+      cannot: 'activate a proposed companionship',
+      failedWhile: 'activating a proposed companionship',
+    });
     if (isUnavailableDatabase(error)) {
       throw new UnavailableDatabase(error);
     }

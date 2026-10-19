@@ -1,4 +1,5 @@
 import { openRegistry } from '@/application/open-registry';
+import { reportFailedRegistryOperation } from '@/application/report-failed-registry-operation';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import type { ICommunityMemberRepository } from '@/ports/repositories/ICommunityMemberRepository';
 import {
@@ -12,7 +13,6 @@ import {
 import { MemberId } from '@/types/auth';
 import type { CompanionshipRelation } from '@/types/companionship-relation';
 import {
-  describeUnavailableDatabase,
   isUnavailableDatabase,
   UnavailableDatabase,
 } from '@/lib/unavailable-database';
@@ -48,20 +48,6 @@ export function isCompanionshipRelationNotFound(
   return error instanceof CompanionshipRelationNotFound;
 }
 
-function reportFailedCompanionshipRelationUpdate(error: unknown): void {
-  if (isUnavailableDatabase(error)) {
-    console.error(
-      `[emma] The registry cannot update a companionship relation. ${describeUnavailableDatabase(error)}`
-    );
-    return;
-  }
-
-  console.error(
-    '[emma] The registry failed while updating a companionship relation.',
-    error
-  );
-}
-
 export async function updateCompanionshipRelation(
   id: string,
   write: CompanionshipRelationWrite,
@@ -88,7 +74,11 @@ export async function updateCompanionshipRelation(
   try {
     return await relations.updateCompanionshipRelation(id, writeWithDefaults);
   } catch (error) {
-    reportFailedCompanionshipRelationUpdate(error);
+    reportFailedRegistryOperation(error, {
+      actor: 'The registry',
+      cannot: 'update a companionship relation',
+      failedWhile: 'updating a companionship relation',
+    });
     if (isUnavailableDatabase(error)) {
       throw new UnavailableDatabase(error);
     }

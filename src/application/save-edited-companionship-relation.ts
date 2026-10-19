@@ -1,4 +1,5 @@
 import { openRegistry } from '@/application/open-registry';
+import { reportFailedRegistryOperation } from '@/application/report-failed-registry-operation';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import type { ICommunityMemberRepository } from '@/ports/repositories/ICommunityMemberRepository';
 import {
@@ -16,7 +17,6 @@ import {
 import { MemberId } from '@/types/auth';
 import type { CompanionshipRelation } from '@/types/companionship-relation';
 import {
-  describeUnavailableDatabase,
   isUnavailableDatabase,
   UnavailableDatabase,
 } from '@/lib/unavailable-database';
@@ -43,20 +43,6 @@ export {
   CompanionshipRelationNotFound,
   isCompanionshipRelationNotFound,
 };
-
-function reportFailedCompanionshipRelationSave(error: unknown): void {
-  if (isUnavailableDatabase(error)) {
-    console.error(
-      `[emma] The registry cannot save an edited companionship relation. ${describeUnavailableDatabase(error)}`
-    );
-    return;
-  }
-
-  console.error(
-    '[emma] The registry failed while saving an edited companionship relation.',
-    error
-  );
-}
 
 /**
  * Person edit: same Companion → in-place update of dates/notes;
@@ -106,7 +92,11 @@ export async function saveEditedCompanionshipRelation(
       writeWithDefaults
     );
   } catch (error) {
-    reportFailedCompanionshipRelationSave(error);
+    reportFailedRegistryOperation(error, {
+      actor: 'The registry',
+      cannot: 'save an edited companionship relation',
+      failedWhile: 'saving an edited companionship relation',
+    });
     if (isUnavailableDatabase(error)) {
       throw new UnavailableDatabase(error);
     }

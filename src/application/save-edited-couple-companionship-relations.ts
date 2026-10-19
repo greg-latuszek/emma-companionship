@@ -1,4 +1,5 @@
 import { openRegistry } from '@/application/open-registry';
+import { reportFailedRegistryOperation } from '@/application/report-failed-registry-operation';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import type { ICoupleRepository } from '@/ports/repositories/ICoupleRepository';
 import {
@@ -17,7 +18,6 @@ import {
 } from '@/schemas/companionship-relation';
 import type { CompanionshipRelation } from '@/types/companionship-relation';
 import {
-  describeUnavailableDatabase,
   isUnavailableDatabase,
   UnavailableDatabase,
 } from '@/lib/unavailable-database';
@@ -30,20 +30,6 @@ export {
   CompanionshipRelationNotFound,
   isCompanionshipRelationNotFound,
 };
-
-function reportFailedCoupleCompanionshipSave(error: unknown): void {
-  if (isUnavailableDatabase(error)) {
-    console.error(
-      `[emma] The registry cannot save edited couple companionship relations. ${describeUnavailableDatabase(error)}`
-    );
-    return;
-  }
-
-  console.error(
-    '[emma] The registry failed while saving edited couple companionship relations.',
-    error
-  );
-}
 
 /**
  * Couple edit: same Companion couple → in-place update of both active rows;
@@ -136,7 +122,11 @@ export async function saveEditedCoupleCompanionshipRelations(
       wifeWrite
     );
   } catch (error) {
-    reportFailedCoupleCompanionshipSave(error);
+    reportFailedRegistryOperation(error, {
+      actor: 'The registry',
+      cannot: 'save edited couple companionship relations',
+      failedWhile: 'saving edited couple companionship relations',
+    });
     if (isUnavailableDatabase(error)) {
       throw new UnavailableDatabase(error);
     }

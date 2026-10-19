@@ -1,25 +1,11 @@
 import { openRegistry } from '@/application/open-registry';
+import { reportFailedRegistryOperation } from '@/application/report-failed-registry-operation';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import type { CompanionshipRelation } from '@/types/companionship-relation';
 import {
-  describeUnavailableDatabase,
   isUnavailableDatabase,
   UnavailableDatabase,
 } from '@/lib/unavailable-database';
-
-function reportFailedCompanionshipRelationFind(error: unknown): void {
-  if (isUnavailableDatabase(error)) {
-    console.error(
-      `[emma] The registry cannot find a companionship relation. ${describeUnavailableDatabase(error)}`
-    );
-    return;
-  }
-
-  console.error(
-    '[emma] The registry failed while finding a companionship relation.',
-    error
-  );
-}
 
 export async function findCompanionshipRelation(
   id: string,
@@ -28,7 +14,11 @@ export async function findCompanionshipRelation(
   try {
     return await relations.findCompanionshipRelationById(id);
   } catch (error) {
-    reportFailedCompanionshipRelationFind(error);
+    reportFailedRegistryOperation(error, {
+      actor: 'The registry',
+      cannot: 'find a companionship relation',
+      failedWhile: 'finding a companionship relation',
+    });
     if (isUnavailableDatabase(error)) {
       throw new UnavailableDatabase(error);
     }

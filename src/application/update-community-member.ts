@@ -1,4 +1,5 @@
 import { openRegistry } from '@/application/open-registry';
+import { reportFailedRegistryOperation } from '@/application/report-failed-registry-operation';
 import {
   DuplicateCommunityMemberEmail,
   isDuplicateCommunityMemberEmail,
@@ -11,7 +12,6 @@ import {
 import type { MemberId } from '@/types/auth';
 import type { CommunityMember } from '@/types/community-member';
 import {
-  describeUnavailableDatabase,
   isUnavailableDatabase,
   UnavailableDatabase,
 } from '@/lib/unavailable-database';
@@ -27,17 +27,6 @@ export function isCommunityMemberNotFound(
   error: unknown
 ): error is CommunityMemberNotFound {
   return error instanceof CommunityMemberNotFound;
-}
-
-function reportFailedCommunityMemberUpdate(error: unknown): void {
-  if (isUnavailableDatabase(error)) {
-    console.error(
-      `[emma] The registry cannot update a community member. ${describeUnavailableDatabase(error)}`
-    );
-    return;
-  }
-
-  console.error('[emma] The registry failed while updating a community member.', error);
 }
 
 export async function updateCommunityMember(
@@ -74,7 +63,11 @@ export async function updateCommunityMember(
       throw error;
     }
 
-    reportFailedCommunityMemberUpdate(error);
+    reportFailedRegistryOperation(error, {
+      actor: 'The registry',
+      cannot: 'update a community member',
+      failedWhile: 'updating a community member',
+    });
     if (isUnavailableDatabase(error)) {
       throw new UnavailableDatabase(error);
     }

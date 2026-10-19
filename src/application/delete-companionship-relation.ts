@@ -1,7 +1,7 @@
 import { openRegistry } from '@/application/open-registry';
+import { reportFailedRegistryOperation } from '@/application/report-failed-registry-operation';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import {
-  describeUnavailableDatabase,
   isUnavailableDatabase,
   UnavailableDatabase,
 } from '@/lib/unavailable-database';
@@ -19,20 +19,6 @@ export function isCompanionshipRelationNotFound(
   return error instanceof CompanionshipRelationNotFound;
 }
 
-function reportFailedCompanionshipRelationDelete(error: unknown): void {
-  if (isUnavailableDatabase(error)) {
-    console.error(
-      `[emma] The registry cannot delete a companionship relation. ${describeUnavailableDatabase(error)}`
-    );
-    return;
-  }
-
-  console.error(
-    '[emma] The registry failed while deleting a companionship relation.',
-    error
-  );
-}
-
 export async function deleteCompanionshipRelation(
   id: string,
   relations: ICompanionshipRelationRepository = openRegistry().getCompanionshipRelationRepository()
@@ -45,7 +31,11 @@ export async function deleteCompanionshipRelation(
   try {
     await relations.deleteCompanionshipRelation(id);
   } catch (error) {
-    reportFailedCompanionshipRelationDelete(error);
+    reportFailedRegistryOperation(error, {
+      actor: 'The registry',
+      cannot: 'delete a companionship relation',
+      failedWhile: 'deleting a companionship relation',
+    });
     if (isUnavailableDatabase(error)) {
       throw new UnavailableDatabase(error);
     }

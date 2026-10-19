@@ -1,8 +1,8 @@
 import { openRegistry } from '@/application/open-registry';
+import { reportFailedRegistryOperation } from '@/application/report-failed-registry-operation';
 import type { IMemberRepository } from '@/ports/repositories/IMemberRepository';
 import type { Member, MemberId, VisualStyle } from '@/types/auth';
 import {
-  describeUnavailableDatabase,
   isUnavailableDatabase,
   UnavailableDatabase,
 } from '@/lib/unavailable-database';
@@ -18,20 +18,6 @@ export function isLoginMemberNotFound(
   error: unknown
 ): error is LoginMemberNotFound {
   return error instanceof LoginMemberNotFound;
-}
-
-function reportFailedMemberVisualStyleUpdate(error: unknown): void {
-  if (isUnavailableDatabase(error)) {
-    console.error(
-      `[emma] The login member cannot store a visual style. ${describeUnavailableDatabase(error)}`
-    );
-    return;
-  }
-
-  console.error(
-    '[emma] The login member failed while storing a visual style.',
-    error
-  );
 }
 
 export async function updateMemberVisualStyle(
@@ -51,7 +37,11 @@ export async function updateMemberVisualStyle(
       throw error;
     }
 
-    reportFailedMemberVisualStyleUpdate(error);
+    reportFailedRegistryOperation(error, {
+      actor: 'The login member',
+      cannot: 'store a visual style',
+      failedWhile: 'storing a visual style',
+    });
     if (isUnavailableDatabase(error)) {
       throw new UnavailableDatabase(error);
     }
