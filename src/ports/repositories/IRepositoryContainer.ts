@@ -4,6 +4,7 @@
  * Allows swapping entire adapter implementations via dependency injection
  */
 
+import { IAtomicWork } from './IAtomicWork';
 import { ICommunityMemberRepository } from './ICommunityMemberRepository';
 import { ICompanionshipRelationRepository } from './ICompanionshipRelationRepository';
 import { ICoupleRepository } from './ICoupleRepository';
@@ -21,4 +22,5 @@ export interface IRepositoryContainer {
   getCommunityMemberRepository(): ICommunityMemberRepository;
   getCompanionshipRelationRepository(): ICompanionshipRelationRepository;
   getCoupleRepository(): ICoupleRepository;
+  getAtomicWork(): IAtomicWork;
 }
