@@ -3,19 +3,18 @@ import { reportFailedRegistryOperation } from '@/application/report-failed-regis
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import type { ICoupleRepository } from '@/ports/repositories/ICoupleRepository';
 import {
-  CompanionAndAccompaniedAreSameCouple,
+  expandCoupleIntoHusbandAndWifeWrites,
+  requireDistinctCompanionAndAccompaniedCouples,
+} from '@/application/companionship-relation-writes';
+import {
   CoupleCompanionshipParticipantsAreNotEligible,
-  isCompanionAndAccompaniedAreSameCouple,
   isCoupleCompanionshipParticipantsAreNotEligible,
 } from '@/application/add-couple-companionship-relations';
 import {
   CompanionshipRelationNotFound,
   isCompanionshipRelationNotFound,
 } from '@/application/update-companionship-relation';
-import {
-  companionshipRelationWriteWithDefaults,
-  type CoupleCompanionshipWrite,
-} from '@/schemas/companionship-relation';
+import type { CoupleCompanionshipWrite } from '@/schemas/companionship-relation';
 import type { CompanionshipRelation } from '@/types/companionship-relation';
 import {
   isUnavailableDatabase,
@@ -24,9 +23,15 @@ import {
 
 export {
   CompanionAndAccompaniedAreSameCouple,
-  CoupleCompanionshipParticipantsAreNotEligible,
   isCompanionAndAccompaniedAreSameCouple,
+} from '@/application/add-couple-companionship-relations';
+
+export {
+  CoupleCompanionshipParticipantsAreNotEligible,
   isCoupleCompanionshipParticipantsAreNotEligible,
+};
+
+export {
   CompanionshipRelationNotFound,
   isCompanionshipRelationNotFound,
 };
@@ -42,19 +47,10 @@ export async function saveEditedCoupleCompanionshipRelations(
   relations: ICompanionshipRelationRepository = openRegistry().getCompanionshipRelationRepository(),
   couples: ICoupleRepository = openRegistry().getCoupleRepository()
 ): Promise<[CompanionshipRelation, CompanionshipRelation]> {
-  if (write.companion_couple_id === write.accompanied_couple_id) {
-    throw new CompanionAndAccompaniedAreSameCouple();
-  }
-
-  const companionCouple = await couples.findCoupleById(write.companion_couple_id);
-  const accompaniedCouple = await couples.findCoupleById(
-    write.accompanied_couple_id
+  const [companionCouple, accompaniedCouple] = await requireDistinctCompanionAndAccompaniedCouples(
+    write,
+    couples
   );
-  if (!companionCouple || !accompaniedCouple) {
-    throw new CoupleCompanionshipParticipantsAreNotEligible(
-      'Both the companion couple and the accompanied couple must exist'
-    );
-  }
 
   const husbandRelation =
     await relations.findCompanionshipRelationById(husbandRelationId);
@@ -79,27 +75,16 @@ export async function saveEditedCoupleCompanionshipRelations(
     );
   }
 
-  const shared = companionshipRelationWriteWithDefaults({
-    companion_id: companionCouple.member1_id,
-    accompanied_id: accompaniedCouple.member1_id,
-    status: write.status,
-    start_date: write.start_date,
-    end_date: write.end_date,
-    notes: write.notes,
-  });
-
-  const husbandWrite = {
-    ...shared,
-    companion_id: companionCouple.member1_id,
-    accompanied_id: accompaniedCouple.member1_id,
-    status: 'active' as const,
-  };
-  const wifeWrite = {
-    ...shared,
-    companion_id: companionCouple.member2_id,
-    accompanied_id: accompaniedCouple.member2_id,
-    status: 'active' as const,
-  };
+  const [husbandWrite, wifeWrite] = expandCoupleIntoHusbandAndWifeWrites(
+    companionCouple,
+    accompaniedCouple,
+    {
+      status: 'active',
+      start_date: write.start_date,
+      end_date: write.end_date,
+      notes: write.notes,
+    }
+  );
 
   const companionUnchanged =
     husbandRelation.companion_id === companionCouple.member1_id &&

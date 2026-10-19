@@ -7,16 +7,14 @@ import { reportFailedRegistryOperation } from '@/application/report-failed-regis
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import type { ICommunityMemberRepository } from '@/ports/repositories/ICommunityMemberRepository';
 import {
-  companionshipParticipantsHaveDifferentGenders,
-  CompanionAndAccompaniedHaveDifferentGenders,
-} from '@/application/companionship-participant-genders';
-import { CompanionAndAccompaniedAreSamePerson } from '@/application/add-companionship-relation';
+  refuseDifferentGenderCompanionship,
+  refuseSamePersonCompanionship,
+} from '@/application/companionship-relation-writes';
 import {
   ProposedCompanionshipAlreadyExists,
   isProposedCompanionshipAlreadyExists,
 } from '@/application/companionship-refusals';
 import type { CompanionshipRelationWrite } from '@/schemas/companionship-relation';
-import { MemberId } from '@/types/auth';
 import type { CompanionshipRelation } from '@/types/companionship-relation';
 import {
   isUnavailableDatabase,
@@ -40,19 +38,8 @@ export async function addProposedCompanionshipRelation(
   relations: ICompanionshipRelationRepository = openRegistry().getCompanionshipRelationRepository(),
   members: ICommunityMemberRepository = openRegistry().getCommunityMemberRepository()
 ): Promise<CompanionshipRelation> {
-  if (write.companion_id === write.accompanied_id) {
-    throw new CompanionAndAccompaniedAreSamePerson();
-  }
-
-  const companion = await members.findCommunityMemberById(
-    MemberId(write.companion_id)
-  );
-  const accompanied = await members.findCommunityMemberById(
-    MemberId(write.accompanied_id)
-  );
-  if (companionshipParticipantsHaveDifferentGenders(companion, accompanied)) {
-    throw new CompanionAndAccompaniedHaveDifferentGenders();
-  }
+  refuseSamePersonCompanionship(write);
+  await refuseDifferentGenderCompanionship(write, members);
 
   const existingProposals =
     await relations.listProposedCompanionshipRelationsForAccompanied([

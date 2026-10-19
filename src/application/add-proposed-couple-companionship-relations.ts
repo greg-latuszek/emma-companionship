@@ -9,9 +9,9 @@ import { reportFailedRegistryOperation } from '@/application/report-failed-regis
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import type { ICoupleRepository } from '@/ports/repositories/ICoupleRepository';
 import {
-  CompanionAndAccompaniedAreSameCouple,
-  CoupleCompanionshipParticipantsAreNotEligible,
-} from '@/application/add-couple-companionship-relations';
+  expandProposedCoupleIntoHusbandAndWifeWrites,
+  requireDistinctCompanionAndAccompaniedCouples,
+} from '@/application/companionship-relation-writes';
 import { ProposedCompanionshipAlreadyExists } from '@/application/add-proposed-companionship-relation';
 import type { CoupleCompanionshipWrite } from '@/schemas/companionship-relation';
 import type { CompanionshipRelation } from '@/types/companionship-relation';
@@ -37,22 +37,10 @@ export async function addProposedCoupleCompanionshipRelations(
   relations: ICompanionshipRelationRepository = openRegistry().getCompanionshipRelationRepository(),
   couples: ICoupleRepository = openRegistry().getCoupleRepository()
 ): Promise<[CompanionshipRelation, CompanionshipRelation]> {
-  if (write.companion_couple_id === write.accompanied_couple_id) {
-    throw new CompanionAndAccompaniedAreSameCouple();
-  }
-
-  const companionCouple = await couples.findCoupleById(
-    write.companion_couple_id
+  const [companionCouple, accompaniedCouple] = await requireDistinctCompanionAndAccompaniedCouples(
+    write,
+    couples
   );
-  const accompaniedCouple = await couples.findCoupleById(
-    write.accompanied_couple_id
-  );
-
-  if (!companionCouple || !accompaniedCouple) {
-    throw new CoupleCompanionshipParticipantsAreNotEligible(
-      'Both the companion couple and the accompanied couple must exist'
-    );
-  }
 
   const existingProposals =
     await relations.listProposedCompanionshipRelationsForAccompanied([
@@ -69,22 +57,11 @@ export async function addProposedCoupleCompanionshipRelations(
     throw new ProposedCompanionshipAlreadyExists();
   }
 
-  const husbandWrite = {
-    companion_id: companionCouple.member1_id,
-    accompanied_id: accompaniedCouple.member1_id,
-    status: 'proposed' as const,
-    start_date: null,
-    end_date: null,
-    notes: write.notes ?? null,
-  };
-  const wifeWrite = {
-    companion_id: companionCouple.member2_id,
-    accompanied_id: accompaniedCouple.member2_id,
-    status: 'proposed' as const,
-    start_date: null,
-    end_date: null,
-    notes: write.notes ?? null,
-  };
+  const [husbandWrite, wifeWrite] = expandProposedCoupleIntoHusbandAndWifeWrites(
+    companionCouple,
+    accompaniedCouple,
+    write.notes
+  );
 
   try {
     return await relations.addCompanionshipRelationPair(husbandWrite, wifeWrite);

@@ -1,15 +1,11 @@
 import { openRegistry } from '@/application/open-registry';
 import { reportFailedRegistryOperation } from '@/application/report-failed-registry-operation';
 import {
-  CompanionAndAccompaniedAreSamePerson,
-  isCompanionAndAccompaniedAreSamePerson,
-} from '@/application/companionship-refusals';
+  refuseDifferentGenderCompanionship,
+  refuseSamePersonCompanionship,
+} from '@/application/companionship-relation-writes';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import type { ICommunityMemberRepository } from '@/ports/repositories/ICommunityMemberRepository';
-import {
-  companionshipParticipantsHaveDifferentGenders,
-  CompanionAndAccompaniedHaveDifferentGenders,
-} from '@/application/companionship-participant-genders';
 import {
   CompanionshipRelationNotFound,
   isCompanionshipRelationNotFound,
@@ -18,7 +14,6 @@ import {
   companionshipRelationWriteWithDefaults,
   type CompanionshipRelationWrite,
 } from '@/schemas/companionship-relation';
-import { MemberId } from '@/types/auth';
 import type { CompanionshipRelation } from '@/types/companionship-relation';
 import {
   isUnavailableDatabase,
@@ -28,7 +23,7 @@ import {
 export {
   CompanionAndAccompaniedAreSamePerson,
   isCompanionAndAccompaniedAreSamePerson,
-};
+} from '@/application/companionship-refusals';
 
 export {
   CompanionAndAccompaniedHaveDifferentGenders,
@@ -50,9 +45,7 @@ export async function saveEditedCompanionshipRelation(
   relations: ICompanionshipRelationRepository = openRegistry().getCompanionshipRelationRepository(),
   members: ICommunityMemberRepository = openRegistry().getCommunityMemberRepository()
 ): Promise<CompanionshipRelation> {
-  if (write.companion_id === write.accompanied_id) {
-    throw new CompanionAndAccompaniedAreSamePerson();
-  }
+  refuseSamePersonCompanionship(write);
 
   const existing = await relations.findCompanionshipRelationById(relationId);
   if (!existing || existing.status !== 'active') {
@@ -63,15 +56,7 @@ export async function saveEditedCompanionshipRelation(
     throw new CompanionshipRelationNotFound(relationId);
   }
 
-  const companion = await members.findCommunityMemberById(
-    MemberId(write.companion_id)
-  );
-  const accompanied = await members.findCommunityMemberById(
-    MemberId(write.accompanied_id)
-  );
-  if (companionshipParticipantsHaveDifferentGenders(companion, accompanied)) {
-    throw new CompanionAndAccompaniedHaveDifferentGenders();
-  }
+  await refuseDifferentGenderCompanionship(write, members);
 
   const writeWithDefaults = companionshipRelationWriteWithDefaults(write);
 

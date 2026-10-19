@@ -1,17 +1,16 @@
 import { openRegistry } from '@/application/open-registry';
 import { reportFailedRegistryOperation } from '@/application/report-failed-registry-operation';
 import {
-  CompanionAndAccompaniedAreSameCouple,
+  expandCoupleIntoHusbandAndWifeWrites,
+  requireDistinctCompanionAndAccompaniedCouples,
+} from '@/application/companionship-relation-writes';
+import {
   CoupleCompanionshipParticipantsAreNotEligible,
-  isCompanionAndAccompaniedAreSameCouple,
   isCoupleCompanionshipParticipantsAreNotEligible,
 } from '@/application/companionship-refusals';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import type { ICoupleRepository } from '@/ports/repositories/ICoupleRepository';
-import {
-  companionshipRelationWriteWithDefaults,
-  type CoupleCompanionshipWrite,
-} from '@/schemas/companionship-relation';
+import type { CoupleCompanionshipWrite } from '@/schemas/companionship-relation';
 import type { CompanionshipRelation } from '@/types/companionship-relation';
 import {
   isUnavailableDatabase,
@@ -21,6 +20,9 @@ import {
 export {
   CompanionAndAccompaniedAreSameCouple,
   isCompanionAndAccompaniedAreSameCouple,
+} from '@/application/companionship-refusals';
+
+export {
   CoupleCompanionshipParticipantsAreNotEligible,
   isCoupleCompanionshipParticipantsAreNotEligible,
 };
@@ -33,20 +35,10 @@ export async function addCoupleCompanionshipRelations(
   relations: ICompanionshipRelationRepository = openRegistry().getCompanionshipRelationRepository(),
   couples: ICoupleRepository = openRegistry().getCoupleRepository()
 ): Promise<[CompanionshipRelation, CompanionshipRelation]> {
-  if (write.companion_couple_id === write.accompanied_couple_id) {
-    throw new CompanionAndAccompaniedAreSameCouple();
-  }
-
-  const companionCouple = await couples.findCoupleById(write.companion_couple_id);
-  const accompaniedCouple = await couples.findCoupleById(
-    write.accompanied_couple_id
+  const [companionCouple, accompaniedCouple] = await requireDistinctCompanionAndAccompaniedCouples(
+    write,
+    couples
   );
-
-  if (!companionCouple || !accompaniedCouple) {
-    throw new CoupleCompanionshipParticipantsAreNotEligible(
-      'Both the companion couple and the accompanied couple must exist'
-    );
-  }
 
   const peopleWithoutCompanion = await relations.listPeopleWithoutCompanion();
   const waitingIds = new Set(
@@ -61,25 +53,11 @@ export async function addCoupleCompanionshipRelations(
     );
   }
 
-  const shared = companionshipRelationWriteWithDefaults({
-    companion_id: companionCouple.member1_id,
-    accompanied_id: accompaniedCouple.member1_id,
-    status: write.status,
-    start_date: write.start_date,
-    end_date: write.end_date,
-    notes: write.notes,
-  });
-
-  const husbandWrite = {
-    ...shared,
-    companion_id: companionCouple.member1_id,
-    accompanied_id: accompaniedCouple.member1_id,
-  };
-  const wifeWrite = {
-    ...shared,
-    companion_id: companionCouple.member2_id,
-    accompanied_id: accompaniedCouple.member2_id,
-  };
+  const [husbandWrite, wifeWrite] = expandCoupleIntoHusbandAndWifeWrites(
+    companionCouple,
+    accompaniedCouple,
+    write
+  );
 
   try {
     return await relations.addCompanionshipRelationPair(husbandWrite, wifeWrite);
