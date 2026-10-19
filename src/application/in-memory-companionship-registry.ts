@@ -128,8 +128,26 @@ export class InMemoryCompanionshipRegistry
     scenarioDoesNotUse('listArchivedCompanionshipRelations');
   }
 
-  listProposedCompanionshipRelationsForAccompanied(): Promise<CompanionshipRelationListItem[]> {
-    scenarioDoesNotUse('listProposedCompanionshipRelationsForAccompanied');
+  async listProposedCompanionshipRelationsForAccompanied(
+    accompaniedIds: string[]
+  ): Promise<CompanionshipRelationListItem[]> {
+    if (accompaniedIds.length === 0) {
+      return [];
+    }
+    const accompanied = new Set(accompaniedIds);
+    return this.relations
+      .filter(
+        (relation) => relation.status === 'proposed' && accompanied.has(relation.accompanied_id)
+      )
+      .map((relation) => ({
+        id: relation.id,
+        companion: companionshipParticipant(relation.companion_id),
+        accompanied: companionshipParticipant(relation.accompanied_id),
+        status: relation.status,
+        start_date: relation.start_date,
+        end_date: relation.end_date,
+        notes: relation.notes,
+      }));
   }
 
   async updateCompanionshipRelation(
@@ -313,6 +331,10 @@ function communityMember(id: string, gender: Gender | null): CommunityMember {
 }
 
 function personWithoutCompanion(id: string): PersonWithoutCompanion {
+  return companionshipParticipant(id);
+}
+
+function companionshipParticipant(id: string): PersonWithoutCompanion {
   return {
     id: MemberId(id),
     first_name: '',
