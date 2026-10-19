@@ -1,5 +1,4 @@
-import { startDatabasePool } from '@/infrastructure/db/startup';
-import { getRepositoryContainer } from '@/di/RepositoryProvider';
+import { openRegistry } from '@/application/open-registry';
 import {
   CommunityMemberNotFound,
   isCommunityMemberNotFound,
@@ -47,11 +46,6 @@ function isForeignKeyViolation(error: unknown): boolean {
   );
 }
 
-function currentCommunityMemberRepository(): ICommunityMemberRepository {
-  startDatabasePool();
-  return getRepositoryContainer().getCommunityMemberRepository();
-}
-
 function reportFailedCommunityMemberRemoval(error: unknown): void {
   if (isUnavailableDatabase(error)) {
     console.error(
@@ -65,7 +59,7 @@ function reportFailedCommunityMemberRemoval(error: unknown): void {
 
 export async function removeCommunityMember(
   id: MemberId,
-  members: ICommunityMemberRepository = currentCommunityMemberRepository()
+  members: ICommunityMemberRepository = openRegistry().getCommunityMemberRepository()
 ): Promise<void> {
   try {
     const existing = await members.findCommunityMemberById(id);

@@ -2,8 +2,7 @@
  * Persists a Find Companion person proposal (status = proposed).
  */
 
-import { startDatabasePool } from '@/infrastructure/db/startup';
-import { getRepositoryContainer } from '@/di/RepositoryProvider';
+import { openRegistry } from '@/application/open-registry';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import type { ICommunityMemberRepository } from '@/ports/repositories/ICommunityMemberRepository';
 import {
@@ -45,16 +44,6 @@ export function isProposedCompanionshipAlreadyExists(
   return error instanceof ProposedCompanionshipAlreadyExists;
 }
 
-function currentCompanionshipRelationRepository(): ICompanionshipRelationRepository {
-  startDatabasePool();
-  return getRepositoryContainer().getCompanionshipRelationRepository();
-}
-
-function currentCommunityMemberRepository(): ICommunityMemberRepository {
-  startDatabasePool();
-  return getRepositoryContainer().getCommunityMemberRepository();
-}
-
 function reportFailedProposedCompanionshipAdd(error: unknown): void {
   if (isUnavailableDatabase(error)) {
     console.error(
@@ -71,8 +60,8 @@ function reportFailedProposedCompanionshipAdd(error: unknown): void {
 
 export async function addProposedCompanionshipRelation(
   write: CompanionshipRelationWrite,
-  relations: ICompanionshipRelationRepository = currentCompanionshipRelationRepository(),
-  members: ICommunityMemberRepository = currentCommunityMemberRepository()
+  relations: ICompanionshipRelationRepository = openRegistry().getCompanionshipRelationRepository(),
+  members: ICommunityMemberRepository = openRegistry().getCommunityMemberRepository()
 ): Promise<CompanionshipRelation> {
   if (write.companion_id === write.accompanied_id) {
     throw new CompanionAndAccompaniedAreSamePerson();

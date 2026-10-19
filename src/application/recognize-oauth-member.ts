@@ -1,5 +1,4 @@
-import { startDatabasePool } from '@/infrastructure/db/startup';
-import { getRepositoryContainer } from '@/di/RepositoryProvider';
+import { openRegistry } from '@/application/open-registry';
 import type { IMemberRepository } from '@/ports/repositories/IMemberRepository';
 import type { OAuthIdentity } from '@/schemas/auth';
 import type { Member } from '@/types/auth';
@@ -23,18 +22,13 @@ function splitDisplayName(name: string | undefined): {
   return { first_name: parts[0], last_name: parts.slice(1).join(' ') };
 }
 
-function currentMemberRepository(): IMemberRepository {
-  startDatabasePool();
-  return getRepositoryContainer().getMemberRepository();
-}
-
 /**
  * After an OAuth provider has confirmed who someone is: find that member,
  * or create a pending one. Logging them into a session stays with Auth.js.
  */
 export async function recognizeOAuthMember(
   identity: OAuthIdentity,
-  members: IMemberRepository = currentMemberRepository()
+  members: IMemberRepository = openRegistry().getMemberRepository()
 ): Promise<Member | null> {
   if (!identity.email) {
     return null;

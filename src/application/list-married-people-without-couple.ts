@@ -1,15 +1,9 @@
-import { startDatabasePool } from '@/infrastructure/db/startup';
-import { getRepositoryContainer } from '@/di/RepositoryProvider';
+import { openRegistry } from '@/application/open-registry';
 import type { ICoupleRepository } from '@/ports/repositories/ICoupleRepository';
 import type { MarriedPersonWithoutCouple } from '@/types/couple';
 
-function currentCoupleRepository(): ICoupleRepository {
-  startDatabasePool();
-  return getRepositoryContainer().getCoupleRepository();
-}
-
 export async function listMarriedPeopleWithoutCouple(
-  couples: ICoupleRepository = currentCoupleRepository()
+  couples: ICoupleRepository = openRegistry().getCoupleRepository()
 ): Promise<MarriedPersonWithoutCouple[]> {
   return couples.listMarriedPeopleWithoutCouple();
 }

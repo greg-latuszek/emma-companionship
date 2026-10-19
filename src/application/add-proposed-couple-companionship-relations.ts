@@ -4,8 +4,7 @@
  * (change-companion entry from Created Companionships).
  */
 
-import { startDatabasePool } from '@/infrastructure/db/startup';
-import { getRepositoryContainer } from '@/di/RepositoryProvider';
+import { openRegistry } from '@/application/open-registry';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import type { ICoupleRepository } from '@/ports/repositories/ICoupleRepository';
 import {
@@ -33,16 +32,6 @@ export {
   isProposedCompanionshipAlreadyExists,
 } from '@/application/add-proposed-companionship-relation';
 
-function currentCompanionshipRelationRepository(): ICompanionshipRelationRepository {
-  startDatabasePool();
-  return getRepositoryContainer().getCompanionshipRelationRepository();
-}
-
-function currentCoupleRepository(): ICoupleRepository {
-  startDatabasePool();
-  return getRepositoryContainer().getCoupleRepository();
-}
-
 function reportFailedProposedCoupleCompanionshipAdd(error: unknown): void {
   if (isUnavailableDatabase(error)) {
     console.error(
@@ -59,8 +48,8 @@ function reportFailedProposedCoupleCompanionshipAdd(error: unknown): void {
 
 export async function addProposedCoupleCompanionshipRelations(
   write: CoupleCompanionshipWrite,
-  relations: ICompanionshipRelationRepository = currentCompanionshipRelationRepository(),
-  couples: ICoupleRepository = currentCoupleRepository()
+  relations: ICompanionshipRelationRepository = openRegistry().getCompanionshipRelationRepository(),
+  couples: ICoupleRepository = openRegistry().getCoupleRepository()
 ): Promise<[CompanionshipRelation, CompanionshipRelation]> {
   if (write.companion_couple_id === write.accompanied_couple_id) {
     throw new CompanionAndAccompaniedAreSameCouple();

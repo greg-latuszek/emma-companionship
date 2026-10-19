@@ -1,15 +1,9 @@
-import { startDatabasePool } from '@/infrastructure/db/startup';
-import { getRepositoryContainer } from '@/di/RepositoryProvider';
+import { openRegistry } from '@/application/open-registry';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import type { CompanionshipRelationListItem } from '@/types/companionship-relation';
 
-function currentCompanionshipRelationRepository(): ICompanionshipRelationRepository {
-  startDatabasePool();
-  return getRepositoryContainer().getCompanionshipRelationRepository();
-}
-
 export async function listCompanionshipRelations(
-  relations: ICompanionshipRelationRepository = currentCompanionshipRelationRepository()
+  relations: ICompanionshipRelationRepository = openRegistry().getCompanionshipRelationRepository()
 ): Promise<CompanionshipRelationListItem[]> {
   return relations.listCompanionshipRelations();
 }

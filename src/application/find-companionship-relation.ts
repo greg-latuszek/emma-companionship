@@ -1,5 +1,4 @@
-import { startDatabasePool } from '@/infrastructure/db/startup';
-import { getRepositoryContainer } from '@/di/RepositoryProvider';
+import { openRegistry } from '@/application/open-registry';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import type { CompanionshipRelation } from '@/types/companionship-relation';
 import {
@@ -7,11 +6,6 @@ import {
   isUnavailableDatabase,
   UnavailableDatabase,
 } from '@/lib/unavailable-database';
-
-function currentCompanionshipRelationRepository(): ICompanionshipRelationRepository {
-  startDatabasePool();
-  return getRepositoryContainer().getCompanionshipRelationRepository();
-}
 
 function reportFailedCompanionshipRelationFind(error: unknown): void {
   if (isUnavailableDatabase(error)) {
@@ -29,7 +23,7 @@ function reportFailedCompanionshipRelationFind(error: unknown): void {
 
 export async function findCompanionshipRelation(
   id: string,
-  relations: ICompanionshipRelationRepository = currentCompanionshipRelationRepository()
+  relations: ICompanionshipRelationRepository = openRegistry().getCompanionshipRelationRepository()
 ): Promise<CompanionshipRelation | null> {
   try {
     return await relations.findCompanionshipRelationById(id);

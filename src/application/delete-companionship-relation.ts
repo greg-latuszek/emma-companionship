@@ -1,5 +1,4 @@
-import { startDatabasePool } from '@/infrastructure/db/startup';
-import { getRepositoryContainer } from '@/di/RepositoryProvider';
+import { openRegistry } from '@/application/open-registry';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import {
   describeUnavailableDatabase,
@@ -20,11 +19,6 @@ export function isCompanionshipRelationNotFound(
   return error instanceof CompanionshipRelationNotFound;
 }
 
-function currentCompanionshipRelationRepository(): ICompanionshipRelationRepository {
-  startDatabasePool();
-  return getRepositoryContainer().getCompanionshipRelationRepository();
-}
-
 function reportFailedCompanionshipRelationDelete(error: unknown): void {
   if (isUnavailableDatabase(error)) {
     console.error(
@@ -41,7 +35,7 @@ function reportFailedCompanionshipRelationDelete(error: unknown): void {
 
 export async function deleteCompanionshipRelation(
   id: string,
-  relations: ICompanionshipRelationRepository = currentCompanionshipRelationRepository()
+  relations: ICompanionshipRelationRepository = openRegistry().getCompanionshipRelationRepository()
 ): Promise<void> {
   const existing = await relations.findCompanionshipRelationById(id);
   if (!existing) {

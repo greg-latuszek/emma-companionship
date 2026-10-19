@@ -1,5 +1,4 @@
-import { startDatabasePool } from '@/infrastructure/db/startup';
-import { getRepositoryContainer } from '@/di/RepositoryProvider';
+import { openRegistry } from '@/application/open-registry';
 import type { ICommunityMemberRepository } from '@/ports/repositories/ICommunityMemberRepository';
 import {
   communityMemberWriteWithDefaults,
@@ -25,11 +24,6 @@ export function isDuplicateCommunityMemberEmail(
   return error instanceof DuplicateCommunityMemberEmail;
 }
 
-function currentCommunityMemberRepository(): ICommunityMemberRepository {
-  startDatabasePool();
-  return getRepositoryContainer().getCommunityMemberRepository();
-}
-
 function reportFailedCommunityMemberAdd(error: unknown): void {
   if (isUnavailableDatabase(error)) {
     console.error(
@@ -43,7 +37,7 @@ function reportFailedCommunityMemberAdd(error: unknown): void {
 
 export async function addCommunityMember(
   write: CommunityMemberWrite,
-  members: ICommunityMemberRepository = currentCommunityMemberRepository()
+  members: ICommunityMemberRepository = openRegistry().getCommunityMemberRepository()
 ): Promise<CommunityMember> {
   const writeWithDefaults = communityMemberWriteWithDefaults(write);
 

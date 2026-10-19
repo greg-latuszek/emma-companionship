@@ -1,5 +1,4 @@
-import { startDatabasePool } from '@/infrastructure/db/startup';
-import { getRepositoryContainer } from '@/di/RepositoryProvider';
+import { openRegistry } from '@/application/open-registry';
 import type { IMemberRepository } from '@/ports/repositories/IMemberRepository';
 import type { Member, MemberId, VisualStyle } from '@/types/auth';
 import {
@@ -21,11 +20,6 @@ export function isLoginMemberNotFound(
   return error instanceof LoginMemberNotFound;
 }
 
-function currentMemberRepository(): IMemberRepository {
-  startDatabasePool();
-  return getRepositoryContainer().getMemberRepository();
-}
-
 function reportFailedMemberVisualStyleUpdate(error: unknown): void {
   if (isUnavailableDatabase(error)) {
     console.error(
@@ -43,7 +37,7 @@ function reportFailedMemberVisualStyleUpdate(error: unknown): void {
 export async function updateMemberVisualStyle(
   id: MemberId,
   visualStyle: VisualStyle | null,
-  members: IMemberRepository = currentMemberRepository()
+  members: IMemberRepository = openRegistry().getMemberRepository()
 ): Promise<Member> {
   try {
     const updated = await members.updateMemberVisualStyle(id, visualStyle);

@@ -1,5 +1,4 @@
-import { startDatabasePool } from '@/infrastructure/db/startup';
-import { getRepositoryContainer } from '@/di/RepositoryProvider';
+import { openRegistry } from '@/application/open-registry';
 import type { ICoupleRepository } from '@/ports/repositories/ICoupleRepository';
 import type { ICommunityMemberRepository } from '@/ports/repositories/ICommunityMemberRepository';
 import type { CoupleWrite } from '@/schemas/couple';
@@ -37,16 +36,6 @@ export function isCoupleParticipantsAreNotEligible(
   return error instanceof CoupleParticipantsAreNotEligible;
 }
 
-function currentCoupleRepository(): ICoupleRepository {
-  startDatabasePool();
-  return getRepositoryContainer().getCoupleRepository();
-}
-
-function currentCommunityMemberRepository(): ICommunityMemberRepository {
-  startDatabasePool();
-  return getRepositoryContainer().getCommunityMemberRepository();
-}
-
 function reportFailedCoupleAdd(error: unknown): void {
   if (isUnavailableDatabase(error)) {
     console.error(
@@ -60,8 +49,8 @@ function reportFailedCoupleAdd(error: unknown): void {
 
 export async function addCouple(
   write: CoupleWrite,
-  couples: ICoupleRepository = currentCoupleRepository(),
-  members: ICommunityMemberRepository = currentCommunityMemberRepository()
+  couples: ICoupleRepository = openRegistry().getCoupleRepository(),
+  members: ICommunityMemberRepository = openRegistry().getCommunityMemberRepository()
 ): Promise<Couple> {
   if (write.husband_id === write.wife_id) {
     throw new HusbandAndWifeAreSamePerson();

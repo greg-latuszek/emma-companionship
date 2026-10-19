@@ -3,8 +3,7 @@
  * Archives any current active relation for the Accompanied (change-companion path).
  */
 
-import { startDatabasePool } from '@/infrastructure/db/startup';
-import { getRepositoryContainer } from '@/di/RepositoryProvider';
+import { openRegistry } from '@/application/open-registry';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import type { CompanionshipRelation } from '@/types/companionship-relation';
 import {
@@ -24,11 +23,6 @@ export function isProposedCompanionshipNotFound(
   error: unknown
 ): error is ProposedCompanionshipNotFound {
   return error instanceof ProposedCompanionshipNotFound;
-}
-
-function currentCompanionshipRelationRepository(): ICompanionshipRelationRepository {
-  startDatabasePool();
-  return getRepositoryContainer().getCompanionshipRelationRepository();
 }
 
 function reportFailedProposedCompanionshipActivate(error: unknown): void {
@@ -53,7 +47,7 @@ export type ProposedCompanionshipActivation = {
 export async function activateProposedCompanionshipRelation(
   proposedRelationId: string,
   activation: ProposedCompanionshipActivation,
-  relations: ICompanionshipRelationRepository = currentCompanionshipRelationRepository()
+  relations: ICompanionshipRelationRepository = openRegistry().getCompanionshipRelationRepository()
 ): Promise<CompanionshipRelation> {
   try {
     return await relations.activateProposedCompanionshipRelation(
@@ -73,7 +67,7 @@ export async function activateProposedCoupleCompanionshipRelations(
   husbandProposedRelationId: string,
   wifeProposedRelationId: string,
   activation: ProposedCompanionshipActivation,
-  relations: ICompanionshipRelationRepository = currentCompanionshipRelationRepository()
+  relations: ICompanionshipRelationRepository = openRegistry().getCompanionshipRelationRepository()
 ): Promise<[CompanionshipRelation, CompanionshipRelation]> {
   try {
     return await relations.activateProposedCompanionshipRelationPair(

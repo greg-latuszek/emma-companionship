@@ -2,19 +2,13 @@
  * Removes a Find Companion proposal (person or couple pair). Only proposed rows.
  */
 
-import { startDatabasePool } from '@/infrastructure/db/startup';
-import { getRepositoryContainer } from '@/di/RepositoryProvider';
+import { openRegistry } from '@/application/open-registry';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import {
   describeUnavailableDatabase,
   isUnavailableDatabase,
   UnavailableDatabase,
 } from '@/lib/unavailable-database';
-
-function currentCompanionshipRelationRepository(): ICompanionshipRelationRepository {
-  startDatabasePool();
-  return getRepositoryContainer().getCompanionshipRelationRepository();
-}
 
 function reportFailedProposedCompanionshipDelete(error: unknown): void {
   if (isUnavailableDatabase(error)) {
@@ -32,7 +26,7 @@ function reportFailedProposedCompanionshipDelete(error: unknown): void {
 
 export async function deleteProposedCompanionshipRelation(
   relationId: string,
-  relations: ICompanionshipRelationRepository = currentCompanionshipRelationRepository()
+  relations: ICompanionshipRelationRepository = openRegistry().getCompanionshipRelationRepository()
 ): Promise<void> {
   try {
     await relations.deleteProposedCompanionshipRelation(relationId);
@@ -48,7 +42,7 @@ export async function deleteProposedCompanionshipRelation(
 export async function deleteProposedCoupleCompanionshipRelations(
   husbandRelationId: string,
   wifeRelationId: string,
-  relations: ICompanionshipRelationRepository = currentCompanionshipRelationRepository()
+  relations: ICompanionshipRelationRepository = openRegistry().getCompanionshipRelationRepository()
 ): Promise<void> {
   try {
     await relations.deleteProposedCompanionshipRelationPair(

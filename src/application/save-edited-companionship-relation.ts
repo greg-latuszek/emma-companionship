@@ -1,5 +1,4 @@
-import { startDatabasePool } from '@/infrastructure/db/startup';
-import { getRepositoryContainer } from '@/di/RepositoryProvider';
+import { openRegistry } from '@/application/open-registry';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import type { ICommunityMemberRepository } from '@/ports/repositories/ICommunityMemberRepository';
 import {
@@ -45,16 +44,6 @@ export {
   isCompanionshipRelationNotFound,
 };
 
-function currentCompanionshipRelationRepository(): ICompanionshipRelationRepository {
-  startDatabasePool();
-  return getRepositoryContainer().getCompanionshipRelationRepository();
-}
-
-function currentCommunityMemberRepository(): ICommunityMemberRepository {
-  startDatabasePool();
-  return getRepositoryContainer().getCommunityMemberRepository();
-}
-
 function reportFailedCompanionshipRelationSave(error: unknown): void {
   if (isUnavailableDatabase(error)) {
     console.error(
@@ -76,8 +65,8 @@ function reportFailedCompanionshipRelationSave(error: unknown): void {
 export async function saveEditedCompanionshipRelation(
   relationId: string,
   write: CompanionshipRelationWrite,
-  relations: ICompanionshipRelationRepository = currentCompanionshipRelationRepository(),
-  members: ICommunityMemberRepository = currentCommunityMemberRepository()
+  relations: ICompanionshipRelationRepository = openRegistry().getCompanionshipRelationRepository(),
+  members: ICommunityMemberRepository = openRegistry().getCommunityMemberRepository()
 ): Promise<CompanionshipRelation> {
   if (write.companion_id === write.accompanied_id) {
     throw new CompanionAndAccompaniedAreSamePerson();

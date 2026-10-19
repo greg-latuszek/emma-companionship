@@ -1,5 +1,4 @@
-import { startDatabasePool } from '@/infrastructure/db/startup';
-import { getRepositoryContainer } from '@/di/RepositoryProvider';
+import { openRegistry } from '@/application/open-registry';
 import type { ICoupleRepository } from '@/ports/repositories/ICoupleRepository';
 import {
   describeUnavailableDatabase,
@@ -18,11 +17,6 @@ export function isCoupleNotFound(error: unknown): error is CoupleNotFound {
   return error instanceof CoupleNotFound;
 }
 
-function currentCoupleRepository(): ICoupleRepository {
-  startDatabasePool();
-  return getRepositoryContainer().getCoupleRepository();
-}
-
 function reportFailedCoupleRemove(error: unknown): void {
   if (isUnavailableDatabase(error)) {
     console.error(
@@ -36,7 +30,7 @@ function reportFailedCoupleRemove(error: unknown): void {
 
 export async function removeCouple(
   id: string,
-  couples: ICoupleRepository = currentCoupleRepository()
+  couples: ICoupleRepository = openRegistry().getCoupleRepository()
 ): Promise<void> {
   const existing = await couples.findCoupleById(id);
   if (!existing) {
