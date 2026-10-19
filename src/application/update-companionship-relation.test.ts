@@ -1,23 +1,21 @@
-import { describe, expect, it, vi } from 'vitest';
-import {
-  updateCompanionshipRelation,
-  CompanionAndAccompaniedAreSamePerson,
-  CompanionAndAccompaniedHaveDifferentGenders,
-  CompanionshipRelationNotFound,
-} from '@/application/update-companionship-relation';
-import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
-import type { ICommunityMemberRepository } from '@/ports/repositories/ICommunityMemberRepository';
+import { describe, expect, it } from 'vitest';
+import { updateCompanionshipRelation } from '@/application/update-companionship-relation';
+import { InMemoryCompanionshipRegistry } from '@/application/in-memory-companionship-registry';
 import type { CompanionshipRelationWrite } from '@/schemas/companionship-relation';
 import { MemberId } from '@/types/auth';
-import type { CommunityMember } from '@/types/community-member';
+import type { Gender } from '@/types/community-member';
 import type { CompanionshipRelation } from '@/types/companionship-relation';
+
+const relationId = 'relation-1';
+const companionId = 'companion-1';
+const accompaniedId = 'accompanied-1';
 
 function aCompanionshipRelationWrite(
   overrides: Partial<CompanionshipRelationWrite> = {}
 ): CompanionshipRelationWrite {
   return {
-    companion_id: 'companion-1',
-    accompanied_id: 'accompanied-1',
+    companion_id: companionId,
+    accompanied_id: accompaniedId,
     status: undefined,
     start_date: null,
     end_date: null,
@@ -26,13 +24,36 @@ function aCompanionshipRelationWrite(
   };
 }
 
-function aCompanionshipRelation(
-  overrides: Partial<CompanionshipRelation> = {}
-): CompanionshipRelation {
+function aRegistry(
+  companionGender: Gender | null = 'female',
+  accompaniedGender: Gender | null = 'female',
+  seeded = true
+): InMemoryCompanionshipRegistry {
+  return new InMemoryCompanionshipRegistry({
+    members: [
+      { id: companionId, gender: companionGender },
+      { id: accompaniedId, gender: accompaniedGender },
+    ],
+    relations: seeded
+      ? [
+          {
+            id: relationId,
+            companionId,
+            accompaniedId,
+            status: 'active',
+            startDate: '2024-01-15',
+            notes: null,
+          },
+        ]
+      : [],
+  });
+}
+
+function theStoredRelation(overrides: Partial<CompanionshipRelation> = {}): CompanionshipRelation {
   return {
-    id: 'relation-1',
-    companion_id: MemberId('companion-1'),
-    accompanied_id: MemberId('accompanied-1'),
+    id: relationId,
+    companion_id: MemberId(companionId),
+    accompanied_id: MemberId(accompaniedId),
     status: 'active',
     start_date: '2024-01-15',
     end_date: null,
@@ -41,95 +62,25 @@ function aCompanionshipRelation(
   };
 }
 
-function aCommunityMember(
-  overrides: Partial<CommunityMember> = {}
-): CommunityMember {
-  return {
-    id: MemberId('companion-1'),
-    first_name: 'Ada',
-    last_name: 'Lovelace',
-    gender: 'female',
-    marital_status: null,
-    consecrated_status: null,
-    community_engagement_status: null,
-    accompanying_readiness: 'Not Candidate',
-    email: null,
-    phone: null,
-    notes: null,
-    profile_picture: null,
-    hasLoginIdentity: false,
-    ...overrides,
-  };
-}
-
-function aCompanionshipRelationRepository(
-  stubs: Partial<ICompanionshipRelationRepository> = {}
-): ICompanionshipRelationRepository {
-  return {
-    listCompanionshipRelations: vi.fn(),
-    listArchivedCompanionshipRelations: vi.fn(),
-    listProposedCompanionshipRelationsForAccompanied: vi.fn(),
-    deleteProposedCompanionshipRelation: vi.fn(),
-    deleteProposedCompanionshipRelationPair: vi.fn(),
-    activateProposedCompanionshipRelation: vi.fn(),
-    activateProposedCompanionshipRelationPair: vi.fn(),
-    listPeopleWithoutCompanion: vi.fn(),
-    findCompanionshipRelationById: vi
-      .fn()
-      .mockResolvedValue(aCompanionshipRelation()),
-    addCompanionshipRelation: vi.fn().mockResolvedValue(aCompanionshipRelation()),
-    findActiveCompanionshipRelationByAccompaniedId: vi.fn(),
-    addCompanionshipRelationPair: vi.fn(),
-    updateCompanionshipRelation: vi
-      .fn()
-      .mockResolvedValue(aCompanionshipRelation()),
-    updateCompanionshipRelationPair: vi.fn(),
-    archiveCompanionshipRelationAndAddReplacement: vi.fn(),
-    archiveCompanionshipRelationPairAndAddReplacement: vi.fn(),
-    deleteCompanionshipRelation: vi.fn(),
-    ...stubs,
-  };
-}
-
-function aCommunityMemberRepository(
-  stubs: Partial<ICommunityMemberRepository> = {}
-): ICommunityMemberRepository {
-  return {
-    listCommunityMembers: vi.fn(),
-    findCommunityMemberById: vi.fn().mockImplementation(async (id: MemberId) =>
-      aCommunityMember({ id, gender: 'female' })
-    ),
-    findCommunityMemberByEmail: vi.fn(),
-    addCommunityMember: vi.fn(),
-    updateCommunityMember: vi.fn(),
-    removeCommunityMember: vi.fn(),
-    ...stubs,
-  };
-}
-
 describe('updateCompanionshipRelation', () => {
   it('updateCompanionshipRelation updates the relation when it exists', async () => {
-    const relations = aCompanionshipRelationRepository();
-    const members = aCommunityMemberRepository();
-    const relationId = 'relation-1';
+    const registry = aRegistry();
+    const today = new Date().toISOString().slice(0, 10);
 
     await updateCompanionshipRelation(
       relationId,
       aCompanionshipRelationWrite(),
-      relations,
-      members
+      registry,
+      registry
     );
 
-    expect(relations.updateCompanionshipRelation).toHaveBeenCalledWith(
-      relationId,
-      expect.objectContaining({ status: 'active' })
-    );
+    expect(registry.relations).toEqual([
+      theStoredRelation({ status: 'active', start_date: today }),
+    ]);
   });
 
   it('updateCompanionshipRelation refuses when companion and accompanied are the same person', async () => {
-    const relations = aCompanionshipRelationRepository();
-    const members = aCommunityMemberRepository();
-    const relationId = 'relation-1';
+    const registry = aRegistry();
     const samePerson = 'member-1';
 
     await expect(
@@ -139,80 +90,51 @@ describe('updateCompanionshipRelation', () => {
           companion_id: samePerson,
           accompanied_id: samePerson,
         }),
-        relations,
-        members
+        registry,
+        registry
       )
-    ).rejects.toBeInstanceOf(CompanionAndAccompaniedAreSamePerson);
+    ).rejects.toThrow('The companion and the accompanied person cannot be the same');
 
-    expect(relations.updateCompanionshipRelation).not.toHaveBeenCalled();
+    expect(registry.relations).toEqual([theStoredRelation()]);
   });
 
   it('updateCompanionshipRelation refuses when companion and accompanied have different genders', async () => {
-    const relations = aCompanionshipRelationRepository();
-    const members = aCommunityMemberRepository({
-      findCommunityMemberById: vi.fn().mockImplementation(async (id: MemberId) => {
-        if (id === MemberId('companion-1')) {
-          return aCommunityMember({ id, gender: 'male' });
-        }
-        return aCommunityMember({ id, gender: 'female' });
-      }),
-    });
-    const relationId = 'relation-1';
+    const registry = aRegistry('male', 'female');
 
     await expect(
-      updateCompanionshipRelation(
-        relationId,
-        aCompanionshipRelationWrite(),
-        relations,
-        members
-      )
-    ).rejects.toBeInstanceOf(CompanionAndAccompaniedHaveDifferentGenders);
+      updateCompanionshipRelation(relationId, aCompanionshipRelationWrite(), registry, registry)
+    ).rejects.toThrow('The companion and the accompanied person must share the same gender');
 
-    expect(relations.updateCompanionshipRelation).not.toHaveBeenCalled();
+    expect(registry.relations).toEqual([theStoredRelation()]);
   });
 
   it('updateCompanionshipRelation refuses when relation does not exist', async () => {
-    const relations = aCompanionshipRelationRepository({
-      findCompanionshipRelationById: vi.fn().mockResolvedValue(null),
-    });
-    const members = aCommunityMemberRepository();
-    const relationId = 'non-existent';
+    const registry = aRegistry('female', 'female', false);
+    const missingId = 'non-existent';
 
     await expect(
-      updateCompanionshipRelation(
-        relationId,
-        aCompanionshipRelationWrite(),
-        relations,
-        members
-      )
-    ).rejects.toBeInstanceOf(CompanionshipRelationNotFound);
+      updateCompanionshipRelation(missingId, aCompanionshipRelationWrite(), registry, registry)
+    ).rejects.toThrow(`Companionship relation with id ${missingId} not found`);
 
-    expect(relations.updateCompanionshipRelation).not.toHaveBeenCalled();
+    expect(registry.relations).toEqual([]);
   });
 
   it('updateCompanionshipRelation defaults start date to today when omitted', async () => {
-    const relations = aCompanionshipRelationRepository();
-    const members = aCommunityMemberRepository();
-    const relationId = 'relation-1';
+    const registry = aRegistry();
     const today = new Date().toISOString().slice(0, 10);
 
     await updateCompanionshipRelation(
       relationId,
       aCompanionshipRelationWrite(),
-      relations,
-      members
+      registry,
+      registry
     );
 
-    expect(relations.updateCompanionshipRelation).toHaveBeenCalledWith(
-      relationId,
-      expect.objectContaining({ start_date: today })
-    );
+    expect(registry.relations).toEqual([theStoredRelation({ start_date: today })]);
   });
 
   it('updateCompanionshipRelation accepts when Delegate provides explicit values', async () => {
-    const relations = aCompanionshipRelationRepository();
-    const members = aCommunityMemberRepository();
-    const relationId = 'relation-1';
+    const registry = aRegistry();
     const explicitDate = '2024-02-15';
 
     await updateCompanionshipRelation(
@@ -222,17 +144,16 @@ describe('updateCompanionshipRelation', () => {
         status: 'archived',
         notes: 'Ended early',
       }),
-      relations,
-      members
+      registry,
+      registry
     );
 
-    expect(relations.updateCompanionshipRelation).toHaveBeenCalledWith(
-      relationId,
-      expect.objectContaining({
+    expect(registry.relations).toEqual([
+      theStoredRelation({
         start_date: explicitDate,
         status: 'archived',
         notes: 'Ended early',
-      })
-    );
+      }),
+    ]);
   });
 });

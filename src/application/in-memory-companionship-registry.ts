@@ -7,6 +7,7 @@ import type { CommunityMember, Gender } from '@/types/community-member';
 import type {
   CompanionshipRelation,
   CompanionshipRelationListItem,
+  CompanionshipRelationStatus,
   PersonWithoutCompanion,
 } from '@/types/companionship-relation';
 import type { Couple, CoupleListItem, MarriedPersonWithoutCouple } from '@/types/couple';
@@ -20,6 +21,16 @@ export type SeededCouple = {
   id: string;
   husbandId: string;
   wifeId: string;
+};
+
+export type SeededCompanionshipRelation = {
+  id: string;
+  companionId: string;
+  accompaniedId: string;
+  status: CompanionshipRelationStatus;
+  startDate?: string | null;
+  endDate?: string | null;
+  notes?: string | null;
 };
 
 /**
@@ -42,6 +53,7 @@ export class InMemoryCompanionshipRegistry
       members?: SeededCommunityMember[];
       couples?: SeededCouple[];
       peopleWithoutCompanion?: string[];
+      relations?: SeededCompanionshipRelation[];
     } = {}
   ) {
     for (const member of seed.members ?? []) {
@@ -55,14 +67,26 @@ export class InMemoryCompanionshipRegistry
       });
     }
     this.peopleWithoutCompanion = [...(seed.peopleWithoutCompanion ?? [])];
+    for (const relation of seed.relations ?? []) {
+      this.relations.push({
+        id: relation.id,
+        companion_id: MemberId(relation.companionId),
+        accompanied_id: MemberId(relation.accompaniedId),
+        status: relation.status,
+        start_date: relation.startDate ?? null,
+        end_date: relation.endDate ?? null,
+        notes: relation.notes ?? null,
+      });
+      this.noteSeededRelationId(relation.id);
+    }
   }
 
   async listPeopleWithoutCompanion(): Promise<PersonWithoutCompanion[]> {
     return this.peopleWithoutCompanion.map(personWithoutCompanion);
   }
 
-  async findCompanionshipRelationById(): Promise<CompanionshipRelation | null> {
-    scenarioDoesNotUse('findCompanionshipRelationById');
+  async findCompanionshipRelationById(id: string): Promise<CompanionshipRelation | null> {
+    return this.relations.find((relation) => relation.id === id) ?? null;
   }
 
   async findActiveCompanionshipRelationByAccompaniedId(): Promise<CompanionshipRelation | null> {
@@ -108,22 +132,45 @@ export class InMemoryCompanionshipRegistry
     scenarioDoesNotUse('listProposedCompanionshipRelationsForAccompanied');
   }
 
-  updateCompanionshipRelation(): Promise<CompanionshipRelation> {
-    scenarioDoesNotUse('updateCompanionshipRelation');
+  async updateCompanionshipRelation(
+    id: string,
+    write: CompanionshipRelationWriteWithDefaults
+  ): Promise<CompanionshipRelation> {
+    return this.replaceCompanionshipRelationFields(id, write);
   }
 
-  updateCompanionshipRelationPair(): Promise<[CompanionshipRelation, CompanionshipRelation]> {
-    scenarioDoesNotUse('updateCompanionshipRelationPair');
+  async updateCompanionshipRelationPair(
+    husbandRelationId: string,
+    wifeRelationId: string,
+    husbandWrite: CompanionshipRelationWriteWithDefaults,
+    wifeWrite: CompanionshipRelationWriteWithDefaults
+  ): Promise<[CompanionshipRelation, CompanionshipRelation]> {
+    return [
+      this.replaceCompanionshipRelationFields(husbandRelationId, husbandWrite),
+      this.replaceCompanionshipRelationFields(wifeRelationId, wifeWrite),
+    ];
   }
 
-  archiveCompanionshipRelationAndAddReplacement(): Promise<CompanionshipRelation> {
-    scenarioDoesNotUse('archiveCompanionshipRelationAndAddReplacement');
+  async archiveCompanionshipRelationAndAddReplacement(
+    existingId: string,
+    replacement: CompanionshipRelationWriteWithDefaults
+  ): Promise<CompanionshipRelation> {
+    this.archiveActiveCompanionshipRelation(existingId);
+    return this.rememberCompanionshipRelation({ ...replacement, status: 'active' });
   }
 
-  archiveCompanionshipRelationPairAndAddReplacement(): Promise<
-    [CompanionshipRelation, CompanionshipRelation]
-  > {
-    scenarioDoesNotUse('archiveCompanionshipRelationPairAndAddReplacement');
+  async archiveCompanionshipRelationPairAndAddReplacement(
+    husbandRelationId: string,
+    wifeRelationId: string,
+    husbandReplacement: CompanionshipRelationWriteWithDefaults,
+    wifeReplacement: CompanionshipRelationWriteWithDefaults
+  ): Promise<[CompanionshipRelation, CompanionshipRelation]> {
+    this.archiveActiveCompanionshipRelation(husbandRelationId);
+    this.archiveActiveCompanionshipRelation(wifeRelationId);
+    return [
+      this.rememberCompanionshipRelation({ ...husbandReplacement, status: 'active' }),
+      this.rememberCompanionshipRelation({ ...wifeReplacement, status: 'active' }),
+    ];
   }
 
   deleteProposedCompanionshipRelation(): Promise<void> {
@@ -144,8 +191,12 @@ export class InMemoryCompanionshipRegistry
     scenarioDoesNotUse('activateProposedCompanionshipRelationPair');
   }
 
-  deleteCompanionshipRelation(): Promise<void> {
-    scenarioDoesNotUse('deleteCompanionshipRelation');
+  async deleteCompanionshipRelation(id: string): Promise<void> {
+    const index = this.relations.findIndex((relation) => relation.id === id);
+    if (index === -1) {
+      return;
+    }
+    this.relations.splice(index, 1);
   }
 
   listCommunityMembers(): Promise<CommunityMember[]> {
@@ -199,6 +250,43 @@ export class InMemoryCompanionshipRegistry
     this.nextRelationNumber += 1;
     this.relations.push(relation);
     return relation;
+  }
+
+  private replaceCompanionshipRelationFields(
+    id: string,
+    write: CompanionshipRelationWriteWithDefaults
+  ): CompanionshipRelation {
+    const relation = this.relations.find((row) => row.id === id);
+    if (!relation) {
+      throw new Error('Failed to update companionship relation');
+    }
+    relation.companion_id = MemberId(write.companion_id);
+    relation.accompanied_id = MemberId(write.accompanied_id);
+    relation.status = write.status;
+    relation.start_date = write.start_date;
+    relation.end_date = write.end_date;
+    relation.notes = write.notes;
+    return relation;
+  }
+
+  private archiveActiveCompanionshipRelation(id: string): void {
+    const relation = this.relations.find((row) => row.id === id);
+    if (!relation || relation.status !== 'active') {
+      throw new Error('Failed to archive companionship relation');
+    }
+    relation.status = 'archived';
+    relation.end_date = new Date().toISOString().slice(0, 10);
+  }
+
+  private noteSeededRelationId(id: string): void {
+    const match = /^relation-(\d+)$/.exec(id);
+    if (!match) {
+      return;
+    }
+    const number = Number(match[1]);
+    if (number >= this.nextRelationNumber) {
+      this.nextRelationNumber = number + 1;
+    }
   }
 }
 
