@@ -12,18 +12,10 @@ import {
   UnavailableDatabase,
 } from '@/lib/unavailable-database';
 
-export class ProposedCompanionshipNotFound extends Error {
-  constructor() {
-    super('The proposed companionship was not found');
-    this.name = 'ProposedCompanionshipNotFound';
-  }
-}
-
-export function isProposedCompanionshipNotFound(
-  error: unknown
-): error is ProposedCompanionshipNotFound {
-  return error instanceof ProposedCompanionshipNotFound;
-}
+export {
+  ProposedCompanionshipNotFound,
+  isProposedCompanionshipNotFound,
+} from '@/application/companionship-refusals';
 
 export type ProposedCompanionshipActivation = {
   start_date: string | null;

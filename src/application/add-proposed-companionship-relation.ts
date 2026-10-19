@@ -11,6 +11,10 @@ import {
   CompanionAndAccompaniedHaveDifferentGenders,
 } from '@/application/companionship-participant-genders';
 import { CompanionAndAccompaniedAreSamePerson } from '@/application/add-companionship-relation';
+import {
+  ProposedCompanionshipAlreadyExists,
+  isProposedCompanionshipAlreadyExists,
+} from '@/application/companionship-refusals';
 import type { CompanionshipRelationWrite } from '@/schemas/companionship-relation';
 import { MemberId } from '@/types/auth';
 import type { CompanionshipRelation } from '@/types/companionship-relation';
@@ -29,20 +33,7 @@ export {
   isCompanionAndAccompaniedHaveDifferentGenders,
 } from '@/application/companionship-participant-genders';
 
-export class ProposedCompanionshipAlreadyExists extends Error {
-  constructor() {
-    super(
-      'A proposed companionship already exists for this companion and accompanied person'
-    );
-    this.name = 'ProposedCompanionshipAlreadyExists';
-  }
-}
-
-export function isProposedCompanionshipAlreadyExists(
-  error: unknown
-): error is ProposedCompanionshipAlreadyExists {
-  return error instanceof ProposedCompanionshipAlreadyExists;
-}
+export { ProposedCompanionshipAlreadyExists, isProposedCompanionshipAlreadyExists };
 
 export async function addProposedCompanionshipRelation(
   write: CompanionshipRelationWrite,

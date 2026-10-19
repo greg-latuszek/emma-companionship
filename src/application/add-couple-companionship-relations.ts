@@ -1,5 +1,11 @@
 import { openRegistry } from '@/application/open-registry';
 import { reportFailedRegistryOperation } from '@/application/report-failed-registry-operation';
+import {
+  CompanionAndAccompaniedAreSameCouple,
+  CoupleCompanionshipParticipantsAreNotEligible,
+  isCompanionAndAccompaniedAreSameCouple,
+  isCoupleCompanionshipParticipantsAreNotEligible,
+} from '@/application/companionship-refusals';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import type { ICoupleRepository } from '@/ports/repositories/ICoupleRepository';
 import {
@@ -12,31 +18,12 @@ import {
   UnavailableDatabase,
 } from '@/lib/unavailable-database';
 
-export class CompanionAndAccompaniedAreSameCouple extends Error {
-  constructor() {
-    super('The companion couple and the accompanied couple cannot be the same');
-    this.name = 'CompanionAndAccompaniedAreSameCouple';
-  }
-}
-
-export function isCompanionAndAccompaniedAreSameCouple(
-  error: unknown
-): error is CompanionAndAccompaniedAreSameCouple {
-  return error instanceof CompanionAndAccompaniedAreSameCouple;
-}
-
-export class CoupleCompanionshipParticipantsAreNotEligible extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'CoupleCompanionshipParticipantsAreNotEligible';
-  }
-}
-
-export function isCoupleCompanionshipParticipantsAreNotEligible(
-  error: unknown
-): error is CoupleCompanionshipParticipantsAreNotEligible {
-  return error instanceof CoupleCompanionshipParticipantsAreNotEligible;
-}
+export {
+  CompanionAndAccompaniedAreSameCouple,
+  isCompanionAndAccompaniedAreSameCouple,
+  CoupleCompanionshipParticipantsAreNotEligible,
+  isCoupleCompanionshipParticipantsAreNotEligible,
+};
 
 /**
  * Creates husband→husband and wife→wife companionship rows from two couples.

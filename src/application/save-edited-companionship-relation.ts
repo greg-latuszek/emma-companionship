@@ -1,5 +1,9 @@
 import { openRegistry } from '@/application/open-registry';
 import { reportFailedRegistryOperation } from '@/application/report-failed-registry-operation';
+import {
+  CompanionAndAccompaniedAreSamePerson,
+  isCompanionAndAccompaniedAreSamePerson,
+} from '@/application/companionship-refusals';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import type { ICommunityMemberRepository } from '@/ports/repositories/ICommunityMemberRepository';
 import {
@@ -21,18 +25,10 @@ import {
   UnavailableDatabase,
 } from '@/lib/unavailable-database';
 
-export class CompanionAndAccompaniedAreSamePerson extends Error {
-  constructor() {
-    super('The companion and the accompanied person cannot be the same');
-    this.name = 'CompanionAndAccompaniedAreSamePerson';
-  }
-}
-
-export function isCompanionAndAccompaniedAreSamePerson(
-  error: unknown
-): error is CompanionAndAccompaniedAreSamePerson {
-  return error instanceof CompanionAndAccompaniedAreSamePerson;
-}
+export {
+  CompanionAndAccompaniedAreSamePerson,
+  isCompanionAndAccompaniedAreSamePerson,
+};
 
 export {
   CompanionAndAccompaniedHaveDifferentGenders,
