@@ -570,6 +570,23 @@ export class PgCompanionshipRelationRepository
     });
   }
 
+  async archiveActiveCompanionshipRelation(id: string): Promise<void> {
+    const today = new Date().toISOString().slice(0, 10);
+    const row = await this.queryOne<{ id: string }>(
+      `
+      UPDATE companionship_relations
+      SET status = 'archived', end_date = $2
+      WHERE id = $1
+        AND status = 'active'
+      RETURNING id
+    `,
+      [id, today]
+    );
+    if (!row) {
+      throw new Error('Failed to archive companionship relation');
+    }
+  }
+
   async deleteProposedCompanionshipRelation(id: string): Promise<void> {
     const row = await this.queryOne<{ id: string }>(
       `

@@ -173,7 +173,7 @@ export class InMemoryCompanionshipRegistry
     existingId: string,
     replacement: CompanionshipRelationWriteWithDefaults
   ): Promise<CompanionshipRelation> {
-    this.archiveActiveCompanionshipRelation(existingId);
+    await this.archiveActiveCompanionshipRelation(existingId);
     return this.rememberCompanionshipRelation({ ...replacement, status: 'active' });
   }
 
@@ -183,8 +183,8 @@ export class InMemoryCompanionshipRegistry
     husbandReplacement: CompanionshipRelationWriteWithDefaults,
     wifeReplacement: CompanionshipRelationWriteWithDefaults
   ): Promise<[CompanionshipRelation, CompanionshipRelation]> {
-    this.archiveActiveCompanionshipRelation(husbandRelationId);
-    this.archiveActiveCompanionshipRelation(wifeRelationId);
+    await this.archiveActiveCompanionshipRelation(husbandRelationId);
+    await this.archiveActiveCompanionshipRelation(wifeRelationId);
     return [
       this.rememberCompanionshipRelation({ ...husbandReplacement, status: 'active' }),
       this.rememberCompanionshipRelation({ ...wifeReplacement, status: 'active' }),
@@ -287,7 +287,7 @@ export class InMemoryCompanionshipRegistry
     return relation;
   }
 
-  private archiveActiveCompanionshipRelation(id: string): void {
+  async archiveActiveCompanionshipRelation(id: string): Promise<void> {
     const relation = this.relations.find((row) => row.id === id);
     if (!relation || relation.status !== 'active') {
       throw new Error('Failed to archive companionship relation');

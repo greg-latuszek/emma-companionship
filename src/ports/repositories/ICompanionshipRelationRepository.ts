@@ -61,6 +61,8 @@ export interface ICompanionshipRelationRepository {
     husbandReplacement: CompanionshipRelationWriteWithDefaults,
     wifeReplacement: CompanionshipRelationWriteWithDefaults
   ): Promise<[CompanionshipRelation, CompanionshipRelation]>;
+  /** Archive one active row (end_date = today); refuses a row that is not active. */
+  archiveActiveCompanionshipRelation(id: string): Promise<void>;
   /** Delete only when status is proposed (Find Companion remove). */
   deleteProposedCompanionshipRelation(id: string): Promise<void>;
   /** Delete both spouse proposed rows in one transaction. */

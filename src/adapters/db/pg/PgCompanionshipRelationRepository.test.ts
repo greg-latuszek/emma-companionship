@@ -36,15 +36,15 @@ function aClient(): RecordedClient {
   return client;
 }
 
-function aPool() {
+function aPool(rowsReturned: unknown[] = [storedRow]) {
   const clients: RecordedClient[] = [];
-  const queriedOnPool: string[] = [];
+  const queriedOnPool: { statement: string; values?: unknown[] }[] = [];
   return {
     clients,
     queriedOnPool,
-    async query(statement: string) {
-      queriedOnPool.push(statement);
-      return { rows: [storedRow] };
+    async query(statement: string, values?: unknown[]) {
+      queriedOnPool.push({ statement, values });
+      return { rows: rowsReturned };
     },
     async connect() {
       const client = aClient();
@@ -88,7 +88,7 @@ describe('PgCompanionshipRelationRepository', () => {
     await repository.addCompanionshipRelation(aWrite());
 
     expect(pool.queriedOnPool).toHaveLength(1);
-    expect(pool.queriedOnPool[0]).toContain('INSERT INTO companionship_relations');
+    expect(pool.queriedOnPool[0].statement).toContain('INSERT INTO companionship_relations');
     expect(pool.clients).toHaveLength(0);
   });
 
@@ -117,5 +117,26 @@ describe('PgCompanionshipRelationRepository', () => {
     expect(pool.clients[0].statements[0]).toBe('BEGIN');
     expect(pool.clients[0].statements.at(-1)).toBe('COMMIT');
     expect(pool.clients[0].released).toBe(true);
+  });
+
+  it('archiveActiveCompanionshipRelation archives an active row with today\'s date', async () => {
+    const pool = aPool([{ id: 'relation-1' }]);
+    const repository = new PgCompanionshipRelationRepository(pool);
+    const today = new Date().toISOString().slice(0, 10);
+
+    await repository.archiveActiveCompanionshipRelation('relation-1');
+
+    expect(pool.queriedOnPool).toHaveLength(1);
+    expect(pool.queriedOnPool[0].statement).toContain("status = 'active'");
+    expect(pool.queriedOnPool[0].values).toEqual(['relation-1', today]);
+  });
+
+  it('archiveActiveCompanionshipRelation refuses a row that is not active', async () => {
+    const pool = aPool([]);
+    const repository = new PgCompanionshipRelationRepository(pool);
+
+    await expect(repository.archiveActiveCompanionshipRelation('relation-1')).rejects.toThrow(
+      'Failed to archive companionship relation'
+    );
   });
 });
