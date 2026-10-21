@@ -163,14 +163,39 @@ export class InMemoryCompanionshipRegistry
     this.relations.splice(index, 1);
   }
 
-  activateProposedCompanionshipRelation(): Promise<CompanionshipRelation> {
-    scenarioDoesNotUse('activateProposedCompanionshipRelation');
-  }
+  async activateProposedCompanionshipRelation(
+    proposedRelationId: string,
+    activation: { start_date: string | null; notes: string | null }
+  ): Promise<CompanionshipRelation> {
+    const proposed = this.relations.find(
+      (row) => row.id === proposedRelationId && row.status === 'proposed'
+    );
+    if (!proposed) {
+      throw new Error('Failed to find proposed companionship relation');
+    }
 
-  activateProposedCompanionshipRelationPair(): Promise<
-    [CompanionshipRelation, CompanionshipRelation]
-  > {
-    scenarioDoesNotUse('activateProposedCompanionshipRelationPair');
+    const today = new Date().toISOString().slice(0, 10);
+    for (const relation of this.relations) {
+      if (relation.accompanied_id === proposed.accompanied_id && relation.status === 'active') {
+        relation.status = 'archived';
+        relation.end_date = today;
+      }
+    }
+    proposed.status = 'active';
+    proposed.start_date = activation.start_date;
+    proposed.end_date = null;
+    proposed.notes = activation.notes;
+
+    const otherProposals = this.relations.filter(
+      (row) =>
+        row.accompanied_id === proposed.accompanied_id &&
+        row.status === 'proposed' &&
+        row.id !== proposed.id
+    );
+    for (const proposal of otherProposals) {
+      this.relations.splice(this.relations.indexOf(proposal), 1);
+    }
+    return proposed;
   }
 
   async deleteCompanionshipRelation(id: string): Promise<void> {

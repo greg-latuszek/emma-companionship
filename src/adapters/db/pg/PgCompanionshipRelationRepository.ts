@@ -3,7 +3,6 @@ import {
   runInOpenAtomicBlockOrOwnTransaction,
   type SqlPool,
 } from '@/adapters/db/pg/PgCurrentClient';
-import { withTransaction } from '@/infrastructure/db/pg';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import type { CompanionshipRelationWriteWithDefaults } from '@/schemas/companionship-relation';
 import { MemberId } from '@/types/auth';
@@ -505,100 +504,6 @@ export class PgCompanionshipRelationRepository
       );
 
       return companionshipRelationFromInsertRow(activated);
-    });
-  }
-
-  async activateProposedCompanionshipRelationPair(
-    husbandProposedRelationId: string,
-    wifeProposedRelationId: string,
-    activation: { start_date: string | null; notes: string | null }
-  ): Promise<[CompanionshipRelation, CompanionshipRelation]> {
-    const today = new Date().toISOString().slice(0, 10);
-    return withTransaction(async (client) => {
-      const proposedIds = [
-        husbandProposedRelationId,
-        wifeProposedRelationId,
-      ];
-      const proposedRows: CompanionshipRelationInsertRow[] = [];
-      for (const relationId of proposedIds) {
-        const proposedResult =
-          await client.query<CompanionshipRelationInsertRow>(
-            `
-            SELECT
-              id,
-              companion_id,
-              accompanied_id,
-              status,
-              start_date::text,
-              end_date::text,
-              notes
-            FROM companionship_relations
-            WHERE id = $1
-              AND status = 'proposed'
-            FOR UPDATE
-          `,
-            [relationId]
-          );
-        const proposed = proposedResult.rows[0];
-        if (!proposed) {
-          throw new Error('Failed to find proposed companionship relation');
-        }
-        proposedRows.push(proposed);
-      }
-
-      const accompaniedIds = proposedRows.map((row) => row.accompanied_id);
-      await client.query(
-        `
-        UPDATE companionship_relations
-        SET status = 'archived', end_date = $2
-        WHERE accompanied_id = ANY($1::uuid[])
-          AND status = 'active'
-      `,
-        [accompaniedIds, today]
-      );
-
-      const activated: CompanionshipRelation[] = [];
-      for (const relationId of proposedIds) {
-        const activatedResult =
-          await client.query<CompanionshipRelationInsertRow>(
-            `
-            UPDATE companionship_relations
-            SET
-              status = 'active',
-              start_date = $2,
-              end_date = NULL,
-              notes = $3
-            WHERE id = $1
-              AND status = 'proposed'
-            RETURNING
-              id,
-              companion_id,
-              accompanied_id,
-              status,
-              start_date::text,
-              end_date::text,
-              notes
-          `,
-            [relationId, activation.start_date, activation.notes]
-          );
-        const row = activatedResult.rows[0];
-        if (!row) {
-          throw new Error('Failed to activate proposed companionship relation');
-        }
-        activated.push(companionshipRelationFromInsertRow(row));
-      }
-
-      await client.query(
-        `
-        DELETE FROM companionship_relations
-        WHERE accompanied_id = ANY($1::uuid[])
-          AND status = 'proposed'
-          AND id <> ALL($2::uuid[])
-      `,
-        [accompaniedIds, proposedIds]
-      );
-
-      return [activated[0]!, activated[1]!];
     });
   }
 

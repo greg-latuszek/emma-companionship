@@ -5,6 +5,7 @@
 
 import { openRegistry } from '@/application/open-registry';
 import { reportFailedRegistryOperation } from '@/application/report-failed-registry-operation';
+import type { IAtomicWork } from '@/ports/repositories/IAtomicWork';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import type { CompanionshipRelation } from '@/types/companionship-relation';
 import {
@@ -49,14 +50,21 @@ export async function activateProposedCoupleCompanionshipRelations(
   husbandProposedRelationId: string,
   wifeProposedRelationId: string,
   activation: ProposedCompanionshipActivation,
-  relations: ICompanionshipRelationRepository = openRegistry().getCompanionshipRelationRepository()
+  relations: ICompanionshipRelationRepository = openRegistry().getCompanionshipRelationRepository(),
+  atomicWork: IAtomicWork = openRegistry().getAtomicWork()
 ): Promise<[CompanionshipRelation, CompanionshipRelation]> {
   try {
-    return await relations.activateProposedCompanionshipRelationPair(
-      husbandProposedRelationId,
-      wifeProposedRelationId,
-      activation
-    );
+    return await atomicWork.runAsAtomic(async () => {
+      const husbandRelation = await relations.activateProposedCompanionshipRelation(
+        husbandProposedRelationId,
+        activation
+      );
+      const wifeRelation = await relations.activateProposedCompanionshipRelation(
+        wifeProposedRelationId,
+        activation
+      );
+      return [husbandRelation, wifeRelation];
+    });
   } catch (error) {
     reportFailedRegistryOperation(error, {
       actor: 'The registry',

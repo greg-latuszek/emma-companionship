@@ -43,14 +43,5 @@ export interface ICompanionshipRelationRepository {
     proposedRelationId: string,
     activation: { start_date: string | null; notes: string | null }
   ): Promise<CompanionshipRelation>;
-  /**
-   * Activate husband+wife proposed pair; archive actives; drop other proposals
-   * for both accompanied spouses.
-   */
-  activateProposedCompanionshipRelationPair(
-    husbandProposedRelationId: string,
-    wifeProposedRelationId: string,
-    activation: { start_date: string | null; notes: string | null }
-  ): Promise<[CompanionshipRelation, CompanionshipRelation]>;
   deleteCompanionshipRelation(id: string): Promise<void>;
 }

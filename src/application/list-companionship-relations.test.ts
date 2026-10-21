@@ -43,7 +43,6 @@ function aCompanionshipRelationRepository(
     listProposedCompanionshipRelationsForAccompanied: vi.fn(),
     deleteProposedCompanionshipRelation: vi.fn(),
     activateProposedCompanionshipRelation: vi.fn(),
-    activateProposedCompanionshipRelationPair: vi.fn(),
     listPeopleWithoutCompanion: vi.fn(),
     findCompanionshipRelationById: vi.fn(),
     addCompanionshipRelation: vi.fn(),
