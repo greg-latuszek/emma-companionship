@@ -1,5 +1,5 @@
-import { startDatabasePool } from '@/infrastructure/db/startup';
-import { getRepositoryContainer } from '@/di/RepositoryProvider';
+import { openRegistry } from '@/application/open-registry';
+import { reportFailedRegistryOperation } from '@/application/report-failed-registry-operation';
 import type { ICommunityMemberRepository } from '@/ports/repositories/ICommunityMemberRepository';
 import {
   communityMemberWriteWithDefaults,
@@ -7,7 +7,6 @@ import {
 } from '@/schemas/community-member';
 import type { CommunityMember } from '@/types/community-member';
 import {
-  describeUnavailableDatabase,
   isUnavailableDatabase,
   UnavailableDatabase,
 } from '@/lib/unavailable-database';
@@ -25,25 +24,9 @@ export function isDuplicateCommunityMemberEmail(
   return error instanceof DuplicateCommunityMemberEmail;
 }
 
-function currentCommunityMemberRepository(): ICommunityMemberRepository {
-  startDatabasePool();
-  return getRepositoryContainer().getCommunityMemberRepository();
-}
-
-function reportFailedCommunityMemberAdd(error: unknown): void {
-  if (isUnavailableDatabase(error)) {
-    console.error(
-      `[emma] The registry cannot add a community member. ${describeUnavailableDatabase(error)}`
-    );
-    return;
-  }
-
-  console.error('[emma] The registry failed while adding a community member.', error);
-}
-
 export async function addCommunityMember(
   write: CommunityMemberWrite,
-  members: ICommunityMemberRepository = currentCommunityMemberRepository()
+  members: ICommunityMemberRepository = openRegistry().getCommunityMemberRepository()
 ): Promise<CommunityMember> {
   const writeWithDefaults = communityMemberWriteWithDefaults(write);
 
@@ -61,7 +44,11 @@ export async function addCommunityMember(
       throw error;
     }
 
-    reportFailedCommunityMemberAdd(error);
+    reportFailedRegistryOperation(error, {
+      actor: 'The registry',
+      cannot: 'add a community member',
+      failedWhile: 'adding a community member',
+    });
     if (isUnavailableDatabase(error)) {
       throw new UnavailableDatabase(error);
     }

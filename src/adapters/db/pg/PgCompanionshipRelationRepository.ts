@@ -1,4 +1,8 @@
-import { queryMany, queryOne, withTransaction } from '@/infrastructure/db/pg';
+import {
+  currentSqlRunner,
+  runInOpenAtomicBlockOrOwnTransaction,
+  type SqlPool,
+} from '@/adapters/db/pg/PgCurrentClient';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import type { CompanionshipRelationWriteWithDefaults } from '@/schemas/companionship-relation';
 import { MemberId } from '@/types/auth';
@@ -9,7 +13,6 @@ import type {
   CompanionshipRelationStatus,
   PersonWithoutCompanion,
 } from '@/types/companionship-relation';
-import type { PoolClient } from 'pg';
 
 const COMPANIONSHIP_RELATION_COLUMNS = `
   cr.id,
@@ -121,52 +124,23 @@ function companionshipRelationFromInsertRow(
   };
 }
 
-async function insertCompanionshipRelationWithClient(
-  client: PoolClient,
-  write: CompanionshipRelationWriteWithDefaults
-): Promise<CompanionshipRelation> {
-  const result = await client.query<CompanionshipRelationInsertRow>(
-    `
-    INSERT INTO companionship_relations (
-      companion_id,
-      accompanied_id,
-      status,
-      start_date,
-      end_date,
-      notes
-    ) VALUES ($1, $2, $3, $4, $5, $6)
-    RETURNING
-      id,
-      companion_id,
-      accompanied_id,
-      status,
-      start_date::text,
-      end_date::text,
-      notes
-  `,
-    [
-      write.companion_id,
-      write.accompanied_id,
-      write.status,
-      write.start_date,
-      write.end_date,
-      write.notes,
-    ]
-  );
-
-  const row = result.rows[0];
-  if (!row) {
-    throw new Error('Failed to insert companionship relation');
-  }
-
-  return companionshipRelationFromInsertRow(row);
-}
-
 export class PgCompanionshipRelationRepository
   implements ICompanionshipRelationRepository
 {
+  constructor(private readonly pool?: SqlPool) {}
+
+  private async queryOne<T>(statement: string, values?: unknown[]): Promise<T | null> {
+    const result = await currentSqlRunner(this.pool).query(statement, values);
+    return (result.rows[0] as T | undefined) ?? null;
+  }
+
+  private async queryMany<T>(statement: string, values?: unknown[]): Promise<T[]> {
+    const result = await currentSqlRunner(this.pool).query(statement, values);
+    return result.rows as T[];
+  }
+
   async listCompanionshipRelations(): Promise<CompanionshipRelationListItem[]> {
-    const rows = await queryMany<CompanionshipRelationRow>(`
+    const rows = await this.queryMany<CompanionshipRelationRow>(`
       SELECT ${COMPANIONSHIP_RELATION_COLUMNS}
       FROM companionship_relations cr
       JOIN members accompanied ON accompanied.id = cr.accompanied_id
@@ -180,7 +154,7 @@ export class PgCompanionshipRelationRepository
   async listArchivedCompanionshipRelations(): Promise<
     CompanionshipRelationListItem[]
   > {
-    const rows = await queryMany<CompanionshipRelationRow>(`
+    const rows = await this.queryMany<CompanionshipRelationRow>(`
       SELECT ${COMPANIONSHIP_RELATION_COLUMNS}
       FROM companionship_relations cr
       JOIN members accompanied ON accompanied.id = cr.accompanied_id
@@ -201,7 +175,7 @@ export class PgCompanionshipRelationRepository
       return [];
     }
 
-    const rows = await queryMany<CompanionshipRelationRow>(
+    const rows = await this.queryMany<CompanionshipRelationRow>(
       `
       SELECT ${COMPANIONSHIP_RELATION_COLUMNS}
       FROM companionship_relations cr
@@ -217,7 +191,7 @@ export class PgCompanionshipRelationRepository
   }
 
   async listPeopleWithoutCompanion(): Promise<PersonWithoutCompanion[]> {
-    const rows = await queryMany<{
+    const rows = await this.queryMany<{
       id: string;
       first_name: string;
       last_name: string;
@@ -257,7 +231,7 @@ export class PgCompanionshipRelationRepository
   async findCompanionshipRelationById(
     id: string
   ): Promise<CompanionshipRelation | null> {
-    const row = await queryOne<{
+    const row = await this.queryOne<{
       id: string;
       companion_id: string;
       accompanied_id: string;
@@ -299,7 +273,7 @@ export class PgCompanionshipRelationRepository
   async findActiveCompanionshipRelationByAccompaniedId(
     accompaniedId: string
   ): Promise<CompanionshipRelation | null> {
-    const row = await queryOne<CompanionshipRelationInsertRow>(
+    const row = await this.queryOne<CompanionshipRelationInsertRow>(
       `
       SELECT
         id,
@@ -328,7 +302,7 @@ export class PgCompanionshipRelationRepository
   async addCompanionshipRelation(
     write: CompanionshipRelationWriteWithDefaults
   ): Promise<CompanionshipRelation> {
-    const row = await queryOne<CompanionshipRelationInsertRow>(
+    const row = await this.queryOne<CompanionshipRelationInsertRow>(
       `
       INSERT INTO companionship_relations (
         companion_id,
@@ -364,28 +338,11 @@ export class PgCompanionshipRelationRepository
     return companionshipRelationFromInsertRow(row);
   }
 
-  async addCompanionshipRelationPair(
-    husbandWrite: CompanionshipRelationWriteWithDefaults,
-    wifeWrite: CompanionshipRelationWriteWithDefaults
-  ): Promise<[CompanionshipRelation, CompanionshipRelation]> {
-    return withTransaction(async (client) => {
-      const husbandRelation = await insertCompanionshipRelationWithClient(
-        client,
-        husbandWrite
-      );
-      const wifeRelation = await insertCompanionshipRelationWithClient(
-        client,
-        wifeWrite
-      );
-      return [husbandRelation, wifeRelation];
-    });
-  }
-
   async updateCompanionshipRelation(
     id: string,
     write: CompanionshipRelationWriteWithDefaults
   ): Promise<CompanionshipRelation> {
-    const row = await queryOne<{
+    const row = await this.queryOne<{
       id: string;
       companion_id: string;
       accompanied_id: string;
@@ -439,122 +396,25 @@ export class PgCompanionshipRelationRepository
     };
   }
 
-  async updateCompanionshipRelationPair(
-    husbandRelationId: string,
-    wifeRelationId: string,
-    husbandWrite: CompanionshipRelationWriteWithDefaults,
-    wifeWrite: CompanionshipRelationWriteWithDefaults
-  ): Promise<[CompanionshipRelation, CompanionshipRelation]> {
-    return withTransaction(async (client) => {
-      const updates: [string, CompanionshipRelationWriteWithDefaults][] = [
-        [husbandRelationId, husbandWrite],
-        [wifeRelationId, wifeWrite],
-      ];
-      const results: CompanionshipRelation[] = [];
-      for (const [relationId, write] of updates) {
-        const result = await client.query<CompanionshipRelationInsertRow>(
-          `
-          UPDATE companionship_relations
-          SET
-            companion_id = $2,
-            accompanied_id = $3,
-            status = $4,
-            start_date = $5,
-            end_date = $6,
-            notes = $7
-          WHERE id = $1
-          RETURNING
-            id,
-            companion_id,
-            accompanied_id,
-            status,
-            start_date::text,
-            end_date::text,
-            notes
-        `,
-          [
-            relationId,
-            write.companion_id,
-            write.accompanied_id,
-            write.status,
-            write.start_date,
-            write.end_date,
-            write.notes,
-          ]
-        );
-        const row = result.rows[0];
-        if (!row) {
-          throw new Error('Failed to update companionship relation');
-        }
-        results.push(companionshipRelationFromInsertRow(row));
-      }
-      return [results[0]!, results[1]!];
-    });
-  }
-
-  async archiveCompanionshipRelationAndAddReplacement(
-    existingId: string,
-    replacement: CompanionshipRelationWriteWithDefaults
-  ): Promise<CompanionshipRelation> {
+  async archiveActiveCompanionshipRelation(id: string): Promise<void> {
     const today = new Date().toISOString().slice(0, 10);
-    return withTransaction(async (client) => {
-      const archiveResult = await client.query(
-        `
-        UPDATE companionship_relations
-        SET status = 'archived', end_date = $2
-        WHERE id = $1
-          AND status = 'active'
-        RETURNING id
-      `,
-        [existingId, today]
-      );
-      if (!archiveResult.rows[0]) {
-        throw new Error('Failed to archive companionship relation');
-      }
-      return insertCompanionshipRelationWithClient(client, {
-        ...replacement,
-        status: 'active',
-      });
-    });
-  }
-
-  async archiveCompanionshipRelationPairAndAddReplacement(
-    husbandRelationId: string,
-    wifeRelationId: string,
-    husbandReplacement: CompanionshipRelationWriteWithDefaults,
-    wifeReplacement: CompanionshipRelationWriteWithDefaults
-  ): Promise<[CompanionshipRelation, CompanionshipRelation]> {
-    const today = new Date().toISOString().slice(0, 10);
-    return withTransaction(async (client) => {
-      for (const relationId of [husbandRelationId, wifeRelationId]) {
-        const archiveResult = await client.query(
-          `
-          UPDATE companionship_relations
-          SET status = 'archived', end_date = $2
-          WHERE id = $1
-            AND status = 'active'
-          RETURNING id
-        `,
-          [relationId, today]
-        );
-        if (!archiveResult.rows[0]) {
-          throw new Error('Failed to archive companionship relation');
-        }
-      }
-      const husbandRelation = await insertCompanionshipRelationWithClient(
-        client,
-        { ...husbandReplacement, status: 'active' }
-      );
-      const wifeRelation = await insertCompanionshipRelationWithClient(client, {
-        ...wifeReplacement,
-        status: 'active',
-      });
-      return [husbandRelation, wifeRelation];
-    });
+    const row = await this.queryOne<{ id: string }>(
+      `
+      UPDATE companionship_relations
+      SET status = 'archived', end_date = $2
+      WHERE id = $1
+        AND status = 'active'
+      RETURNING id
+    `,
+      [id, today]
+    );
+    if (!row) {
+      throw new Error('Failed to archive companionship relation');
+    }
   }
 
   async deleteProposedCompanionshipRelation(id: string): Promise<void> {
-    const row = await queryOne<{ id: string }>(
+    const row = await this.queryOne<{ id: string }>(
       `
       DELETE FROM companionship_relations
       WHERE id = $1
@@ -568,35 +428,13 @@ export class PgCompanionshipRelationRepository
     }
   }
 
-  async deleteProposedCompanionshipRelationPair(
-    husbandRelationId: string,
-    wifeRelationId: string
-  ): Promise<void> {
-    await withTransaction(async (client) => {
-      for (const relationId of [husbandRelationId, wifeRelationId]) {
-        const result = await client.query(
-          `
-          DELETE FROM companionship_relations
-          WHERE id = $1
-            AND status = 'proposed'
-          RETURNING id
-        `,
-          [relationId]
-        );
-        if (!result.rows[0]) {
-          throw new Error('Failed to delete proposed companionship relation');
-        }
-      }
-    });
-  }
-
   async activateProposedCompanionshipRelation(
     proposedRelationId: string,
     activation: { start_date: string | null; notes: string | null }
   ): Promise<CompanionshipRelation> {
     const today = new Date().toISOString().slice(0, 10);
-    return withTransaction(async (client) => {
-      const proposedResult = await client.query<CompanionshipRelationInsertRow>(
+    return runInOpenAtomicBlockOrOwnTransaction(this.pool, async (client) => {
+      const proposedResult = await client.query(
         `
         SELECT
           id,
@@ -629,7 +467,7 @@ export class PgCompanionshipRelationRepository
       );
 
       const activatedResult =
-        await client.query<CompanionshipRelationInsertRow>(
+        await client.query(
           `
           UPDATE companionship_relations
           SET
@@ -669,102 +507,8 @@ export class PgCompanionshipRelationRepository
     });
   }
 
-  async activateProposedCompanionshipRelationPair(
-    husbandProposedRelationId: string,
-    wifeProposedRelationId: string,
-    activation: { start_date: string | null; notes: string | null }
-  ): Promise<[CompanionshipRelation, CompanionshipRelation]> {
-    const today = new Date().toISOString().slice(0, 10);
-    return withTransaction(async (client) => {
-      const proposedIds = [
-        husbandProposedRelationId,
-        wifeProposedRelationId,
-      ];
-      const proposedRows: CompanionshipRelationInsertRow[] = [];
-      for (const relationId of proposedIds) {
-        const proposedResult =
-          await client.query<CompanionshipRelationInsertRow>(
-            `
-            SELECT
-              id,
-              companion_id,
-              accompanied_id,
-              status,
-              start_date::text,
-              end_date::text,
-              notes
-            FROM companionship_relations
-            WHERE id = $1
-              AND status = 'proposed'
-            FOR UPDATE
-          `,
-            [relationId]
-          );
-        const proposed = proposedResult.rows[0];
-        if (!proposed) {
-          throw new Error('Failed to find proposed companionship relation');
-        }
-        proposedRows.push(proposed);
-      }
-
-      const accompaniedIds = proposedRows.map((row) => row.accompanied_id);
-      await client.query(
-        `
-        UPDATE companionship_relations
-        SET status = 'archived', end_date = $2
-        WHERE accompanied_id = ANY($1::uuid[])
-          AND status = 'active'
-      `,
-        [accompaniedIds, today]
-      );
-
-      const activated: CompanionshipRelation[] = [];
-      for (const relationId of proposedIds) {
-        const activatedResult =
-          await client.query<CompanionshipRelationInsertRow>(
-            `
-            UPDATE companionship_relations
-            SET
-              status = 'active',
-              start_date = $2,
-              end_date = NULL,
-              notes = $3
-            WHERE id = $1
-              AND status = 'proposed'
-            RETURNING
-              id,
-              companion_id,
-              accompanied_id,
-              status,
-              start_date::text,
-              end_date::text,
-              notes
-          `,
-            [relationId, activation.start_date, activation.notes]
-          );
-        const row = activatedResult.rows[0];
-        if (!row) {
-          throw new Error('Failed to activate proposed companionship relation');
-        }
-        activated.push(companionshipRelationFromInsertRow(row));
-      }
-
-      await client.query(
-        `
-        DELETE FROM companionship_relations
-        WHERE accompanied_id = ANY($1::uuid[])
-          AND status = 'proposed'
-          AND id <> ALL($2::uuid[])
-      `,
-        [accompaniedIds, proposedIds]
-      );
-
-      return [activated[0]!, activated[1]!];
-    });
-  }
-
   async deleteCompanionshipRelation(id: string): Promise<void> {
-    await queryOne(
+    await this.queryOne(
       `
       DELETE FROM companionship_relations
       WHERE id = $1

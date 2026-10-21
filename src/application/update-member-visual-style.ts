@@ -1,9 +1,8 @@
-import { startDatabasePool } from '@/infrastructure/db/startup';
-import { getRepositoryContainer } from '@/di/RepositoryProvider';
+import { openRegistry } from '@/application/open-registry';
+import { reportFailedRegistryOperation } from '@/application/report-failed-registry-operation';
 import type { IMemberRepository } from '@/ports/repositories/IMemberRepository';
 import type { Member, MemberId, VisualStyle } from '@/types/auth';
 import {
-  describeUnavailableDatabase,
   isUnavailableDatabase,
   UnavailableDatabase,
 } from '@/lib/unavailable-database';
@@ -21,29 +20,10 @@ export function isLoginMemberNotFound(
   return error instanceof LoginMemberNotFound;
 }
 
-function currentMemberRepository(): IMemberRepository {
-  startDatabasePool();
-  return getRepositoryContainer().getMemberRepository();
-}
-
-function reportFailedMemberVisualStyleUpdate(error: unknown): void {
-  if (isUnavailableDatabase(error)) {
-    console.error(
-      `[emma] The login member cannot store a visual style. ${describeUnavailableDatabase(error)}`
-    );
-    return;
-  }
-
-  console.error(
-    '[emma] The login member failed while storing a visual style.',
-    error
-  );
-}
-
 export async function updateMemberVisualStyle(
   id: MemberId,
   visualStyle: VisualStyle | null,
-  members: IMemberRepository = currentMemberRepository()
+  members: IMemberRepository = openRegistry().getMemberRepository()
 ): Promise<Member> {
   try {
     const updated = await members.updateMemberVisualStyle(id, visualStyle);
@@ -57,7 +37,11 @@ export async function updateMemberVisualStyle(
       throw error;
     }
 
-    reportFailedMemberVisualStyleUpdate(error);
+    reportFailedRegistryOperation(error, {
+      actor: 'The login member',
+      cannot: 'store a visual style',
+      failedWhile: 'storing a visual style',
+    });
     if (isUnavailableDatabase(error)) {
       throw new UnavailableDatabase(error);
     }

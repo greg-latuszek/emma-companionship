@@ -3,47 +3,20 @@
  * Archives any current active relation for the Accompanied (change-companion path).
  */
 
-import { startDatabasePool } from '@/infrastructure/db/startup';
-import { getRepositoryContainer } from '@/di/RepositoryProvider';
+import { openRegistry } from '@/application/open-registry';
+import { reportFailedRegistryOperation } from '@/application/report-failed-registry-operation';
+import type { IAtomicWork } from '@/ports/repositories/IAtomicWork';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import type { CompanionshipRelation } from '@/types/companionship-relation';
 import {
-  describeUnavailableDatabase,
   isUnavailableDatabase,
   UnavailableDatabase,
 } from '@/lib/unavailable-database';
 
-export class ProposedCompanionshipNotFound extends Error {
-  constructor() {
-    super('The proposed companionship was not found');
-    this.name = 'ProposedCompanionshipNotFound';
-  }
-}
-
-export function isProposedCompanionshipNotFound(
-  error: unknown
-): error is ProposedCompanionshipNotFound {
-  return error instanceof ProposedCompanionshipNotFound;
-}
-
-function currentCompanionshipRelationRepository(): ICompanionshipRelationRepository {
-  startDatabasePool();
-  return getRepositoryContainer().getCompanionshipRelationRepository();
-}
-
-function reportFailedProposedCompanionshipActivate(error: unknown): void {
-  if (isUnavailableDatabase(error)) {
-    console.error(
-      `[emma] The registry cannot activate a proposed companionship. ${describeUnavailableDatabase(error)}`
-    );
-    return;
-  }
-
-  console.error(
-    '[emma] The registry failed while activating a proposed companionship.',
-    error
-  );
-}
+export {
+  ProposedCompanionshipNotFound,
+  isProposedCompanionshipNotFound,
+} from '@/application/companionship-refusals';
 
 export type ProposedCompanionshipActivation = {
   start_date: string | null;
@@ -53,7 +26,7 @@ export type ProposedCompanionshipActivation = {
 export async function activateProposedCompanionshipRelation(
   proposedRelationId: string,
   activation: ProposedCompanionshipActivation,
-  relations: ICompanionshipRelationRepository = currentCompanionshipRelationRepository()
+  relations: ICompanionshipRelationRepository = openRegistry().getCompanionshipRelationRepository()
 ): Promise<CompanionshipRelation> {
   try {
     return await relations.activateProposedCompanionshipRelation(
@@ -61,7 +34,11 @@ export async function activateProposedCompanionshipRelation(
       activation
     );
   } catch (error) {
-    reportFailedProposedCompanionshipActivate(error);
+    reportFailedRegistryOperation(error, {
+      actor: 'The registry',
+      cannot: 'activate a proposed companionship',
+      failedWhile: 'activating a proposed companionship',
+    });
     if (isUnavailableDatabase(error)) {
       throw new UnavailableDatabase(error);
     }
@@ -73,16 +50,27 @@ export async function activateProposedCoupleCompanionshipRelations(
   husbandProposedRelationId: string,
   wifeProposedRelationId: string,
   activation: ProposedCompanionshipActivation,
-  relations: ICompanionshipRelationRepository = currentCompanionshipRelationRepository()
+  relations: ICompanionshipRelationRepository = openRegistry().getCompanionshipRelationRepository(),
+  atomicWork: IAtomicWork = openRegistry().getAtomicWork()
 ): Promise<[CompanionshipRelation, CompanionshipRelation]> {
   try {
-    return await relations.activateProposedCompanionshipRelationPair(
-      husbandProposedRelationId,
-      wifeProposedRelationId,
-      activation
-    );
+    return await atomicWork.runAsAtomic(async () => {
+      const husbandRelation = await relations.activateProposedCompanionshipRelation(
+        husbandProposedRelationId,
+        activation
+      );
+      const wifeRelation = await relations.activateProposedCompanionshipRelation(
+        wifeProposedRelationId,
+        activation
+      );
+      return [husbandRelation, wifeRelation];
+    });
   } catch (error) {
-    reportFailedProposedCompanionshipActivate(error);
+    reportFailedRegistryOperation(error, {
+      actor: 'The registry',
+      cannot: 'activate a proposed companionship',
+      failedWhile: 'activating a proposed companionship',
+    });
     if (isUnavailableDatabase(error)) {
       throw new UnavailableDatabase(error);
     }

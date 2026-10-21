@@ -3,11 +3,13 @@
  * Factory for Pg-based repository adapters
  */
 
+import { IAtomicWork } from '@/ports/repositories/IAtomicWork';
 import { IRepositoryContainer } from '@/ports/repositories/IRepositoryContainer';
 import { ICommunityMemberRepository } from '@/ports/repositories/ICommunityMemberRepository';
 import { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import { ICoupleRepository } from '@/ports/repositories/ICoupleRepository';
 import { IMemberRepository } from '@/ports/repositories/IMemberRepository';
+import { PgAtomicWork } from './PgAtomicWork';
 import { PgCommunityMemberRepository } from './PgCommunityMemberRepository';
 import { PgCompanionshipRelationRepository } from './PgCompanionshipRelationRepository';
 import { PgCoupleRepository } from './PgCoupleRepository';
@@ -21,6 +23,7 @@ export class PgRepositoryContainer implements IRepositoryContainer {
   private communityMemberRepository: ICommunityMemberRepository | null = null;
   private companionshipRelationRepository: ICompanionshipRelationRepository | null = null;
   private coupleRepository: ICoupleRepository | null = null;
+  private atomicWork: IAtomicWork | null = null;
 
   getMemberRepository(): IMemberRepository {
     if (!this.memberRepository) {
@@ -48,5 +51,12 @@ export class PgRepositoryContainer implements IRepositoryContainer {
       this.coupleRepository = new PgCoupleRepository();
     }
     return this.coupleRepository;
+  }
+
+  getAtomicWork(): IAtomicWork {
+    if (!this.atomicWork) {
+      this.atomicWork = new PgAtomicWork();
+    }
+    return this.atomicWork;
   }
 }

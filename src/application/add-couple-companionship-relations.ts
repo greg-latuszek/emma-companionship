@@ -1,90 +1,46 @@
-import { startDatabasePool } from '@/infrastructure/db/startup';
-import { getRepositoryContainer } from '@/di/RepositoryProvider';
-import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
-import type { ICoupleRepository } from '@/ports/repositories/ICoupleRepository';
+import { openRegistry } from '@/application/open-registry';
+import { reportFailedRegistryOperation } from '@/application/report-failed-registry-operation';
 import {
-  companionshipRelationWriteWithDefaults,
-  type CoupleCompanionshipWrite,
-} from '@/schemas/companionship-relation';
+  expandCoupleIntoHusbandAndWifeWrites,
+  requireDistinctCompanionAndAccompaniedCouples,
+} from '@/application/companionship-relation-writes';
+import {
+  CoupleCompanionshipParticipantsAreNotEligible,
+  isCoupleCompanionshipParticipantsAreNotEligible,
+} from '@/application/companionship-refusals';
+import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
+import type { IAtomicWork } from '@/ports/repositories/IAtomicWork';
+import type { ICoupleRepository } from '@/ports/repositories/ICoupleRepository';
+import type { CoupleCompanionshipWrite } from '@/schemas/companionship-relation';
 import type { CompanionshipRelation } from '@/types/companionship-relation';
 import {
-  describeUnavailableDatabase,
   isUnavailableDatabase,
   UnavailableDatabase,
 } from '@/lib/unavailable-database';
 
-export class CompanionAndAccompaniedAreSameCouple extends Error {
-  constructor() {
-    super('The companion couple and the accompanied couple cannot be the same');
-    this.name = 'CompanionAndAccompaniedAreSameCouple';
-  }
-}
+export {
+  CompanionAndAccompaniedAreSameCouple,
+  isCompanionAndAccompaniedAreSameCouple,
+} from '@/application/companionship-refusals';
 
-export function isCompanionAndAccompaniedAreSameCouple(
-  error: unknown
-): error is CompanionAndAccompaniedAreSameCouple {
-  return error instanceof CompanionAndAccompaniedAreSameCouple;
-}
-
-export class CoupleCompanionshipParticipantsAreNotEligible extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'CoupleCompanionshipParticipantsAreNotEligible';
-  }
-}
-
-export function isCoupleCompanionshipParticipantsAreNotEligible(
-  error: unknown
-): error is CoupleCompanionshipParticipantsAreNotEligible {
-  return error instanceof CoupleCompanionshipParticipantsAreNotEligible;
-}
-
-function currentCompanionshipRelationRepository(): ICompanionshipRelationRepository {
-  startDatabasePool();
-  return getRepositoryContainer().getCompanionshipRelationRepository();
-}
-
-function currentCoupleRepository(): ICoupleRepository {
-  startDatabasePool();
-  return getRepositoryContainer().getCoupleRepository();
-}
-
-function reportFailedCoupleCompanionshipAdd(error: unknown): void {
-  if (isUnavailableDatabase(error)) {
-    console.error(
-      `[emma] The registry cannot add couple companionship relations. ${describeUnavailableDatabase(error)}`
-    );
-    return;
-  }
-
-  console.error(
-    '[emma] The registry failed while adding couple companionship relations.',
-    error
-  );
-}
+export {
+  CoupleCompanionshipParticipantsAreNotEligible,
+  isCoupleCompanionshipParticipantsAreNotEligible,
+};
 
 /**
  * Creates husband→husband and wife→wife companionship rows from two couples.
  */
 export async function addCoupleCompanionshipRelations(
   write: CoupleCompanionshipWrite,
-  relations: ICompanionshipRelationRepository = currentCompanionshipRelationRepository(),
-  couples: ICoupleRepository = currentCoupleRepository()
+  relations: ICompanionshipRelationRepository = openRegistry().getCompanionshipRelationRepository(),
+  couples: ICoupleRepository = openRegistry().getCoupleRepository(),
+  atomicWork: IAtomicWork = openRegistry().getAtomicWork()
 ): Promise<[CompanionshipRelation, CompanionshipRelation]> {
-  if (write.companion_couple_id === write.accompanied_couple_id) {
-    throw new CompanionAndAccompaniedAreSameCouple();
-  }
-
-  const companionCouple = await couples.findCoupleById(write.companion_couple_id);
-  const accompaniedCouple = await couples.findCoupleById(
-    write.accompanied_couple_id
+  const [companionCouple, accompaniedCouple] = await requireDistinctCompanionAndAccompaniedCouples(
+    write,
+    couples
   );
-
-  if (!companionCouple || !accompaniedCouple) {
-    throw new CoupleCompanionshipParticipantsAreNotEligible(
-      'Both the companion couple and the accompanied couple must exist'
-    );
-  }
 
   const peopleWithoutCompanion = await relations.listPeopleWithoutCompanion();
   const waitingIds = new Set(
@@ -99,30 +55,24 @@ export async function addCoupleCompanionshipRelations(
     );
   }
 
-  const shared = companionshipRelationWriteWithDefaults({
-    companion_id: companionCouple.member1_id,
-    accompanied_id: accompaniedCouple.member1_id,
-    status: write.status,
-    start_date: write.start_date,
-    end_date: write.end_date,
-    notes: write.notes,
-  });
-
-  const husbandWrite = {
-    ...shared,
-    companion_id: companionCouple.member1_id,
-    accompanied_id: accompaniedCouple.member1_id,
-  };
-  const wifeWrite = {
-    ...shared,
-    companion_id: companionCouple.member2_id,
-    accompanied_id: accompaniedCouple.member2_id,
-  };
+  const [husbandWrite, wifeWrite] = expandCoupleIntoHusbandAndWifeWrites(
+    companionCouple,
+    accompaniedCouple,
+    write
+  );
 
   try {
-    return await relations.addCompanionshipRelationPair(husbandWrite, wifeWrite);
+    return await atomicWork.runAsAtomic(async () => {
+      const husbandRelation = await relations.addCompanionshipRelation(husbandWrite);
+      const wifeRelation = await relations.addCompanionshipRelation(wifeWrite);
+      return [husbandRelation, wifeRelation];
+    });
   } catch (error) {
-    reportFailedCoupleCompanionshipAdd(error);
+    reportFailedRegistryOperation(error, {
+      actor: 'The registry',
+      cannot: 'add couple companionship relations',
+      failedWhile: 'adding couple companionship relations',
+    });
     if (isUnavailableDatabase(error)) {
       throw new UnavailableDatabase(error);
     }

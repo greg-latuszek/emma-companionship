@@ -1,11 +1,12 @@
-import { startDatabasePool } from '@/infrastructure/db/startup';
-import { getRepositoryContainer } from '@/di/RepositoryProvider';
-import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
-import type { ICommunityMemberRepository } from '@/ports/repositories/ICommunityMemberRepository';
+import { openRegistry } from '@/application/open-registry';
+import { reportFailedRegistryOperation } from '@/application/report-failed-registry-operation';
 import {
-  companionshipParticipantsHaveDifferentGenders,
-  CompanionAndAccompaniedHaveDifferentGenders,
-} from '@/application/companionship-participant-genders';
+  refuseDifferentGenderCompanionship,
+  refuseSamePersonCompanionship,
+} from '@/application/companionship-relation-writes';
+import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
+import type { IAtomicWork } from '@/ports/repositories/IAtomicWork';
+import type { ICommunityMemberRepository } from '@/ports/repositories/ICommunityMemberRepository';
 import {
   CompanionshipRelationNotFound,
   isCompanionshipRelationNotFound,
@@ -14,26 +15,16 @@ import {
   companionshipRelationWriteWithDefaults,
   type CompanionshipRelationWrite,
 } from '@/schemas/companionship-relation';
-import { MemberId } from '@/types/auth';
 import type { CompanionshipRelation } from '@/types/companionship-relation';
 import {
-  describeUnavailableDatabase,
   isUnavailableDatabase,
   UnavailableDatabase,
 } from '@/lib/unavailable-database';
 
-export class CompanionAndAccompaniedAreSamePerson extends Error {
-  constructor() {
-    super('The companion and the accompanied person cannot be the same');
-    this.name = 'CompanionAndAccompaniedAreSamePerson';
-  }
-}
-
-export function isCompanionAndAccompaniedAreSamePerson(
-  error: unknown
-): error is CompanionAndAccompaniedAreSamePerson {
-  return error instanceof CompanionAndAccompaniedAreSamePerson;
-}
+export {
+  CompanionAndAccompaniedAreSamePerson,
+  isCompanionAndAccompaniedAreSamePerson,
+} from '@/application/companionship-refusals';
 
 export {
   CompanionAndAccompaniedHaveDifferentGenders,
@@ -45,30 +36,6 @@ export {
   isCompanionshipRelationNotFound,
 };
 
-function currentCompanionshipRelationRepository(): ICompanionshipRelationRepository {
-  startDatabasePool();
-  return getRepositoryContainer().getCompanionshipRelationRepository();
-}
-
-function currentCommunityMemberRepository(): ICommunityMemberRepository {
-  startDatabasePool();
-  return getRepositoryContainer().getCommunityMemberRepository();
-}
-
-function reportFailedCompanionshipRelationSave(error: unknown): void {
-  if (isUnavailableDatabase(error)) {
-    console.error(
-      `[emma] The registry cannot save an edited companionship relation. ${describeUnavailableDatabase(error)}`
-    );
-    return;
-  }
-
-  console.error(
-    '[emma] The registry failed while saving an edited companionship relation.',
-    error
-  );
-}
-
 /**
  * Person edit: same Companion → in-place update of dates/notes;
  * Companion changed → archive current active row and insert a replacement.
@@ -76,12 +43,11 @@ function reportFailedCompanionshipRelationSave(error: unknown): void {
 export async function saveEditedCompanionshipRelation(
   relationId: string,
   write: CompanionshipRelationWrite,
-  relations: ICompanionshipRelationRepository = currentCompanionshipRelationRepository(),
-  members: ICommunityMemberRepository = currentCommunityMemberRepository()
+  relations: ICompanionshipRelationRepository = openRegistry().getCompanionshipRelationRepository(),
+  members: ICommunityMemberRepository = openRegistry().getCommunityMemberRepository(),
+  atomicWork: IAtomicWork = openRegistry().getAtomicWork()
 ): Promise<CompanionshipRelation> {
-  if (write.companion_id === write.accompanied_id) {
-    throw new CompanionAndAccompaniedAreSamePerson();
-  }
+  refuseSamePersonCompanionship(write);
 
   const existing = await relations.findCompanionshipRelationById(relationId);
   if (!existing || existing.status !== 'active') {
@@ -92,15 +58,7 @@ export async function saveEditedCompanionshipRelation(
     throw new CompanionshipRelationNotFound(relationId);
   }
 
-  const companion = await members.findCommunityMemberById(
-    MemberId(write.companion_id)
-  );
-  const accompanied = await members.findCommunityMemberById(
-    MemberId(write.accompanied_id)
-  );
-  if (companionshipParticipantsHaveDifferentGenders(companion, accompanied)) {
-    throw new CompanionAndAccompaniedHaveDifferentGenders();
-  }
+  await refuseDifferentGenderCompanionship(write, members);
 
   const writeWithDefaults = companionshipRelationWriteWithDefaults(write);
 
@@ -112,12 +70,19 @@ export async function saveEditedCompanionshipRelation(
       });
     }
 
-    return await relations.archiveCompanionshipRelationAndAddReplacement(
-      relationId,
-      writeWithDefaults
-    );
+    return await atomicWork.runAsAtomic(async () => {
+      await relations.archiveActiveCompanionshipRelation(relationId);
+      return relations.addCompanionshipRelation({
+        ...writeWithDefaults,
+        status: 'active',
+      });
+    });
   } catch (error) {
-    reportFailedCompanionshipRelationSave(error);
+    reportFailedRegistryOperation(error, {
+      actor: 'The registry',
+      cannot: 'save an edited companionship relation',
+      failedWhile: 'saving an edited companionship relation',
+    });
     if (isUnavailableDatabase(error)) {
       throw new UnavailableDatabase(error);
     }

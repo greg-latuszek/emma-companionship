@@ -1,5 +1,5 @@
-import { startDatabasePool } from '@/infrastructure/db/startup';
-import { getRepositoryContainer } from '@/di/RepositoryProvider';
+import { openRegistry } from '@/application/open-registry';
+import { reportFailedRegistryOperation } from '@/application/report-failed-registry-operation';
 import {
   CommunityMemberNotFound,
   isCommunityMemberNotFound,
@@ -7,7 +7,6 @@ import {
 import type { ICommunityMemberRepository } from '@/ports/repositories/ICommunityMemberRepository';
 import type { MemberId } from '@/types/auth';
 import {
-  describeUnavailableDatabase,
   isUnavailableDatabase,
   UnavailableDatabase,
 } from '@/lib/unavailable-database';
@@ -47,25 +46,9 @@ function isForeignKeyViolation(error: unknown): boolean {
   );
 }
 
-function currentCommunityMemberRepository(): ICommunityMemberRepository {
-  startDatabasePool();
-  return getRepositoryContainer().getCommunityMemberRepository();
-}
-
-function reportFailedCommunityMemberRemoval(error: unknown): void {
-  if (isUnavailableDatabase(error)) {
-    console.error(
-      `[emma] The registry cannot remove a community member. ${describeUnavailableDatabase(error)}`
-    );
-    return;
-  }
-
-  console.error('[emma] The registry failed while removing a community member.', error);
-}
-
 export async function removeCommunityMember(
   id: MemberId,
-  members: ICommunityMemberRepository = currentCommunityMemberRepository()
+  members: ICommunityMemberRepository = openRegistry().getCommunityMemberRepository()
 ): Promise<void> {
   try {
     const existing = await members.findCommunityMemberById(id);
@@ -93,7 +76,11 @@ export async function removeCommunityMember(
       throw new CannotRemoveCommunityMemberLinkedToOtherData(id);
     }
 
-    reportFailedCommunityMemberRemoval(error);
+    reportFailedRegistryOperation(error, {
+      actor: 'The registry',
+      cannot: 'remove a community member',
+      failedWhile: 'removing a community member',
+    });
     if (isUnavailableDatabase(error)) {
       throw new UnavailableDatabase(error);
     }

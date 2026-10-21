@@ -2,20 +2,21 @@
  * Persists a Find Companion person proposal (status = proposed).
  */
 
-import { startDatabasePool } from '@/infrastructure/db/startup';
-import { getRepositoryContainer } from '@/di/RepositoryProvider';
+import { openRegistry } from '@/application/open-registry';
+import { reportFailedRegistryOperation } from '@/application/report-failed-registry-operation';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import type { ICommunityMemberRepository } from '@/ports/repositories/ICommunityMemberRepository';
 import {
-  companionshipParticipantsHaveDifferentGenders,
-  CompanionAndAccompaniedHaveDifferentGenders,
-} from '@/application/companionship-participant-genders';
-import { CompanionAndAccompaniedAreSamePerson } from '@/application/add-companionship-relation';
+  refuseDifferentGenderCompanionship,
+  refuseSamePersonCompanionship,
+} from '@/application/companionship-relation-writes';
+import {
+  ProposedCompanionshipAlreadyExists,
+  isProposedCompanionshipAlreadyExists,
+} from '@/application/companionship-refusals';
 import type { CompanionshipRelationWrite } from '@/schemas/companionship-relation';
-import { MemberId } from '@/types/auth';
 import type { CompanionshipRelation } from '@/types/companionship-relation';
 import {
-  describeUnavailableDatabase,
   isUnavailableDatabase,
   UnavailableDatabase,
 } from '@/lib/unavailable-database';
@@ -30,63 +31,15 @@ export {
   isCompanionAndAccompaniedHaveDifferentGenders,
 } from '@/application/companionship-participant-genders';
 
-export class ProposedCompanionshipAlreadyExists extends Error {
-  constructor() {
-    super(
-      'A proposed companionship already exists for this companion and accompanied person'
-    );
-    this.name = 'ProposedCompanionshipAlreadyExists';
-  }
-}
-
-export function isProposedCompanionshipAlreadyExists(
-  error: unknown
-): error is ProposedCompanionshipAlreadyExists {
-  return error instanceof ProposedCompanionshipAlreadyExists;
-}
-
-function currentCompanionshipRelationRepository(): ICompanionshipRelationRepository {
-  startDatabasePool();
-  return getRepositoryContainer().getCompanionshipRelationRepository();
-}
-
-function currentCommunityMemberRepository(): ICommunityMemberRepository {
-  startDatabasePool();
-  return getRepositoryContainer().getCommunityMemberRepository();
-}
-
-function reportFailedProposedCompanionshipAdd(error: unknown): void {
-  if (isUnavailableDatabase(error)) {
-    console.error(
-      `[emma] The registry cannot add a proposed companionship. ${describeUnavailableDatabase(error)}`
-    );
-    return;
-  }
-
-  console.error(
-    '[emma] The registry failed while adding a proposed companionship.',
-    error
-  );
-}
+export { ProposedCompanionshipAlreadyExists, isProposedCompanionshipAlreadyExists };
 
 export async function addProposedCompanionshipRelation(
   write: CompanionshipRelationWrite,
-  relations: ICompanionshipRelationRepository = currentCompanionshipRelationRepository(),
-  members: ICommunityMemberRepository = currentCommunityMemberRepository()
+  relations: ICompanionshipRelationRepository = openRegistry().getCompanionshipRelationRepository(),
+  members: ICommunityMemberRepository = openRegistry().getCommunityMemberRepository()
 ): Promise<CompanionshipRelation> {
-  if (write.companion_id === write.accompanied_id) {
-    throw new CompanionAndAccompaniedAreSamePerson();
-  }
-
-  const companion = await members.findCommunityMemberById(
-    MemberId(write.companion_id)
-  );
-  const accompanied = await members.findCommunityMemberById(
-    MemberId(write.accompanied_id)
-  );
-  if (companionshipParticipantsHaveDifferentGenders(companion, accompanied)) {
-    throw new CompanionAndAccompaniedHaveDifferentGenders();
-  }
+  refuseSamePersonCompanionship(write);
+  await refuseDifferentGenderCompanionship(write, members);
 
   const existingProposals =
     await relations.listProposedCompanionshipRelationsForAccompanied([
@@ -110,7 +63,11 @@ export async function addProposedCompanionshipRelation(
       notes: write.notes ?? null,
     });
   } catch (error) {
-    reportFailedProposedCompanionshipAdd(error);
+    reportFailedRegistryOperation(error, {
+      actor: 'The registry',
+      cannot: 'add a proposed companionship',
+      failedWhile: 'adding a proposed companionship',
+    });
     if (isUnavailableDatabase(error)) {
       throw new UnavailableDatabase(error);
     }

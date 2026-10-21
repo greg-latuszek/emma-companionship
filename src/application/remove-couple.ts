@@ -1,8 +1,7 @@
-import { startDatabasePool } from '@/infrastructure/db/startup';
-import { getRepositoryContainer } from '@/di/RepositoryProvider';
+import { openRegistry } from '@/application/open-registry';
+import { reportFailedRegistryOperation } from '@/application/report-failed-registry-operation';
 import type { ICoupleRepository } from '@/ports/repositories/ICoupleRepository';
 import {
-  describeUnavailableDatabase,
   isUnavailableDatabase,
   UnavailableDatabase,
 } from '@/lib/unavailable-database';
@@ -18,25 +17,9 @@ export function isCoupleNotFound(error: unknown): error is CoupleNotFound {
   return error instanceof CoupleNotFound;
 }
 
-function currentCoupleRepository(): ICoupleRepository {
-  startDatabasePool();
-  return getRepositoryContainer().getCoupleRepository();
-}
-
-function reportFailedCoupleRemove(error: unknown): void {
-  if (isUnavailableDatabase(error)) {
-    console.error(
-      `[emma] The registry cannot remove a couple. ${describeUnavailableDatabase(error)}`
-    );
-    return;
-  }
-
-  console.error('[emma] The registry failed while removing a couple.', error);
-}
-
 export async function removeCouple(
   id: string,
-  couples: ICoupleRepository = currentCoupleRepository()
+  couples: ICoupleRepository = openRegistry().getCoupleRepository()
 ): Promise<void> {
   const existing = await couples.findCoupleById(id);
   if (!existing) {
@@ -46,7 +29,11 @@ export async function removeCouple(
   try {
     await couples.removeCouple(id);
   } catch (error) {
-    reportFailedCoupleRemove(error);
+    reportFailedRegistryOperation(error, {
+      actor: 'The registry',
+      cannot: 'remove a couple',
+      failedWhile: 'removing a couple',
+    });
     if (isUnavailableDatabase(error)) {
       throw new UnavailableDatabase(error);
     }

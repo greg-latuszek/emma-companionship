@@ -1,12 +1,11 @@
-import { startDatabasePool } from '@/infrastructure/db/startup';
-import { getRepositoryContainer } from '@/di/RepositoryProvider';
+import { openRegistry } from '@/application/open-registry';
+import { reportFailedRegistryOperation } from '@/application/report-failed-registry-operation';
 import type { ICoupleRepository } from '@/ports/repositories/ICoupleRepository';
 import type { ICommunityMemberRepository } from '@/ports/repositories/ICommunityMemberRepository';
 import type { CoupleWrite } from '@/schemas/couple';
 import { MemberId } from '@/types/auth';
 import type { Couple } from '@/types/couple';
 import {
-  describeUnavailableDatabase,
   isUnavailableDatabase,
   UnavailableDatabase,
 } from '@/lib/unavailable-database';
@@ -37,31 +36,10 @@ export function isCoupleParticipantsAreNotEligible(
   return error instanceof CoupleParticipantsAreNotEligible;
 }
 
-function currentCoupleRepository(): ICoupleRepository {
-  startDatabasePool();
-  return getRepositoryContainer().getCoupleRepository();
-}
-
-function currentCommunityMemberRepository(): ICommunityMemberRepository {
-  startDatabasePool();
-  return getRepositoryContainer().getCommunityMemberRepository();
-}
-
-function reportFailedCoupleAdd(error: unknown): void {
-  if (isUnavailableDatabase(error)) {
-    console.error(
-      `[emma] The registry cannot add a couple. ${describeUnavailableDatabase(error)}`
-    );
-    return;
-  }
-
-  console.error('[emma] The registry failed while adding a couple.', error);
-}
-
 export async function addCouple(
   write: CoupleWrite,
-  couples: ICoupleRepository = currentCoupleRepository(),
-  members: ICommunityMemberRepository = currentCommunityMemberRepository()
+  couples: ICoupleRepository = openRegistry().getCoupleRepository(),
+  members: ICommunityMemberRepository = openRegistry().getCommunityMemberRepository()
 ): Promise<Couple> {
   if (write.husband_id === write.wife_id) {
     throw new HusbandAndWifeAreSamePerson();
@@ -99,7 +77,11 @@ export async function addCouple(
   try {
     return await couples.addCouple(write);
   } catch (error) {
-    reportFailedCoupleAdd(error);
+    reportFailedRegistryOperation(error, {
+      actor: 'The registry',
+      cannot: 'add a couple',
+      failedWhile: 'adding a couple',
+    });
     if (isUnavailableDatabase(error)) {
       throw new UnavailableDatabase(error);
     }

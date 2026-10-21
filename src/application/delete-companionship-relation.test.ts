@@ -1,90 +1,59 @@
-import { describe, expect, it, vi } from 'vitest';
-import {
-  deleteCompanionshipRelation,
-  CompanionshipRelationNotFound,
-} from '@/application/delete-companionship-relation';
-import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
+import { describe, expect, it } from 'vitest';
+import { deleteCompanionshipRelation } from '@/application/delete-companionship-relation';
+import { InMemoryCompanionshipRegistry } from '@/adapters/db/in-memory/InMemoryCompanionshipRegistry';
 import { MemberId } from '@/types/auth';
-import type { CompanionshipRelation } from '@/types/companionship-relation';
 
-function aCompanionshipRelation(
-  overrides: Partial<CompanionshipRelation> = {}
-): CompanionshipRelation {
-  return {
-    id: 'relation-1',
-    companion_id: MemberId('companion-1'),
-    accompanied_id: MemberId('accompanied-1'),
-    status: 'active',
-    start_date: '2024-01-15',
-    end_date: null,
-    notes: null,
-    ...overrides,
-  };
-}
-
-function aCompanionshipRelationRepository(
-  stubs: Partial<ICompanionshipRelationRepository> = {}
-): ICompanionshipRelationRepository {
-  return {
-    listCompanionshipRelations: vi.fn(),
-    listArchivedCompanionshipRelations: vi.fn(),
-    listProposedCompanionshipRelationsForAccompanied: vi.fn(),
-    deleteProposedCompanionshipRelation: vi.fn(),
-    deleteProposedCompanionshipRelationPair: vi.fn(),
-    activateProposedCompanionshipRelation: vi.fn(),
-    activateProposedCompanionshipRelationPair: vi.fn(),
-    listPeopleWithoutCompanion: vi.fn(),
-    findCompanionshipRelationById: vi
-      .fn()
-      .mockResolvedValue(aCompanionshipRelation()),
-    addCompanionshipRelation: vi.fn(),
-    findActiveCompanionshipRelationByAccompaniedId: vi.fn(),
-    addCompanionshipRelationPair: vi.fn(),
-    updateCompanionshipRelation: vi.fn(),
-    updateCompanionshipRelationPair: vi.fn(),
-    archiveCompanionshipRelationAndAddReplacement: vi.fn(),
-    archiveCompanionshipRelationPairAndAddReplacement: vi.fn(),
-    deleteCompanionshipRelation: vi.fn().mockResolvedValue(undefined),
-    ...stubs,
-  };
-}
+const relationId = 'relation-1';
 
 describe('deleteCompanionshipRelation', () => {
   it('deleteCompanionshipRelation removes the relation when it exists', async () => {
-    const relations = aCompanionshipRelationRepository();
-    const relationId = 'relation-1';
+    const registry = new InMemoryCompanionshipRegistry({
+      relations: [
+        {
+          id: relationId,
+          companionId: 'companion-1',
+          accompaniedId: 'accompanied-1',
+          status: 'active',
+          startDate: '2024-01-15',
+          notes: null,
+        },
+      ],
+    });
 
-    await deleteCompanionshipRelation(relationId, relations);
+    await deleteCompanionshipRelation(relationId, registry);
 
-    expect(relations.deleteCompanionshipRelation).toHaveBeenCalledWith(
-      relationId
-    );
+    expect(registry.relations).toEqual([]);
   });
 
   it('deleteCompanionshipRelation refuses when relation does not exist', async () => {
-    const relations = aCompanionshipRelationRepository({
-      findCompanionshipRelationById: vi.fn().mockResolvedValue(null),
+    const registry = new InMemoryCompanionshipRegistry({
+      relations: [
+        {
+          id: relationId,
+          companionId: 'companion-1',
+          accompaniedId: 'accompanied-1',
+          status: 'active',
+          startDate: '2024-01-15',
+          notes: null,
+        },
+      ],
     });
-    const relationId = 'non-existent';
+    const missingId = 'non-existent';
 
-    await expect(
-      deleteCompanionshipRelation(relationId, relations)
-    ).rejects.toBeInstanceOf(CompanionshipRelationNotFound);
-
-    expect(relations.deleteCompanionshipRelation).not.toHaveBeenCalled();
-  });
-
-  it('deleteCompanionshipRelation checks existence before deleting', async () => {
-    const relations = aCompanionshipRelationRepository();
-    const relationId = 'relation-1';
-
-    await deleteCompanionshipRelation(relationId, relations);
-
-    expect(relations.findCompanionshipRelationById).toHaveBeenCalledWith(
-      relationId
+    await expect(deleteCompanionshipRelation(missingId, registry)).rejects.toThrow(
+      `Companionship relation with id ${missingId} not found`
     );
-    expect(relations.deleteCompanionshipRelation).toHaveBeenCalledWith(
-      relationId
-    );
+
+    expect(registry.relations).toEqual([
+      {
+        id: relationId,
+        companion_id: MemberId('companion-1'),
+        accompanied_id: MemberId('accompanied-1'),
+        status: 'active',
+        start_date: '2024-01-15',
+        end_date: null,
+        notes: null,
+      },
+    ]);
   });
 });
