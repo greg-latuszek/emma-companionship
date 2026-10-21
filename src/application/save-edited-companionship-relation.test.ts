@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { saveEditedCompanionshipRelation } from '@/application/save-edited-companionship-relation';
 import {
   InMemoryCompanionshipRegistry,
@@ -70,6 +70,7 @@ describe('saveEditedCompanionshipRelation', () => {
       relationId,
       aWrite({ notes: 'works well' }),
       registry,
+      registry,
       registry
     );
 
@@ -93,6 +94,7 @@ describe('saveEditedCompanionshipRelation', () => {
     await saveEditedCompanionshipRelation(
       relationId,
       aWrite({ companion_id: newCompanionId }),
+      registry,
       registry,
       registry
     );
@@ -149,9 +151,30 @@ describe('saveEditedCompanionshipRelation', () => {
         relationId,
         aWrite({ companion_id: accompaniedId, accompanied_id: accompaniedId }),
         registry,
+        registry,
         registry
       )
     ).rejects.toThrow('The companion and the accompanied person cannot be the same');
+
+    expect(registry.relations).toEqual([storedRelation()]);
+  });
+
+  it('saveEditedCompanionshipRelation keeps the active row when the replacement cannot be stored', async () => {
+    const registry = aRegistryWith(theActiveRelation());
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(registry, 'addCompanionshipRelation').mockRejectedValueOnce(
+      new Error('replacement failed')
+    );
+
+    await expect(
+      saveEditedCompanionshipRelation(
+        relationId,
+        aWrite({ companion_id: '550e8400-e29b-41d4-a716-446655440011' }),
+        registry,
+        registry,
+        registry
+      )
+    ).rejects.toThrow('replacement failed');
 
     expect(registry.relations).toEqual([storedRelation()]);
   });

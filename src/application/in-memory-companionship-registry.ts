@@ -153,40 +153,6 @@ export class InMemoryCompanionshipRegistry
     return this.replaceCompanionshipRelationFields(id, write);
   }
 
-  async updateCompanionshipRelationPair(
-    husbandRelationId: string,
-    wifeRelationId: string,
-    husbandWrite: CompanionshipRelationWriteWithDefaults,
-    wifeWrite: CompanionshipRelationWriteWithDefaults
-  ): Promise<[CompanionshipRelation, CompanionshipRelation]> {
-    return [
-      this.replaceCompanionshipRelationFields(husbandRelationId, husbandWrite),
-      this.replaceCompanionshipRelationFields(wifeRelationId, wifeWrite),
-    ];
-  }
-
-  async archiveCompanionshipRelationAndAddReplacement(
-    existingId: string,
-    replacement: CompanionshipRelationWriteWithDefaults
-  ): Promise<CompanionshipRelation> {
-    await this.archiveActiveCompanionshipRelation(existingId);
-    return this.rememberCompanionshipRelation({ ...replacement, status: 'active' });
-  }
-
-  async archiveCompanionshipRelationPairAndAddReplacement(
-    husbandRelationId: string,
-    wifeRelationId: string,
-    husbandReplacement: CompanionshipRelationWriteWithDefaults,
-    wifeReplacement: CompanionshipRelationWriteWithDefaults
-  ): Promise<[CompanionshipRelation, CompanionshipRelation]> {
-    await this.archiveActiveCompanionshipRelation(husbandRelationId);
-    await this.archiveActiveCompanionshipRelation(wifeRelationId);
-    return [
-      this.rememberCompanionshipRelation({ ...husbandReplacement, status: 'active' }),
-      this.rememberCompanionshipRelation({ ...wifeReplacement, status: 'active' }),
-    ];
-  }
-
   deleteProposedCompanionshipRelation(): Promise<void> {
     scenarioDoesNotUse('deleteProposedCompanionshipRelation');
   }

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { saveEditedCoupleCompanionshipRelations } from '@/application/save-edited-couple-companionship-relations';
 import {
   InMemoryCompanionshipRegistry,
@@ -102,6 +102,7 @@ describe('saveEditedCoupleCompanionshipRelations', () => {
       wifeRelationId,
       aWrite({ notes: 'smooth' }),
       registry,
+      registry,
       registry
     );
 
@@ -128,6 +129,7 @@ describe('saveEditedCoupleCompanionshipRelations', () => {
       husbandRelationId,
       wifeRelationId,
       aWrite({ companion_couple_id: newCompanionCoupleId }),
+      registry,
       registry,
       registry
     );
@@ -168,9 +170,61 @@ describe('saveEditedCoupleCompanionshipRelations', () => {
           accompanied_couple_id: accompaniedCoupleId,
         }),
         registry,
+        registry,
         registry
       )
     ).rejects.toThrow('The companion couple and the accompanied couple cannot be the same');
+
+    expect(registry.relations).toEqual([theHusbandRow(), theWifeRow()]);
+  });
+
+  it('saveEditedCoupleCompanionshipRelations changes no row when the wife update fails', async () => {
+    const registry = aRegistryWithTheActiveCouple();
+    const updateFirst = registry.updateCompanionshipRelation.bind(registry);
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(registry, 'updateCompanionshipRelation')
+      .mockImplementationOnce(updateFirst)
+      .mockRejectedValueOnce(new Error('wife update failed'));
+
+    await expect(
+      saveEditedCoupleCompanionshipRelations(
+        husbandRelationId,
+        wifeRelationId,
+        aWrite({ notes: 'smooth' }),
+        registry,
+        registry,
+        registry
+      )
+    ).rejects.toThrow('wife update failed');
+
+    expect(registry.relations).toEqual([theHusbandRow(), theWifeRow()]);
+  });
+
+  it('saveEditedCoupleCompanionshipRelations changes no row when the wife replacement fails', async () => {
+    const newCompanionCoupleId = '550e8400-e29b-41d4-a716-446655440030';
+    const registry = aRegistryWithTheActiveCouple([
+      {
+        id: newCompanionCoupleId,
+        husbandId: '550e8400-e29b-41d4-a716-446655440005',
+        wifeId: '550e8400-e29b-41d4-a716-446655440006',
+      },
+    ]);
+    const addFirst = registry.addCompanionshipRelation.bind(registry);
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(registry, 'addCompanionshipRelation')
+      .mockImplementationOnce(addFirst)
+      .mockRejectedValueOnce(new Error('wife replacement failed'));
+
+    await expect(
+      saveEditedCoupleCompanionshipRelations(
+        husbandRelationId,
+        wifeRelationId,
+        aWrite({ companion_couple_id: newCompanionCoupleId }),
+        registry,
+        registry,
+        registry
+      )
+    ).rejects.toThrow('wife replacement failed');
 
     expect(registry.relations).toEqual([theHusbandRow(), theWifeRow()]);
   });

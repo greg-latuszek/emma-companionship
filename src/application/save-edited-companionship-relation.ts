@@ -5,6 +5,7 @@ import {
   refuseSamePersonCompanionship,
 } from '@/application/companionship-relation-writes';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
+import type { IAtomicWork } from '@/ports/repositories/IAtomicWork';
 import type { ICommunityMemberRepository } from '@/ports/repositories/ICommunityMemberRepository';
 import {
   CompanionshipRelationNotFound,
@@ -43,7 +44,8 @@ export async function saveEditedCompanionshipRelation(
   relationId: string,
   write: CompanionshipRelationWrite,
   relations: ICompanionshipRelationRepository = openRegistry().getCompanionshipRelationRepository(),
-  members: ICommunityMemberRepository = openRegistry().getCommunityMemberRepository()
+  members: ICommunityMemberRepository = openRegistry().getCommunityMemberRepository(),
+  atomicWork: IAtomicWork = openRegistry().getAtomicWork()
 ): Promise<CompanionshipRelation> {
   refuseSamePersonCompanionship(write);
 
@@ -68,10 +70,13 @@ export async function saveEditedCompanionshipRelation(
       });
     }
 
-    return await relations.archiveCompanionshipRelationAndAddReplacement(
-      relationId,
-      writeWithDefaults
-    );
+    return await atomicWork.runAsAtomic(async () => {
+      await relations.archiveActiveCompanionshipRelation(relationId);
+      return relations.addCompanionshipRelation({
+        ...writeWithDefaults,
+        status: 'active',
+      });
+    });
   } catch (error) {
     reportFailedRegistryOperation(error, {
       actor: 'The registry',

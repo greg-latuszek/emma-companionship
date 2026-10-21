@@ -31,31 +31,6 @@ export interface ICompanionshipRelationRepository {
     id: string,
     write: CompanionshipRelationWriteWithDefaults
   ): Promise<CompanionshipRelation>;
-  /** In-place update of both spouse rows (dates/notes) in one transaction. */
-  updateCompanionshipRelationPair(
-    husbandRelationId: string,
-    wifeRelationId: string,
-    husbandWrite: CompanionshipRelationWriteWithDefaults,
-    wifeWrite: CompanionshipRelationWriteWithDefaults
-  ): Promise<[CompanionshipRelation, CompanionshipRelation]>;
-  /**
-   * Archive the existing active row (end_date = today) and insert the
-   * replacement in one transaction when the Companion changes.
-   */
-  archiveCompanionshipRelationAndAddReplacement(
-    existingId: string,
-    replacement: CompanionshipRelationWriteWithDefaults
-  ): Promise<CompanionshipRelation>;
-  /**
-   * Archive both spouses' active rows and insert the new husband/wife pair
-   * in one transaction when the Companion couple changes.
-   */
-  archiveCompanionshipRelationPairAndAddReplacement(
-    husbandRelationId: string,
-    wifeRelationId: string,
-    husbandReplacement: CompanionshipRelationWriteWithDefaults,
-    wifeReplacement: CompanionshipRelationWriteWithDefaults
-  ): Promise<[CompanionshipRelation, CompanionshipRelation]>;
   /** Archive one active row (end_date = today); refuses a row that is not active. */
   archiveActiveCompanionshipRelation(id: string): Promise<void>;
   /** Delete only when status is proposed (Find Companion remove). */

@@ -1,6 +1,7 @@
 import { openRegistry } from '@/application/open-registry';
 import { reportFailedRegistryOperation } from '@/application/report-failed-registry-operation';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
+import type { IAtomicWork } from '@/ports/repositories/IAtomicWork';
 import type { ICoupleRepository } from '@/ports/repositories/ICoupleRepository';
 import {
   expandCoupleIntoHusbandAndWifeWrites,
@@ -45,7 +46,8 @@ export async function saveEditedCoupleCompanionshipRelations(
   wifeRelationId: string,
   write: CoupleCompanionshipWrite,
   relations: ICompanionshipRelationRepository = openRegistry().getCompanionshipRelationRepository(),
-  couples: ICoupleRepository = openRegistry().getCoupleRepository()
+  couples: ICoupleRepository = openRegistry().getCoupleRepository(),
+  atomicWork: IAtomicWork = openRegistry().getAtomicWork()
 ): Promise<[CompanionshipRelation, CompanionshipRelation]> {
   const [companionCouple, accompaniedCouple] = await requireDistinctCompanionAndAccompaniedCouples(
     write,
@@ -92,20 +94,32 @@ export async function saveEditedCoupleCompanionshipRelations(
 
   try {
     if (companionUnchanged) {
-      return await relations.updateCompanionshipRelationPair(
-        husbandRelationId,
-        wifeRelationId,
-        husbandWrite,
-        wifeWrite
-      );
+      return await atomicWork.runAsAtomic(async () => {
+        const husbandUpdated = await relations.updateCompanionshipRelation(
+          husbandRelationId,
+          husbandWrite
+        );
+        const wifeUpdated = await relations.updateCompanionshipRelation(
+          wifeRelationId,
+          wifeWrite
+        );
+        return [husbandUpdated, wifeUpdated];
+      });
     }
 
-    return await relations.archiveCompanionshipRelationPairAndAddReplacement(
-      husbandRelationId,
-      wifeRelationId,
-      husbandWrite,
-      wifeWrite
-    );
+    return await atomicWork.runAsAtomic(async () => {
+      await relations.archiveActiveCompanionshipRelation(husbandRelationId);
+      await relations.archiveActiveCompanionshipRelation(wifeRelationId);
+      const husbandReplacement = await relations.addCompanionshipRelation({
+        ...husbandWrite,
+        status: 'active',
+      });
+      const wifeReplacement = await relations.addCompanionshipRelation({
+        ...wifeWrite,
+        status: 'active',
+      });
+      return [husbandReplacement, wifeReplacement];
+    });
   } catch (error) {
     reportFailedRegistryOperation(error, {
       actor: 'The registry',
