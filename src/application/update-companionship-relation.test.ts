@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { updateCompanionshipRelation } from '@/application/update-companionship-relation';
-import { InMemoryCompanionshipRegistry } from '@/application/in-memory-companionship-registry';
+import { InMemoryCompanionshipRegistry } from '@/adapters/db/in-memory/InMemoryCompanionshipRegistry';
 import type { CompanionshipRelationWrite } from '@/schemas/companionship-relation';
 import { MemberId } from '@/types/auth';
 import type { Gender } from '@/types/community-member';

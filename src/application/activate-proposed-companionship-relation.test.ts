@@ -3,7 +3,7 @@ import {
   activateProposedCompanionshipRelation,
   activateProposedCoupleCompanionshipRelations,
 } from '@/application/activate-proposed-companionship-relation';
-import { InMemoryCompanionshipRegistry } from '@/application/in-memory-companionship-registry';
+import { InMemoryCompanionshipRegistry } from '@/adapters/db/in-memory/InMemoryCompanionshipRegistry';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import { MemberId } from '@/types/auth';
 

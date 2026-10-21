@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { InMemoryCompanionshipRegistry } from '@/application/in-memory-companionship-registry';
+import { InMemoryCompanionshipRegistry } from '@/adapters/db/in-memory/InMemoryCompanionshipRegistry';
 import type { CompanionshipRelationWriteWithDefaults } from '@/schemas/companionship-relation';
 
 function aWrite(

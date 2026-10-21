@@ -3,7 +3,7 @@ import { saveEditedCoupleCompanionshipRelations } from '@/application/save-edite
 import {
   InMemoryCompanionshipRegistry,
   type SeededCouple,
-} from '@/application/in-memory-companionship-registry';
+} from '@/adapters/db/in-memory/InMemoryCompanionshipRegistry';
 import type { CoupleCompanionshipWrite } from '@/schemas/companionship-relation';
 import { MemberId } from '@/types/auth';
 import type { CompanionshipRelation } from '@/types/companionship-relation';

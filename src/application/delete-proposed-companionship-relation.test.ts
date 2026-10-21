@@ -3,7 +3,7 @@ import {
   deleteProposedCompanionshipRelation,
   deleteProposedCoupleCompanionshipRelations,
 } from '@/application/delete-proposed-companionship-relation';
-import { InMemoryCompanionshipRegistry } from '@/application/in-memory-companionship-registry';
+import { InMemoryCompanionshipRegistry } from '@/adapters/db/in-memory/InMemoryCompanionshipRegistry';
 import type { CompanionshipRelationStatus } from '@/types/companionship-relation';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 

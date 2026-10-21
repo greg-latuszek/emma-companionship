@@ -3,7 +3,7 @@ import { addProposedCoupleCompanionshipRelations } from '@/application/add-propo
 import {
   InMemoryCompanionshipRegistry,
   type SeededCompanionshipRelation,
-} from '@/application/in-memory-companionship-registry';
+} from '@/adapters/db/in-memory/InMemoryCompanionshipRegistry';
 import { MemberId } from '@/types/auth';
 import type { CompanionshipRelation } from '@/types/companionship-relation';
 

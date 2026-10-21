@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { deleteCompanionshipRelation } from '@/application/delete-companionship-relation';
-import { InMemoryCompanionshipRegistry } from '@/application/in-memory-companionship-registry';
+import { InMemoryCompanionshipRegistry } from '@/adapters/db/in-memory/InMemoryCompanionshipRegistry';
 import { MemberId } from '@/types/auth';
 
 const relationId = 'relation-1';

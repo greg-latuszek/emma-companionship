@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { addCoupleCompanionshipRelations } from '@/application/add-couple-companionship-relations';
-import { InMemoryCompanionshipRegistry } from '@/application/in-memory-companionship-registry';
+import { InMemoryCompanionshipRegistry } from '@/adapters/db/in-memory/InMemoryCompanionshipRegistry';
 import type { CoupleCompanionshipWrite } from '@/schemas/companionship-relation';
 import { MemberId } from '@/types/auth';
 
