@@ -1,3 +1,4 @@
+import { AtomicBlockAlreadyOpen, type IAtomicWork } from '@/ports/repositories/IAtomicWork';
 import type { ICommunityMemberRepository } from '@/ports/repositories/ICommunityMemberRepository';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import type { ICoupleRepository } from '@/ports/repositories/ICoupleRepository';
@@ -39,11 +40,16 @@ export type SeededCompanionshipRelation = {
  * still waiting; this store does not infer the waiting list from rows.
  */
 export class InMemoryCompanionshipRegistry
-  implements ICompanionshipRelationRepository, ICommunityMemberRepository, ICoupleRepository
+  implements
+    ICompanionshipRelationRepository,
+    ICommunityMemberRepository,
+    ICoupleRepository,
+    IAtomicWork
 {
   readonly relations: CompanionshipRelation[] = [];
 
   private nextRelationNumber = 1;
+  private isAtomicBlockOpen = false;
   private readonly members = new Map<string, Gender | null>();
   private readonly couples = new Map<string, Couple>();
   private readonly peopleWithoutCompanion: string[];
@@ -285,6 +291,25 @@ export class InMemoryCompanionshipRegistry
     relation.end_date = write.end_date;
     relation.notes = write.notes;
     return relation;
+  }
+
+  async runAsAtomic<T>(work: () => Promise<T>): Promise<T> {
+    if (this.isAtomicBlockOpen) {
+      throw new AtomicBlockAlreadyOpen();
+    }
+
+    const storedRelations = this.relations.map((relation) => ({ ...relation }));
+    const storedNextRelationNumber = this.nextRelationNumber;
+    this.isAtomicBlockOpen = true;
+    try {
+      return await work();
+    } catch (error) {
+      this.relations.splice(0, this.relations.length, ...storedRelations);
+      this.nextRelationNumber = storedNextRelationNumber;
+      throw error;
+    } finally {
+      this.isAtomicBlockOpen = false;
+    }
   }
 
   async archiveActiveCompanionshipRelation(id: string): Promise<void> {
