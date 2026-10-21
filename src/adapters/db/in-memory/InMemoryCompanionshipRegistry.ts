@@ -35,9 +35,12 @@ export type SeededCompanionshipRelation = {
 };
 
 /**
- * Test double for the companionship write scenarios.
+ * In-memory adapter for the registry ports: companionship relations,
+ * community members, couples, and atomic work. One object serves all four.
+ * Used by the use case scenario tests, not by the running app.
  * Rows live on `relations`. The scenario seeds members, couples, and who is
  * still waiting; this store does not infer the waiting list from rows.
+ * Port methods no scenario needs yet throw instead of guessing behavior.
  */
 export class InMemoryCompanionshipRegistry
   implements
