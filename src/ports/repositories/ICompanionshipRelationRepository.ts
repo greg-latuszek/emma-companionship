@@ -35,11 +35,6 @@ export interface ICompanionshipRelationRepository {
   archiveActiveCompanionshipRelation(id: string): Promise<void>;
   /** Delete only when status is proposed (Find Companion remove). */
   deleteProposedCompanionshipRelation(id: string): Promise<void>;
-  /** Delete both spouse proposed rows in one transaction. */
-  deleteProposedCompanionshipRelationPair(
-    husbandRelationId: string,
-    wifeRelationId: string
-  ): Promise<void>;
   /**
    * Activate one proposed row: archive any current active for that accompanied,
    * set chosen to active with start_date/notes, delete other proposed for them.

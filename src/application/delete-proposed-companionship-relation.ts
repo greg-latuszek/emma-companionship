@@ -4,6 +4,7 @@
 
 import { openRegistry } from '@/application/open-registry';
 import { reportFailedRegistryOperation } from '@/application/report-failed-registry-operation';
+import type { IAtomicWork } from '@/ports/repositories/IAtomicWork';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import {
   isUnavailableDatabase,
@@ -32,13 +33,14 @@ export async function deleteProposedCompanionshipRelation(
 export async function deleteProposedCoupleCompanionshipRelations(
   husbandRelationId: string,
   wifeRelationId: string,
-  relations: ICompanionshipRelationRepository = openRegistry().getCompanionshipRelationRepository()
+  relations: ICompanionshipRelationRepository = openRegistry().getCompanionshipRelationRepository(),
+  atomicWork: IAtomicWork = openRegistry().getAtomicWork()
 ): Promise<void> {
   try {
-    await relations.deleteProposedCompanionshipRelationPair(
-      husbandRelationId,
-      wifeRelationId
-    );
+    await atomicWork.runAsAtomic(async () => {
+      await relations.deleteProposedCompanionshipRelation(husbandRelationId);
+      await relations.deleteProposedCompanionshipRelation(wifeRelationId);
+    });
   } catch (error) {
     reportFailedRegistryOperation(error, {
       actor: 'The registry',

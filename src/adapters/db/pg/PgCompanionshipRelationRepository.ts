@@ -429,28 +429,6 @@ export class PgCompanionshipRelationRepository
     }
   }
 
-  async deleteProposedCompanionshipRelationPair(
-    husbandRelationId: string,
-    wifeRelationId: string
-  ): Promise<void> {
-    await withTransaction(async (client) => {
-      for (const relationId of [husbandRelationId, wifeRelationId]) {
-        const result = await client.query(
-          `
-          DELETE FROM companionship_relations
-          WHERE id = $1
-            AND status = 'proposed'
-          RETURNING id
-        `,
-          [relationId]
-        );
-        if (!result.rows[0]) {
-          throw new Error('Failed to delete proposed companionship relation');
-        }
-      }
-    });
-  }
-
   async activateProposedCompanionshipRelation(
     proposedRelationId: string,
     activation: { start_date: string | null; notes: string | null }

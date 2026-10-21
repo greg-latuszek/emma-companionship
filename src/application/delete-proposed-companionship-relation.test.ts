@@ -3,7 +3,20 @@ import {
   deleteProposedCompanionshipRelation,
   deleteProposedCoupleCompanionshipRelations,
 } from '@/application/delete-proposed-companionship-relation';
+import { InMemoryCompanionshipRegistry } from '@/application/in-memory-companionship-registry';
+import type { CompanionshipRelationStatus } from '@/types/companionship-relation';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
+
+function aRegistryWithTheCoupleProposals(
+  wifeStatus: CompanionshipRelationStatus = 'proposed'
+): InMemoryCompanionshipRegistry {
+  return new InMemoryCompanionshipRegistry({
+    relations: [
+      { id: 'husband-proposal', companionId: 'ch', accompaniedId: 'ah', status: 'proposed' },
+      { id: 'wife-proposal', companionId: 'cw', accompaniedId: 'aw', status: wifeStatus },
+    ],
+  });
+}
 
 describe('deleteProposedCompanionshipRelation', () => {
   it('deleteProposedCompanionshipRelation asks the repository to delete that proposed row', async () => {
@@ -18,21 +31,36 @@ describe('deleteProposedCompanionshipRelation', () => {
     );
   });
 
-  it('deleteProposedCoupleCompanionshipRelations asks the repository to delete both spouse proposed rows', async () => {
-    const relations = {
-      deleteProposedCompanionshipRelationPair: vi
-        .fn()
-        .mockResolvedValue(undefined),
-    } as unknown as ICompanionshipRelationRepository;
+  it('deleteProposedCoupleCompanionshipRelations removes both spouse proposed rows', async () => {
+    const registry = aRegistryWithTheCoupleProposals();
 
     await deleteProposedCoupleCompanionshipRelations(
       'husband-proposal',
       'wife-proposal',
-      relations
+      registry,
+      registry
     );
 
-    expect(
-      relations.deleteProposedCompanionshipRelationPair
-    ).toHaveBeenCalledWith('husband-proposal', 'wife-proposal');
+    expect(registry.relations).toEqual([]);
+  });
+
+  it('deleteProposedCoupleCompanionshipRelations keeps the husband proposal when the wife row is not proposed', async () => {
+    const registry = aRegistryWithTheCoupleProposals('active');
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await expect(
+      deleteProposedCoupleCompanionshipRelations(
+        'husband-proposal',
+        'wife-proposal',
+        registry,
+        registry
+      )
+    ).rejects.toThrow('Failed to delete proposed companionship relation');
+
+    expect(registry.relations.map((relation) => relation.id)).toEqual([
+      'husband-proposal',
+      'wife-proposal',
+    ]);
+    expect(registry.relations[0].status).toBe('proposed');
   });
 });

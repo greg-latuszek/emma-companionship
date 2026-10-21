@@ -153,12 +153,14 @@ export class InMemoryCompanionshipRegistry
     return this.replaceCompanionshipRelationFields(id, write);
   }
 
-  deleteProposedCompanionshipRelation(): Promise<void> {
-    scenarioDoesNotUse('deleteProposedCompanionshipRelation');
-  }
-
-  deleteProposedCompanionshipRelationPair(): Promise<void> {
-    scenarioDoesNotUse('deleteProposedCompanionshipRelationPair');
+  async deleteProposedCompanionshipRelation(id: string): Promise<void> {
+    const index = this.relations.findIndex(
+      (row) => row.id === id && row.status === 'proposed'
+    );
+    if (index === -1) {
+      throw new Error('Failed to delete proposed companionship relation');
+    }
+    this.relations.splice(index, 1);
   }
 
   activateProposedCompanionshipRelation(): Promise<CompanionshipRelation> {

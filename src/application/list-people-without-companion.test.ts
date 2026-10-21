@@ -26,7 +26,6 @@ function aCompanionshipRelationRepository(
     listArchivedCompanionshipRelations: vi.fn(),
     listProposedCompanionshipRelationsForAccompanied: vi.fn(),
     deleteProposedCompanionshipRelation: vi.fn(),
-    deleteProposedCompanionshipRelationPair: vi.fn(),
     activateProposedCompanionshipRelation: vi.fn(),
     activateProposedCompanionshipRelationPair: vi.fn(),
     listPeopleWithoutCompanion: vi.fn(),
