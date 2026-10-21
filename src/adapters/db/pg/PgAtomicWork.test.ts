@@ -5,7 +5,7 @@ import { PgAtomicWork, currentAtomicClient } from '@/adapters/db/pg/PgAtomicWork
 type RecordedClient = {
   statements: string[];
   released: boolean;
-  query(statement: string): Promise<void>;
+  query(statement: string): Promise<{ rows: never[] }>;
   release(): void;
 };
 
@@ -15,6 +15,7 @@ function aClient(): RecordedClient {
     released: false,
     async query(statement: string) {
       client.statements.push(statement);
+      return { rows: [] };
     },
     release() {
       client.released = true;

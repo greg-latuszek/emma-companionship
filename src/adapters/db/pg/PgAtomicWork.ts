@@ -9,8 +9,9 @@ import { AtomicBlockAlreadyOpen, type IAtomicWork } from '@/ports/repositories/I
  * share this client. The port does not expose the client.
  */
 
-type AtomicClient = {
-  query(statement: string): Promise<unknown>;
+export type AtomicClient = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  query(statement: string, values?: any[]): Promise<{ rows: any[] }>;
   release(): void;
 };
 

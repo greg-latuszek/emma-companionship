@@ -1,4 +1,9 @@
-import { queryMany, queryOne, withTransaction } from '@/infrastructure/db/pg';
+import {
+  currentSqlRunner,
+  runInOpenAtomicBlockOrOwnTransaction,
+  type SqlPool,
+} from '@/adapters/db/pg/PgCurrentClient';
+import { withTransaction } from '@/infrastructure/db/pg';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import type { CompanionshipRelationWriteWithDefaults } from '@/schemas/companionship-relation';
 import { MemberId } from '@/types/auth';
@@ -165,8 +170,20 @@ async function insertCompanionshipRelationWithClient(
 export class PgCompanionshipRelationRepository
   implements ICompanionshipRelationRepository
 {
+  constructor(private readonly pool?: SqlPool) {}
+
+  private async queryOne<T>(statement: string, values?: unknown[]): Promise<T | null> {
+    const result = await currentSqlRunner(this.pool).query(statement, values);
+    return (result.rows[0] as T | undefined) ?? null;
+  }
+
+  private async queryMany<T>(statement: string, values?: unknown[]): Promise<T[]> {
+    const result = await currentSqlRunner(this.pool).query(statement, values);
+    return result.rows as T[];
+  }
+
   async listCompanionshipRelations(): Promise<CompanionshipRelationListItem[]> {
-    const rows = await queryMany<CompanionshipRelationRow>(`
+    const rows = await this.queryMany<CompanionshipRelationRow>(`
       SELECT ${COMPANIONSHIP_RELATION_COLUMNS}
       FROM companionship_relations cr
       JOIN members accompanied ON accompanied.id = cr.accompanied_id
@@ -180,7 +197,7 @@ export class PgCompanionshipRelationRepository
   async listArchivedCompanionshipRelations(): Promise<
     CompanionshipRelationListItem[]
   > {
-    const rows = await queryMany<CompanionshipRelationRow>(`
+    const rows = await this.queryMany<CompanionshipRelationRow>(`
       SELECT ${COMPANIONSHIP_RELATION_COLUMNS}
       FROM companionship_relations cr
       JOIN members accompanied ON accompanied.id = cr.accompanied_id
@@ -201,7 +218,7 @@ export class PgCompanionshipRelationRepository
       return [];
     }
 
-    const rows = await queryMany<CompanionshipRelationRow>(
+    const rows = await this.queryMany<CompanionshipRelationRow>(
       `
       SELECT ${COMPANIONSHIP_RELATION_COLUMNS}
       FROM companionship_relations cr
@@ -217,7 +234,7 @@ export class PgCompanionshipRelationRepository
   }
 
   async listPeopleWithoutCompanion(): Promise<PersonWithoutCompanion[]> {
-    const rows = await queryMany<{
+    const rows = await this.queryMany<{
       id: string;
       first_name: string;
       last_name: string;
@@ -257,7 +274,7 @@ export class PgCompanionshipRelationRepository
   async findCompanionshipRelationById(
     id: string
   ): Promise<CompanionshipRelation | null> {
-    const row = await queryOne<{
+    const row = await this.queryOne<{
       id: string;
       companion_id: string;
       accompanied_id: string;
@@ -299,7 +316,7 @@ export class PgCompanionshipRelationRepository
   async findActiveCompanionshipRelationByAccompaniedId(
     accompaniedId: string
   ): Promise<CompanionshipRelation | null> {
-    const row = await queryOne<CompanionshipRelationInsertRow>(
+    const row = await this.queryOne<CompanionshipRelationInsertRow>(
       `
       SELECT
         id,
@@ -328,7 +345,7 @@ export class PgCompanionshipRelationRepository
   async addCompanionshipRelation(
     write: CompanionshipRelationWriteWithDefaults
   ): Promise<CompanionshipRelation> {
-    const row = await queryOne<CompanionshipRelationInsertRow>(
+    const row = await this.queryOne<CompanionshipRelationInsertRow>(
       `
       INSERT INTO companionship_relations (
         companion_id,
@@ -385,7 +402,7 @@ export class PgCompanionshipRelationRepository
     id: string,
     write: CompanionshipRelationWriteWithDefaults
   ): Promise<CompanionshipRelation> {
-    const row = await queryOne<{
+    const row = await this.queryOne<{
       id: string;
       companion_id: string;
       accompanied_id: string;
@@ -554,7 +571,7 @@ export class PgCompanionshipRelationRepository
   }
 
   async deleteProposedCompanionshipRelation(id: string): Promise<void> {
-    const row = await queryOne<{ id: string }>(
+    const row = await this.queryOne<{ id: string }>(
       `
       DELETE FROM companionship_relations
       WHERE id = $1
@@ -595,8 +612,8 @@ export class PgCompanionshipRelationRepository
     activation: { start_date: string | null; notes: string | null }
   ): Promise<CompanionshipRelation> {
     const today = new Date().toISOString().slice(0, 10);
-    return withTransaction(async (client) => {
-      const proposedResult = await client.query<CompanionshipRelationInsertRow>(
+    return runInOpenAtomicBlockOrOwnTransaction(this.pool, async (client) => {
+      const proposedResult = await client.query(
         `
         SELECT
           id,
@@ -629,7 +646,7 @@ export class PgCompanionshipRelationRepository
       );
 
       const activatedResult =
-        await client.query<CompanionshipRelationInsertRow>(
+        await client.query(
           `
           UPDATE companionship_relations
           SET
@@ -764,7 +781,7 @@ export class PgCompanionshipRelationRepository
   }
 
   async deleteCompanionshipRelation(id: string): Promise<void> {
-    await queryOne(
+    await this.queryOne(
       `
       DELETE FROM companionship_relations
       WHERE id = $1
