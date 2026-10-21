@@ -381,23 +381,6 @@ export class PgCompanionshipRelationRepository
     return companionshipRelationFromInsertRow(row);
   }
 
-  async addCompanionshipRelationPair(
-    husbandWrite: CompanionshipRelationWriteWithDefaults,
-    wifeWrite: CompanionshipRelationWriteWithDefaults
-  ): Promise<[CompanionshipRelation, CompanionshipRelation]> {
-    return withTransaction(async (client) => {
-      const husbandRelation = await insertCompanionshipRelationWithClient(
-        client,
-        husbandWrite
-      );
-      const wifeRelation = await insertCompanionshipRelationWithClient(
-        client,
-        wifeWrite
-      );
-      return [husbandRelation, wifeRelation];
-    });
-  }
-
   async updateCompanionshipRelation(
     id: string,
     write: CompanionshipRelationWriteWithDefaults

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { addProposedCoupleCompanionshipRelations } from '@/application/add-proposed-couple-companionship-relations';
 import {
   InMemoryCompanionshipRegistry,
@@ -63,6 +63,7 @@ describe('addProposedCoupleCompanionshipRelations', () => {
         notes: null,
       },
       registry,
+      registry,
       registry
     );
 
@@ -84,6 +85,7 @@ describe('addProposedCoupleCompanionshipRelations', () => {
           end_date: null,
           notes: null,
         },
+        registry,
         registry,
         registry
       )
@@ -115,6 +117,7 @@ describe('addProposedCoupleCompanionshipRelations', () => {
           notes: null,
         },
         registry,
+        registry,
         registry
       )
     ).rejects.toThrow(
@@ -124,5 +127,31 @@ describe('addProposedCoupleCompanionshipRelations', () => {
     expect(registry.relations).toEqual([
       aProposedRow('existing', companionHusbandId, accompaniedHusbandId),
     ]);
+  });
+
+  it('addProposedCoupleCompanionshipRelations stores no row when the wife row fails', async () => {
+    const registry = aRegistryWithBothCouples();
+    const addFirst = registry.addCompanionshipRelation.bind(registry);
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(registry, 'addCompanionshipRelation')
+      .mockImplementationOnce(addFirst)
+      .mockRejectedValueOnce(new Error('wife row failed'));
+
+    await expect(
+      addProposedCoupleCompanionshipRelations(
+        {
+          companion_couple_id: companionCoupleId,
+          accompanied_couple_id: accompaniedCoupleId,
+          start_date: null,
+          end_date: null,
+          notes: null,
+        },
+        registry,
+        registry,
+        registry
+      )
+    ).rejects.toThrow('wife row failed');
+
+    expect(registry.relations).toEqual([]);
   });
 });

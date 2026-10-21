@@ -7,6 +7,7 @@
 import { openRegistry } from '@/application/open-registry';
 import { reportFailedRegistryOperation } from '@/application/report-failed-registry-operation';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
+import type { IAtomicWork } from '@/ports/repositories/IAtomicWork';
 import type { ICoupleRepository } from '@/ports/repositories/ICoupleRepository';
 import {
   expandProposedCoupleIntoHusbandAndWifeWrites,
@@ -35,7 +36,8 @@ export {
 export async function addProposedCoupleCompanionshipRelations(
   write: CoupleCompanionshipWrite,
   relations: ICompanionshipRelationRepository = openRegistry().getCompanionshipRelationRepository(),
-  couples: ICoupleRepository = openRegistry().getCoupleRepository()
+  couples: ICoupleRepository = openRegistry().getCoupleRepository(),
+  atomicWork: IAtomicWork = openRegistry().getAtomicWork()
 ): Promise<[CompanionshipRelation, CompanionshipRelation]> {
   const [companionCouple, accompaniedCouple] = await requireDistinctCompanionAndAccompaniedCouples(
     write,
@@ -64,7 +66,11 @@ export async function addProposedCoupleCompanionshipRelations(
   );
 
   try {
-    return await relations.addCompanionshipRelationPair(husbandWrite, wifeWrite);
+    return await atomicWork.runAsAtomic(async () => {
+      const husbandRelation = await relations.addCompanionshipRelation(husbandWrite);
+      const wifeRelation = await relations.addCompanionshipRelation(wifeWrite);
+      return [husbandRelation, wifeRelation];
+    });
   } catch (error) {
     reportFailedRegistryOperation(error, {
       actor: 'The registry',

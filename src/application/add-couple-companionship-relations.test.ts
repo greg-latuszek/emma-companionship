@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { addCoupleCompanionshipRelations } from '@/application/add-couple-companionship-relations';
 import { InMemoryCompanionshipRegistry } from '@/application/in-memory-companionship-registry';
 import type { CoupleCompanionshipWrite } from '@/schemas/companionship-relation';
@@ -45,11 +45,19 @@ function aRegistryWithBothCouples(
   });
 }
 
+function failTheSecondCompanionshipRelationWrite(registry: InMemoryCompanionshipRegistry): void {
+  const addFirst = registry.addCompanionshipRelation.bind(registry);
+  vi.spyOn(console, 'error').mockImplementation(() => {});
+  vi.spyOn(registry, 'addCompanionshipRelation')
+    .mockImplementationOnce(addFirst)
+    .mockRejectedValueOnce(new Error('wife row failed'));
+}
+
 describe('addCoupleCompanionshipRelations', () => {
   it('addCoupleCompanionshipRelations writes husband-to-husband and wife-to-wife rows with the shared fields', async () => {
     const registry = aRegistryWithBothCouples();
 
-    await addCoupleCompanionshipRelations(aCoupleCompanionshipWrite(), registry, registry);
+    await addCoupleCompanionshipRelations(aCoupleCompanionshipWrite(), registry, registry, registry);
 
     expect(registry.relations).toEqual([
       expect.objectContaining({
@@ -81,6 +89,7 @@ describe('addCoupleCompanionshipRelations', () => {
           accompanied_couple_id: companionCoupleId,
         }),
         registry,
+        registry,
         registry
       )
     ).rejects.toThrow('The companion couple and the accompanied couple cannot be the same');
@@ -92,7 +101,7 @@ describe('addCoupleCompanionshipRelations', () => {
     const registry = new InMemoryCompanionshipRegistry();
 
     await expect(
-      addCoupleCompanionshipRelations(aCoupleCompanionshipWrite(), registry, registry)
+      addCoupleCompanionshipRelations(aCoupleCompanionshipWrite(), registry, registry, registry)
     ).rejects.toThrow('Both the companion couple and the accompanied couple must exist');
 
     expect(registry.relations).toEqual([]);
@@ -102,8 +111,19 @@ describe('addCoupleCompanionshipRelations', () => {
     const registry = aRegistryWithBothCouples([accompaniedHusbandId]);
 
     await expect(
-      addCoupleCompanionshipRelations(aCoupleCompanionshipWrite(), registry, registry)
+      addCoupleCompanionshipRelations(aCoupleCompanionshipWrite(), registry, registry, registry)
     ).rejects.toThrow('Both spouses of the accompanied couple must still need a companion');
+
+    expect(registry.relations).toEqual([]);
+  });
+
+  it('addCoupleCompanionshipRelations stores no row when the wife row fails', async () => {
+    const registry = aRegistryWithBothCouples();
+    failTheSecondCompanionshipRelationWrite(registry);
+
+    await expect(
+      addCoupleCompanionshipRelations(aCoupleCompanionshipWrite(), registry, registry, registry)
+    ).rejects.toThrow('wife row failed');
 
     expect(registry.relations).toEqual([]);
   });

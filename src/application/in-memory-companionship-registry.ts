@@ -105,16 +105,6 @@ export class InMemoryCompanionshipRegistry
     return this.rememberCompanionshipRelation(write);
   }
 
-  async addCompanionshipRelationPair(
-    husbandWrite: CompanionshipRelationWriteWithDefaults,
-    wifeWrite: CompanionshipRelationWriteWithDefaults
-  ): Promise<[CompanionshipRelation, CompanionshipRelation]> {
-    return [
-      this.rememberCompanionshipRelation(husbandWrite),
-      this.rememberCompanionshipRelation(wifeWrite),
-    ];
-  }
-
   async findCommunityMemberById(id: MemberId): Promise<CommunityMember | null> {
     if (!this.members.has(id)) {
       return null;

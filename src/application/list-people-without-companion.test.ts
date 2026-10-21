@@ -33,7 +33,6 @@ function aCompanionshipRelationRepository(
     findCompanionshipRelationById: vi.fn(),
     addCompanionshipRelation: vi.fn(),
     findActiveCompanionshipRelationByAccompaniedId: vi.fn(),
-    addCompanionshipRelationPair: vi.fn(),
     updateCompanionshipRelation: vi.fn(),
     updateCompanionshipRelationPair: vi.fn(),
     archiveActiveCompanionshipRelation: vi.fn(),
