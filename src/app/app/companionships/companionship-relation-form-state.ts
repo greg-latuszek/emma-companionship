@@ -139,13 +139,13 @@ export function companionshipRelationWriteIssueMessages(
     Record<keyof CompanionshipRelationFormValues, MessageRef>
   > = {};
   const fieldLabels: Record<keyof CompanionshipRelationFormValues, MessageRef> = {
-    accompanied_kind: messageRef('companionshipForm.field.accompanied'),
-    accompanied_id: messageRef('companionshipForm.field.accompanied'),
-    companion_kind: messageRef('companionshipForm.field.companion'),
-    companion_id: messageRef('companionshipForm.field.companion'),
-    start_date: messageRef('companionshipForm.field.startDate'),
-    end_date: messageRef('companionshipForm.field.endDate'),
-    notes: messageRef('companionshipForm.field.notes'),
+    accompanied_kind: messageRef('companionship.field.accompanied'),
+    accompanied_id: messageRef('companionship.field.accompanied'),
+    companion_kind: messageRef('companionship.field.companion'),
+    companion_id: messageRef('companionship.field.companion'),
+    start_date: messageRef('companionship.field.startDate'),
+    end_date: messageRef('companionship.field.endDate'),
+    notes: messageRef('companionship.field.notes'),
   };
 
   for (const issue of issues) {

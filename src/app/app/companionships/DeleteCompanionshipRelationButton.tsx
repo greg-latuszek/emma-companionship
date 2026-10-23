@@ -37,7 +37,7 @@ export function DeleteCompanionshipRelationButton({
     return (
       <div className="flex flex-col gap-2">
         <p className="text-sm text-white/80">
-          Czy na pewno chcesz usunąć akompaniament?
+          {translate('companionships.delete.confirm')}
         </p>
         <p className="text-xs text-white/60">
           {accompaniedName} ← {companionName}
@@ -49,7 +49,9 @@ export function DeleteCompanionshipRelationButton({
             disabled={isPending}
             className={`text-sm font-medium ${surfaces.dangerText} underline-offset-4 hover:underline disabled:opacity-50`}
           >
-            {isPending ? 'Usuwanie...' : 'Tak, usuń'}
+            {isPending
+              ? translate('companionships.delete.pending')
+              : translate('companionships.delete.confirmYes')}
           </button>
           <button
             type="button"
@@ -57,7 +59,7 @@ export function DeleteCompanionshipRelationButton({
             disabled={isPending}
             className={`text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline disabled:opacity-50`}
           >
-            Anuluj
+            {translate('common.cancel')}
           </button>
         </div>
       </div>
@@ -74,7 +76,7 @@ export function DeleteCompanionshipRelationButton({
         }}
         className={`text-sm font-medium ${surfaces.dangerText} underline-offset-4 hover:underline`}
       >
-        Usuń
+        {translate('common.delete')}
       </button>
       {error ? (
         <p className={`text-xs ${surfaces.dangerText}`}>{translate(error)}</p>

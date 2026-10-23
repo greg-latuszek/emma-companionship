@@ -31,7 +31,7 @@ function aMember(overrides: Partial<CommunityMember> & Pick<CommunityMember, 'id
 }
 
 describe('companionshipFindDetailPeople', () => {
-  it('companionshipFindDetailPeople titles a single person as Detale osoby', () => {
+  it('companionshipFindDetailPeople titles a single person as person details', () => {
     const member = aMember({ id: MemberId('m1') });
     expect(
       companionshipFindDetailPeople(
@@ -44,10 +44,10 @@ describe('companionshipFindDetailPeople', () => {
         [member],
         []
       )
-    ).toEqual([{ title: 'Detale osoby', member }]);
+    ).toEqual([{ titleKey: 'companionships.find.detail.person', member }]);
   });
 
-  it('companionshipFindDetailPeople splits a couple into Detale męża and Detale żony', () => {
+  it('companionshipFindDetailPeople splits a couple into husband details and wife details', () => {
     const husband = aMember({
       id: MemberId('h1'),
       first_name: 'Jan',
@@ -89,8 +89,8 @@ describe('companionshipFindDetailPeople', () => {
         [couple]
       )
     ).toEqual([
-      { title: 'Detale męża', member: husband },
-      { title: 'Detale żony', member: wife },
+      { titleKey: 'companionships.find.detail.husband', member: husband },
+      { titleKey: 'companionships.find.detail.wife', member: wife },
     ]);
   });
 });

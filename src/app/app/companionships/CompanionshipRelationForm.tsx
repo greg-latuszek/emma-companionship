@@ -101,6 +101,7 @@ function LockedPersonAccompaniedSelect({
   accompaniedError?: MessageRef;
   companionError?: MessageRef;
 }): JSX.Element {
+  const translate = useTranslate();
   const [companionId, setCompanionId] = useState(initialCompanionId);
 
   const accompanied =
@@ -116,7 +117,7 @@ function LockedPersonAccompaniedSelect({
       <input type="hidden" name="accompanied_kind" value="person" />
       <input type="hidden" name="companion_kind" value="person" />
       <label className="flex flex-col gap-1">
-        <span>Akompaniowany</span>
+        <span>{translate('companionship.field.accompanied')}</span>
         <input type="hidden" name="accompanied_id" value={initialAccompaniedId} />
         <p className={fieldControlClassName}>
           {accompanied ? formatMemberName(accompanied) : '—'}
@@ -125,7 +126,7 @@ function LockedPersonAccompaniedSelect({
       </label>
 
       <label className="flex flex-col gap-1">
-        <span>Akompaniator</span>
+        <span>{translate('companionship.field.companion')}</span>
         <select
           name="companion_id"
           value={companionId}
@@ -134,7 +135,7 @@ function LockedPersonAccompaniedSelect({
           required
         >
           <option value="" className={selectOptionClassName}>
-            wybierz osobę...
+            {translate('common.choosePerson')}
           </option>
           {companionOptions.map((member) => (
             <option key={member.id} value={member.id} className={selectOptionClassName}>
@@ -161,6 +162,7 @@ function LockedFromFindParticipants({
   accompaniedError?: MessageRef;
   companionError?: MessageRef;
 }): JSX.Element {
+  const translate = useTranslate();
   return (
     <>
       <input type="hidden" name="from" value="find" />
@@ -203,13 +205,13 @@ function LockedFromFindParticipants({
       ) : null}
 
       <label className="flex flex-col gap-1">
-        <span>Akompaniowany</span>
+        <span>{translate('companionship.field.accompanied')}</span>
         <p className={fieldControlClassName}>{lockedFromFind.accompaniedLabel}</p>
         <FieldError message={accompaniedError} className={dangerTextClassName} />
       </label>
 
       <label className="flex flex-col gap-1">
-        <span>Akompaniator</span>
+        <span>{translate('companionship.field.companion')}</span>
         <p className={fieldControlClassName}>{lockedFromFind.companionLabel}</p>
         <FieldError message={companionError} className={dangerTextClassName} />
       </label>
@@ -234,6 +236,7 @@ function LockedCoupleAccompaniedSelect({
   accompaniedError?: MessageRef;
   companionError?: MessageRef;
 }): JSX.Element {
+  const translate = useTranslate();
   const [companionCoupleId, setCompanionCoupleId] = useState(
     initialCompanionCoupleId
   );
@@ -267,7 +270,7 @@ function LockedCoupleAccompaniedSelect({
         value={lockedCoupleEdit.wifeRelationId}
       />
       <label className="flex flex-col gap-1">
-        <span>Akompaniowany</span>
+        <span>{translate('companionship.field.accompanied')}</span>
         <input
           type="hidden"
           name="accompanied_id"
@@ -278,7 +281,7 @@ function LockedCoupleAccompaniedSelect({
       </label>
 
       <label className="flex flex-col gap-1">
-        <span>Akompaniator</span>
+        <span>{translate('companionship.field.companion')}</span>
         <select
           name="companion_id"
           value={companionCoupleId}
@@ -287,7 +290,7 @@ function LockedCoupleAccompaniedSelect({
           required
         >
           <option value="" className={selectOptionClassName}>
-            wybierz małżeństwo...
+            {translate('common.chooseCouple')}
           </option>
           {companionOptions.map((option) => (
             <option
@@ -330,6 +333,7 @@ function MixedCompanionshipParticipantSelects({
   accompaniedError?: MessageRef;
   companionError?: MessageRef;
 }): JSX.Element {
+  const translate = useTranslate();
   const [accompaniedId, setAccompaniedId] = useState(initialAccompaniedId);
   const [accompaniedKind, setAccompaniedKind] = useState<
     CompanionshipParticipantKind | ''
@@ -365,7 +369,9 @@ function MixedCompanionshipParticipantSelects({
   }
 
   const companionPlaceholder =
-    accompanied?.kind === 'couple' ? 'wybierz małżeństwo...' : 'wybierz osobę...';
+    accompanied?.kind === 'couple'
+      ? translate('common.chooseCouple')
+      : translate('common.choosePerson');
 
   return (
     <>
@@ -373,7 +379,7 @@ function MixedCompanionshipParticipantSelects({
       <input type="hidden" name="companion_kind" value={companionKind} />
 
       <label className="flex flex-col gap-1">
-        <span>Akompaniowany</span>
+        <span>{translate('companionship.field.accompanied')}</span>
         <select
           name="accompanied_id"
           value={accompaniedId}
@@ -382,7 +388,7 @@ function MixedCompanionshipParticipantSelects({
           required
         >
           <option value="" className={selectOptionClassName}>
-            wybierz...
+            {translate('common.choose')}
           </option>
           {accompaniedOptions.map((option) => (
             <option key={`${option.kind}-${option.id}`} value={option.id} className={selectOptionClassName}>
@@ -394,7 +400,7 @@ function MixedCompanionshipParticipantSelects({
       </label>
 
       <label className="flex flex-col gap-1">
-        <span>Akompaniator</span>
+        <span>{translate('companionship.field.companion')}</span>
         <select
           name="companion_id"
           value={companionId}
@@ -524,7 +530,7 @@ export function CompanionshipRelationForm({
         )}
 
         <label className="flex flex-col gap-1">
-          <span>Data rozpoczęcia</span>
+          <span>{translate('companionship.field.startDate')}</span>
           <input
             name="start_date"
             type="date"
@@ -536,7 +542,7 @@ export function CompanionshipRelationForm({
 
         {lockedFromFind ? null : (
           <label className="flex flex-col gap-1">
-            <span>Data zakończenia (opcjonalnie)</span>
+            <span>{translate('companionship.field.endDateOptional')}</span>
             <input
               name="end_date"
               type="date"
@@ -548,7 +554,7 @@ export function CompanionshipRelationForm({
         )}
 
         <label className="flex flex-col gap-1">
-          <span>Notatki (opcjonalnie)</span>
+          <span>{translate('companionship.field.notesOptional')}</span>
           <textarea
             name="notes"
             defaultValue={values.notes}
@@ -563,13 +569,13 @@ export function CompanionshipRelationForm({
             href={cancelHref}
             className={surfaces.secondaryButton}
           >
-            Anuluj
+            {translate('common.cancel')}
           </Link>
           <button
             type="submit"
             className={surfaces.primaryButton}
           >
-            Zapisz
+            {translate('common.save')}
           </button>
         </div>
       </form>

@@ -72,7 +72,7 @@ describe('createTranslator with a message reference', () => {
   it('createTranslator translates a message reference nested in a value', () => {
     const translate = createTranslator(messagesFor('pl'));
     const ref = messageRef('validation.field.required', {
-      field: messageRef('companionshipForm.field.startDate'),
+      field: messageRef('companionship.field.startDate'),
     });
 
     expect(translate(ref)).toBe('Pole "Data rozpoczęcia" jest wymagane.');

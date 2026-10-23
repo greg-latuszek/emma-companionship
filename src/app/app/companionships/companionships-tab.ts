@@ -1,3 +1,5 @@
+import type { MessageKey } from '@/i18n/translator';
+
 export const companionshipsTabs = [
   'created',
   'missing',
@@ -7,12 +9,12 @@ export const companionshipsTabs = [
 ] as const;
 export type CompanionshipsTab = (typeof companionshipsTabs)[number];
 
-export const companionshipsTabTitles: Record<CompanionshipsTab, string> = {
-  created: 'Utworzone Akompaniamenty',
-  missing: 'Brakujące Akompaniamenty',
-  find: 'Znajdź Akompaniatora',
-  history: 'Historia Akompaniamentów',
-  new: '+ Dodaj Akompaniament',
+export const companionshipsTabTitleKeys: Record<CompanionshipsTab, MessageKey> = {
+  created: 'companionships.tab.created',
+  missing: 'companionships.tab.missing',
+  find: 'companionships.tab.find',
+  history: 'companionships.tab.history',
+  new: 'companionships.tab.new',
 };
 
 export function companionshipsTabFrom(

@@ -17,7 +17,7 @@ describe('companionship relation list history akompaniament extras', () => {
     ).toEqual(defaultCompanionshipRelationListHistoryAkompaniamentExtras);
   });
 
-  it('readStoredCompanionshipRelationListHistoryAkompaniamentExtras drops Status and keeps Data zakończenia', () => {
+  it('readStoredCompanionshipRelationListHistoryAkompaniamentExtras drops Status and keeps the end date', () => {
     const storage = {
       getItem: (key: string) =>
         key === companionshipRelationListHistoryAkompaniamentExtrasStorageKey

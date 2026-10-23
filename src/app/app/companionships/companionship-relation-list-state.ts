@@ -1,5 +1,6 @@
 import type { ArchivedCompanionshipHistoryRow } from '@/application/group-archived-companionship-history';
 import type { CompanionshipRelationListItem } from '@/types/companionship-relation';
+import type { MessageKey } from '@/i18n/translator';
 import {
   maritalStatusLabels,
   consecratedStatusLabels,
@@ -92,28 +93,28 @@ export const defaultCompanionshipRelationListAccompaniedExtras: CompanionshipRel
 export const defaultCompanionshipRelationListCompanionExtras: CompanionshipRelationListPersonExtraField[] =
   [];
 
-export const companionshipRelationListFieldLabels: Record<
+export const companionshipRelationListFieldLabelKeys: Record<
   | CompanionshipRelationListBaseField
   | CompanionshipRelationListAkompaniamentExtraField
   | CompanionshipRelationListPersonExtraField
   | `accompanied_${CompanionshipRelationListPersonExtraField}`
   | `companion_${CompanionshipRelationListPersonExtraField}`,
-  string
+  MessageKey
 > = {
-  accompanied: 'Akompaniowany',
-  companion: 'Akompaniator',
-  start_date: 'Data rozpoczęcia',
-  end_date: 'Data zakończenia',
-  status: 'Status',
-  marital_status: 'Stan cywilny',
-  consecrated_status: 'Typ osoby konsekrowanej',
-  community_engagement_status: 'Zaangażowanie we wspólnocie',
-  accompanied_marital_status: 'Stan cywilny',
-  accompanied_consecrated_status: 'Typ osoby konsekrowanej',
-  accompanied_community_engagement_status: 'Zaangażowanie we wspólnocie',
-  companion_marital_status: 'Stan cywilny',
-  companion_consecrated_status: 'Typ osoby konsekrowanej',
-  companion_community_engagement_status: 'Zaangażowanie we wspólnocie',
+  accompanied: 'companionship.field.accompanied',
+  companion: 'companionship.field.companion',
+  start_date: 'companionship.field.startDate',
+  end_date: 'companionship.field.endDate',
+  status: 'companionship.field.status',
+  marital_status: 'companionship.field.maritalStatus',
+  consecrated_status: 'companionship.field.consecratedStatus',
+  community_engagement_status: 'companionship.field.communityEngagement',
+  accompanied_marital_status: 'companionship.field.maritalStatus',
+  accompanied_consecrated_status: 'companionship.field.consecratedStatus',
+  accompanied_community_engagement_status: 'companionship.field.communityEngagement',
+  companion_marital_status: 'companionship.field.maritalStatus',
+  companion_consecrated_status: 'companionship.field.consecratedStatus',
+  companion_community_engagement_status: 'companionship.field.communityEngagement',
 };
 
 export function accompaniedFullName(
@@ -148,10 +149,6 @@ export function personFieldText(
   return '';
 }
 
-function statusLabel(status: string): string {
-  return status === 'active' ? 'Aktywny' : 'Zarchiwizowany';
-}
-
 function companionshipRelationSortKey(
   relation: CompanionshipRelationListItem,
   field: CompanionshipRelationListSortField
@@ -169,7 +166,7 @@ function companionshipRelationSortKey(
     return relation.end_date ?? '';
   }
   if (field === 'status') {
-    return statusLabel(relation.status);
+    return relation.status;
   }
   if (field === 'accompanied_marital_status') {
     return personFieldText(relation.accompanied, 'marital_status');

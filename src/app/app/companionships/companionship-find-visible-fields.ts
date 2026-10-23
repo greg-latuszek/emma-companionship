@@ -51,7 +51,10 @@ export function storeCompanionshipFindVisibleFields(
 
 export type CompanionshipFindDetailPerson = {
   /** Fold title shown above the visible fields. */
-  title: 'Detale osoby' | 'Detale męża' | 'Detale żony';
+  titleKey:
+    | 'companionships.find.detail.person'
+    | 'companionships.find.detail.husband'
+    | 'companionships.find.detail.wife';
   member: CommunityMember;
 };
 
@@ -65,7 +68,7 @@ export function companionshipFindDetailPeople(
   }
   if (option.kind === 'person') {
     const member = members.find((candidate) => candidate.id === option.id);
-    return member ? [{ title: 'Detale osoby', member }] : [];
+    return member ? [{ titleKey: 'companionships.find.detail.person', member }] : [];
   }
   const couple = couples.find((candidate) => candidate.id === option.id);
   if (!couple) {
@@ -76,11 +79,11 @@ export function companionshipFindDetailPeople(
     (candidate) => candidate.id === couple.husband.id
   );
   if (husband) {
-    people.push({ title: 'Detale męża', member: husband });
+    people.push({ titleKey: 'companionships.find.detail.husband', member: husband });
   }
   const wife = members.find((candidate) => candidate.id === couple.wife.id);
   if (wife) {
-    people.push({ title: 'Detale żony', member: wife });
+    people.push({ titleKey: 'companionships.find.detail.wife', member: wife });
   }
   return people;
 }
