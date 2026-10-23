@@ -5,6 +5,7 @@ import en from './messages/en-GB.json';
 import pl from './messages/pl-PL.json';
 import cs from './messages/cs-CZ.json';
 import sk from './messages/sk-SK.json';
+import hu from './messages/hu-HU.json';
 import { isLanguageCode } from './language-flag';
 import { localeFromCookieValue, locales } from './locales';
 import { messagesFor } from './messages';
@@ -92,6 +93,7 @@ describe('every translated language', () => {
     ['pl-PL', pl],
     ['cs-CZ', cs],
     ['sk-SK', sk],
+    ['hu-HU', hu],
   ])('%s keeps the placeholders of the English sentences', (_language, translated) => {
     for (const [key, text] of Object.entries(translated)) {
       const english = (en as Record<string, string>)[key];

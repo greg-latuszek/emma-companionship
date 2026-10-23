@@ -2,6 +2,7 @@ import en from './messages/en-GB.json';
 import pl from './messages/pl-PL.json';
 import cs from './messages/cs-CZ.json';
 import sk from './messages/sk-SK.json';
+import hu from './messages/hu-HU.json';
 import type { Locale } from './locales';
 import { mergeOverEnglish, type Messages } from './translator';
 
@@ -10,6 +11,7 @@ const translations: Record<Locale, Partial<Messages>> = {
   'pl-PL': pl,
   'cs-CZ': cs,
   'sk-SK': sk,
+  'hu-HU': hu,
 };
 
 export function messagesFor(locale: Locale): Messages {

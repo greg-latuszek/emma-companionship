@@ -1,6 +1,6 @@
 import { flagOfLanguage } from './language-flag';
 
-export const locales = ['en-GB', 'pl-PL', 'cs-CZ', 'sk-SK'] as const;
+export const locales = ['en-GB', 'pl-PL', 'cs-CZ', 'sk-SK', 'hu-HU'] as const;
 export type Locale = (typeof locales)[number];
 
 export const defaultLocale: Locale = 'en-GB';
@@ -12,6 +12,7 @@ const languageNames: Record<Locale, string> = {
   'pl-PL': 'Polski',
   'cs-CZ': 'Čeština',
   'sk-SK': 'Slovenčina',
+  'hu-HU': 'Magyar',
 };
 
 export const languageChoices: Record<Locale, { flag: string; name: string }> =
