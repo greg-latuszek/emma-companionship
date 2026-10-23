@@ -6,7 +6,7 @@ import {
   consecratedStatusLabelKeys,
   communityEngagementLabelKeys,
 } from '@/app/app/members/community-member-labels';
-import { translateInPolish } from '@/i18n/messages';
+import { translateInPolish } from '@/i18n/translate-in-polish';
 
 // Base fields in the Companionship group
 export const companionshipRelationListBaseFields = [

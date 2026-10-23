@@ -1,5 +1,5 @@
 import type { CommunityMember } from '@/types/community-member';
-import { translateInPolish } from '@/i18n/messages';
+import { translateInPolish } from '@/i18n/translate-in-polish';
 import type { MessageKey, Translate } from '@/i18n/translator';
 import {
   accompanyingReadinessLabelKeys,
