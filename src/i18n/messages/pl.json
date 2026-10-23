@@ -1,0 +1,22 @@
+{
+  "app.title": "emaCompanionship - Serwis dla Delegatów ds. Akompaniamentów",
+  "app.description": "Emmanuel Community - Serwis dla Delegatów ds. Akompaniamentów",
+  "language.label": "Język",
+  "landing.subtitle": "Serwis dla Delegatów ds. Akompaniamentów",
+  "signIn.label": "Zaloguj się przez Google",
+  "signIn.action": "Zaloguj się",
+  "signIn.viaGoogle": "przez Google",
+  "logout.label": "Wyloguj mnie",
+  "navbar.home": "Strona główna",
+  "panel.welcome": "Witamy Delegata ds. Akompaniamentów",
+  "panel.members.title": "Członkowie wspólnoty",
+  "panel.members.description": "Osoby wpisane do rejestru wspólnoty",
+  "panel.companionships.title": "Akompaniamenty",
+  "panel.companionships.description": "Kto jest czyim akompaniatorem",
+  "panel.companionships.missing": "Brakujące akompaniamenty: {count}",
+  "panel.settings.title": "Ustawienia aplikacji",
+  "panel.settings.signInAgain": "Zaloguj się ponownie, aby zmienić wygląd.",
+  "panel.settings.appearance": "Wygląd",
+  "visualStyle.semi-transparent": "Półprzeźroczysty",
+  "visualStyle.high-contrast": "Kontrastowy"
+}

@@ -6,6 +6,7 @@ import { useState } from 'react';
 import type { JSX } from 'react';
 import { useVisualStyle } from '@/components/VisualStyleProvider';
 import { visualSurfaces } from '@/components/visual-style-surfaces';
+import { useTranslate } from '@/i18n/LocaleProvider';
 
 interface LogoutButtonProps {
   profilePicture?: string | null;
@@ -21,11 +22,12 @@ export function LogoutButton({
   const [pictureFailed, setPictureFailed] = useState(false);
   const showPicture = Boolean(profilePicture) && !pictureFailed;
   const surfaces = visualSurfaces(useVisualStyle());
+  const translate = useTranslate();
 
   return (
     <motion.button
       type="button"
-      aria-label="Wyloguj mnie"
+      aria-label={translate('logout.label')}
       onClick={async () => {
         if (process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true') {
           await signOut({ redirect: false });
@@ -73,7 +75,7 @@ export function LogoutButton({
         <line x1="21" y1="12" x2="9" y2="12" />
       </svg>
       <span className="hidden sm:inline font-sans font-medium sm:text-base whitespace-nowrap">
-        Wyloguj mnie
+        {translate('logout.label')}
       </span>
     </motion.button>
   );

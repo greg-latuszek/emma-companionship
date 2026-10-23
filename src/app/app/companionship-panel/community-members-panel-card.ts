@@ -1,9 +1,9 @@
 export function communityMembersPanelCard(): {
   href: '/app/members';
-  title: 'Członkowie wspólnoty';
+  titleKey: 'panel.members.title';
 } {
   return {
     href: '/app/members',
-    title: 'Członkowie wspólnoty',
+    titleKey: 'panel.members.title',
   };
 }

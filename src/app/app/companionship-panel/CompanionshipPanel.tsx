@@ -14,6 +14,7 @@ import { visualSurfaces } from '@/components/visual-style-surfaces';
 import { communityMembersPanelCard } from './community-members-panel-card';
 import { companionshipsPanelCard } from './companionships-panel-card';
 import { VisualStyleSettings } from './VisualStyleSettings';
+import { useTranslate } from '@/i18n/LocaleProvider';
 
 export function CompanionshipPanel({
   member,
@@ -25,6 +26,7 @@ export function CompanionshipPanel({
   const communityMembers = communityMembersPanelCard();
   const companionships = companionshipsPanelCard(missingCount);
   const surfaces = visualSurfaces(useVisualStyle());
+  const translate = useTranslate();
 
   return (
     <PageBackground
@@ -50,7 +52,7 @@ export function CompanionshipPanel({
               transition={{ duration: 1, delay: 0.2 }}
               className="pt-4 pb-1 px-4 text-center"
             >
-              <PageTitle delay={0.2}>Witamy Delegata ds. Akompaniamentów</PageTitle>
+              <PageTitle delay={0.2}>{translate('panel.welcome')}</PageTitle>
 
             </motion.div>
           </AnimatePresence>
@@ -67,10 +69,10 @@ export function CompanionshipPanel({
                 className={`${surfaces.panel} block p-6 ${surfaces.panelHover} ${surfaces.focusOutline}`}
               >
                 <h3 className={`mb-2 text-lg ${surfaces.headerText}`}>
-                  {communityMembers.title}
+                  {translate(communityMembers.titleKey)}
                 </h3>
                 <p className={`text-sm ${surfaces.mutedText}`}>
-                  Osoby wpisane do rejestru wspólnoty
+                  {translate('panel.members.description')}
                 </p>
               </Link>
 
@@ -79,13 +81,15 @@ export function CompanionshipPanel({
                 className={`${surfaces.panel} block p-6 ${surfaces.panelHover} ${surfaces.focusOutline}`}
               >
                 <h3 className={`mb-2 text-lg ${surfaces.headerText}`}>
-                  {companionships.title}
+                  {translate(companionships.titleKey)}
                 </h3>
                 <p className={`text-sm ${surfaces.mutedText}`}>
-                  Kto jest czyim akompaniatorem
+                  {translate('panel.companionships.description')}
                 </p>
                 <p className={`mt-3 text-sm font-medium ${surfaces.strongText}`}>
-                  Brakujące akompaniamenty: {companionships.missingCount}
+                  {translate('panel.companionships.missing', {
+                    count: companionships.missingCount,
+                  })}
                 </p>
               </Link>
 
@@ -94,9 +98,9 @@ export function CompanionshipPanel({
                   <VisualStyleSettings />
                 ) : (
                   <>
-                    <h3 className={`mb-2 text-lg ${surfaces.headerText}`}>Ustawienia aplikacji</h3>
+                    <h3 className={`mb-2 text-lg ${surfaces.headerText}`}>{translate('panel.settings.title')}</h3>
                     <p className={`text-sm ${surfaces.mutedText}`}>
-                      Zaloguj się ponownie, aby zmienić wygląd.
+                      {translate('panel.settings.signInAgain')}
                     </p>
                   </>
                 )}

@@ -1,0 +1,22 @@
+{
+  "app.title": "emaCompanionship - Service for Companionship Delegates",
+  "app.description": "Emmanuel Community - Service for Companionship Delegates",
+  "language.label": "Language",
+  "landing.subtitle": "Service for Companionship Delegates",
+  "signIn.label": "Sign in with Google",
+  "signIn.action": "Sign in",
+  "signIn.viaGoogle": "with Google",
+  "logout.label": "Sign out",
+  "navbar.home": "Home page",
+  "panel.welcome": "Welcome, Companionship Delegate",
+  "panel.members.title": "Community members",
+  "panel.members.description": "People entered in the community register",
+  "panel.companionships.title": "Companionships",
+  "panel.companionships.description": "Who is whose companion",
+  "panel.companionships.missing": "Missing companionships: {count}",
+  "panel.settings.title": "Application settings",
+  "panel.settings.signInAgain": "Sign in again to change the appearance.",
+  "panel.settings.appearance": "Appearance",
+  "visualStyle.semi-transparent": "Semi-transparent",
+  "visualStyle.high-contrast": "High contrast"
+}

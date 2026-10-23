@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { visualStyleFromForm, visualStyleLabels } from './visual-style-form-state';
+import { messagesFor } from '@/i18n/messages';
+import { visualStyleFromForm, visualStyleLabelKeys } from './visual-style-form-state';
 
 describe('visualStyleFromForm', () => {
   it('visualStyleFromForm reads the high-contrast choice from the settings form', () => {
@@ -17,9 +18,18 @@ describe('visualStyleFromForm', () => {
   });
 });
 
-describe('visualStyleLabels', () => {
-  it('visualStyleLabels names the stored styles in Polish', () => {
-    expect(visualStyleLabels['semi-transparent']).toBe('Półprzeźroczysty');
-    expect(visualStyleLabels['high-contrast']).toBe('Kontrastowy');
+describe('visualStyleLabelKeys', () => {
+  it('visualStyleLabelKeys names the stored styles in Polish', () => {
+    const polish = messagesFor('pl');
+
+    expect(polish[visualStyleLabelKeys['semi-transparent']]).toBe('Półprzeźroczysty');
+    expect(polish[visualStyleLabelKeys['high-contrast']]).toBe('Kontrastowy');
+  });
+
+  it('visualStyleLabelKeys names the stored styles in English', () => {
+    const english = messagesFor('en');
+
+    expect(english[visualStyleLabelKeys['semi-transparent']]).toBe('Semi-transparent');
+    expect(english[visualStyleLabelKeys['high-contrast']]).toBe('High contrast');
   });
 });

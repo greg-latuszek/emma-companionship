@@ -6,6 +6,8 @@ import { motion } from 'motion/react';
 import { useSession } from 'next-auth/react';
 import type { JSX } from 'react';
 import { decorativeFrame } from '@/components/decorative-frame';
+import { LanguageSwitch } from '@/components/LanguageSwitch';
+import { useTranslate } from '@/i18n/LocaleProvider';
 
 interface NavbarProps {
   rightContent?: React.ReactNode;
@@ -58,6 +60,7 @@ export function Navbar({
   homeHref,
 }: NavbarProps): JSX.Element {
   const { status } = useSession();
+  const translate = useTranslate();
   const isSignedIn = status === 'authenticated';
 
   return (
@@ -85,7 +88,7 @@ export function Navbar({
         >
           <Link
             href={homeHref}
-            aria-label="Strona główna"
+            aria-label={translate('navbar.home')}
             className="flex items-center justify-center rounded-full p-2 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
           >
             <svg
@@ -102,16 +105,15 @@ export function Navbar({
         </motion.div>
       )}
 
-      {rightContent && (
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8, ease: 'easeOut', delay: logoDelay + 0.2 }}
-          className={`absolute ${decorativeFrame.topRightClassName}`}
-        >
-          {rightContent}
-        </motion.div>
-      )}
+      <motion.div
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8, ease: 'easeOut', delay: logoDelay + 0.2 }}
+        className={`absolute flex items-center gap-3 ${decorativeFrame.topRightClassName}`}
+      >
+        <LanguageSwitch />
+        {rightContent}
+      </motion.div>
     </motion.nav>
   );
 }
