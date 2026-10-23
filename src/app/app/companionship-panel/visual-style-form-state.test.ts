@@ -20,14 +20,14 @@ describe('visualStyleFromForm', () => {
 
 describe('visualStyleLabelKeys', () => {
   it('visualStyleLabelKeys names the stored styles in Polish', () => {
-    const polish = messagesFor('pl');
+    const polish = messagesFor('pl-PL');
 
     expect(polish[visualStyleLabelKeys['semi-transparent']]).toBe('Półprzeźroczysty');
     expect(polish[visualStyleLabelKeys['high-contrast']]).toBe('Kontrastowy');
   });
 
   it('visualStyleLabelKeys names the stored styles in English', () => {
-    const english = messagesFor('en');
+    const english = messagesFor('en-GB');
 
     expect(english[visualStyleLabelKeys['semi-transparent']]).toBe('Semi-transparent');
     expect(english[visualStyleLabelKeys['high-contrast']]).toBe('High contrast');

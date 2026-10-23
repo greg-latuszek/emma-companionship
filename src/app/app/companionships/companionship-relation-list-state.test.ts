@@ -97,10 +97,10 @@ describe('sortCompanionshipRelations by a labelled field', () => {
   }
 
   it('sortCompanionshipRelations orders marital statuses by the English words when the screen is English', () => {
-    expect(idsSortedIn('en')).toEqual(['married', 'single', 'widowed']);
+    expect(idsSortedIn('en-GB')).toEqual(['married', 'single', 'widowed']);
   });
 
   it('sortCompanionshipRelations orders marital statuses by the Polish words when the screen is Polish', () => {
-    expect(idsSortedIn('pl')).toEqual(['single', 'married', 'widowed']);
+    expect(idsSortedIn('pl-PL')).toEqual(['single', 'married', 'widowed']);
   });
 });

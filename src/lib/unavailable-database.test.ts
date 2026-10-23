@@ -91,7 +91,7 @@ describe('unavailable database', () => {
     const key = signInFailureMessageKey({ NODE_ENV: 'development' });
 
     expect(key).toBe('auth.signInFailedLocal');
-    for (const locale of ['en', 'pl'] as const) {
+    for (const locale of ['en-GB', 'pl-PL'] as const) {
       expect(messagesFor(locale)[key]).not.toMatch(/npm|postgres|baz[aę]/i);
     }
   });
@@ -100,7 +100,7 @@ describe('unavailable database', () => {
     const key = signInFailureMessageKey({ NODE_ENV: 'production' });
 
     expect(key).toBe('auth.signInFailed');
-    for (const locale of ['en', 'pl'] as const) {
+    for (const locale of ['en-GB', 'pl-PL'] as const) {
       expect(messagesFor(locale)[key]).not.toMatch(/npm|logi serwera|lokalnie|server logs|locally/i);
     }
   });

@@ -1,9 +1,12 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import en from './messages/en.json';
-import pl from './messages/pl.json';
-import cs from './messages/cs.json';
-import sk from './messages/sk.json';
-import { localeFromCookieValue } from './locales';
+import en from './messages/en-GB.json';
+import pl from './messages/pl-PL.json';
+import cs from './messages/cs-CZ.json';
+import sk from './messages/sk-SK.json';
+import { isLanguageCode } from './language-flag';
+import { localeFromCookieValue, locales } from './locales';
 import { messagesFor } from './messages';
 import {
   createTranslator,
@@ -46,11 +49,11 @@ describe('mergeOverEnglish', () => {
 
 describe('messagesFor', () => {
   it('messagesFor gives Polish texts for pl', () => {
-    expect(messagesFor('pl')['navbar.home']).toBe('Strona główna');
+    expect(messagesFor('pl-PL')['navbar.home']).toBe('Strona główna');
   });
 
   it('messagesFor gives English texts for en', () => {
-    expect(messagesFor('en')['navbar.home']).toBe('Home page');
+    expect(messagesFor('en-GB')['navbar.home']).toBe('Home page');
   });
 
   it('every English message key has a Polish text', () => {
@@ -64,7 +67,7 @@ describe('messagesFor', () => {
 
 describe('createTranslator with a message reference', () => {
   it('createTranslator translates a message reference with its own values', () => {
-    const translate = createTranslator(messagesFor('en'));
+    const translate = createTranslator(messagesFor('en-GB'));
 
     expect(translate(messageRef('panel.companionships.missing', { count: 3 }))).toBe(
       'Missing companionships: 3'
@@ -72,7 +75,7 @@ describe('createTranslator with a message reference', () => {
   });
 
   it('createTranslator translates a message reference nested in a value', () => {
-    const translate = createTranslator(messagesFor('pl'));
+    const translate = createTranslator(messagesFor('pl-PL'));
     const ref = messageRef('validation.field.required', {
       field: messageRef('companionship.field.startDate'),
     });
@@ -86,9 +89,9 @@ describe('every translated language', () => {
     (text.match(/\{\w+\}/g) ?? []).sort();
 
   it.each([
-    ['pl', pl],
-    ['cs', cs],
-    ['sk', sk],
+    ['pl-PL', pl],
+    ['cs-CZ', cs],
+    ['sk-SK', sk],
   ])('%s keeps the placeholders of the English sentences', (_language, translated) => {
     for (const [key, text] of Object.entries(translated)) {
       const english = (en as Record<string, string>)[key];
@@ -98,16 +101,31 @@ describe('every translated language', () => {
   });
 });
 
+describe('language files', () => {
+  const languageFiles = fs
+    .readdirSync(path.join(__dirname, 'messages'))
+    .filter((fileName) => fileName.endsWith('.json'))
+    .map((fileName) => fileName.slice(0, -'.json'.length));
+
+  it('every language file is named <language>-<COUNTRY>', () => {
+    expect(languageFiles.filter((code) => !isLanguageCode(code))).toEqual([]);
+  });
+
+  it('every language file is a registered locale and every locale has a file', () => {
+    expect([...languageFiles].sort()).toEqual([...locales].sort());
+  });
+});
+
 describe('localeFromCookieValue', () => {
   it('localeFromCookieValue chooses English when the cookie is absent', () => {
-    expect(localeFromCookieValue(undefined)).toBe('en');
+    expect(localeFromCookieValue(undefined)).toBe('en-GB');
   });
 
   it('localeFromCookieValue chooses English when the cookie names an unknown language', () => {
-    expect(localeFromCookieValue('xx')).toBe('en');
+    expect(localeFromCookieValue('xx')).toBe('en-GB');
   });
 
   it('localeFromCookieValue chooses Polish when the cookie says pl', () => {
-    expect(localeFromCookieValue('pl')).toBe('pl');
+    expect(localeFromCookieValue('pl-PL')).toBe('pl-PL');
   });
 });

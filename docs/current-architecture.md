@@ -145,7 +145,7 @@ flowchart TD
 
 ### How texts get translated
 
-Every user-visible string lives in `src/i18n/messages/<language>.json` (flat keys named by meaning). English is the base and the fallback; Polish is the second language. The `emma-language` cookie, set from the navbar dropdown, chooses the language; routes do not change. The root layout reads the cookie and gives the merged messages to `LocaleProvider`; client components call `useTranslate()`, server components `currentTranslator()`. Server actions never return sentences: they return `messageRef(key, values)` and the form or button translates it. Enum values and other stored values stay English; only their labels translate, and lists sort by the words shown, collated by the chosen language, so switching language can reorder a list. To add a language, follow [translating.md](./translating.md).
+Every user-visible string lives in `src/i18n/messages/<language>-<COUNTRY>.json` (flat keys named by meaning). English is the base and the fallback; Polish is the second language. The `emma-language` cookie, set from the navbar dropdown, chooses the language; routes do not change. The root layout reads the cookie and gives the merged messages to `LocaleProvider`; client components call `useTranslate()`, server components `currentTranslator()`. Server actions never return sentences: they return `messageRef(key, values)` and the form or button translates it. Enum values and other stored values stay English; only their labels translate, and lists sort by the words shown, collated by the chosen language, so switching language can reorder a list. To add a language, follow [translating.md](./translating.md).
 
 ## Community registry
 

@@ -2,11 +2,11 @@
 
 You do not need to write code to translate the app. You copy one text file, translate the sentences in it, and register the language in two places. English is the base language: any sentence you leave out is shown in English, so a half-finished translation already works.
 
-The examples use Czech (`cs`). Use the two-letter code of your language instead.
+The examples use Czech (`cs-CZ`). A language code is always the language and the country in capitals, joined by a hyphen: `cs-CZ`, `sk-SK`, `pl-PL`, `en-GB`, `pt-BR`. The country decides the flag shown in the dropdown, so for a language spoken in several countries pick the one your community is in (`de-AT`, not `de-DE`, for Austria).
 
 ## 1. Copy the English file
 
-Copy `src/i18n/messages/en.json` to `src/i18n/messages/cs.json`.
+Copy `src/i18n/messages/en-GB.json` to `src/i18n/messages/cs-CZ.json`. The file name must be the language code in exactly this form; `npm test` fails otherwise.
 
 ## 2. Translate the values
 
@@ -36,20 +36,20 @@ Rules:
 
 Two small edits.
 
-In `src/i18n/locales.ts`, add the code to `locales` and a flag and name to `languageChoices`:
+In `src/i18n/locales.ts`, add the code to `locales` and the name of the language, written in that language, to `languageNames`. The flag follows from the country in the code:
 
 ```ts
-export const locales = ['en', 'pl', 'cs'] as const;
+export const locales = ['en-GB', 'pl-PL', 'cs-CZ'] as const;
 ...
-  cs: { flag: '🇨🇿', name: 'Čeština' },
+  'cs-CZ': 'Čeština',
 ```
 
 In `src/i18n/messages.ts`, import the file and add it to `translations`:
 
 ```ts
-import cs from './messages/cs.json';
+import cs from './messages/cs-CZ.json';
 ...
-const translations: Record<Locale, Partial<Messages>> = { en, pl, cs };
+  'cs-CZ': cs,
 ```
 
 The language now appears in the dropdown in the navbar. The choice is remembered in a cookie.
@@ -59,8 +59,8 @@ The language now appears in the dropdown in the navbar. The choice is remembered
 Keys that are in English but not in your file still show English text in the app. To list them:
 
 ```bash
-diff <(jq -r 'keys[]' src/i18n/messages/en.json | sort) \
-     <(jq -r 'keys[]' src/i18n/messages/cs.json | sort)
+diff <(jq -r 'keys[]' src/i18n/messages/en-GB.json | sort) \
+     <(jq -r 'keys[]' src/i18n/messages/cs-CZ.json | sort)
 ```
 
 Lines starting with `<` are missing from your file. Lines starting with `>` are keys that do not exist in English (usually a typo in a key).
@@ -75,4 +75,4 @@ Then run the app (`npm run dev`), choose your language in the navbar, and walk t
 
 ## For developers
 
-New user-visible text goes into `src/i18n/messages/en.json` and `pl.json` under a key that names the meaning, not the wording. Client components read it with `useTranslate()`, server components with `currentTranslator()`. Server actions return `messageRef(key, values)` and the UI translates it. See "How texts get translated" in [current-architecture.md](./current-architecture.md).
+New user-visible text goes into `src/i18n/messages/en-GB.json` and `pl-PL.json` under a key that names the meaning, not the wording. Client components read it with `useTranslate()`, server components with `currentTranslator()`. Server actions return `messageRef(key, values)` and the UI translates it. See "How texts get translated" in [current-architecture.md](./current-architecture.md).

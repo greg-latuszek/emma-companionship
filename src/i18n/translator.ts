@@ -1,4 +1,4 @@
-import type en from './messages/en.json';
+import type en from './messages/en-GB.json';
 
 export type MessageKey = keyof typeof en;
 export type Messages = Record<MessageKey, string>;

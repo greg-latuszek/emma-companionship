@@ -75,7 +75,7 @@ describe('community member list state', () => {
       last_name: 'Babbage',
     });
 
-    const sorted = sortCommunityMembers([ada, charles], 'last_name', 'asc', translatorIn('en'), 'en');
+    const sorted = sortCommunityMembers([ada, charles], 'last_name', 'asc', translatorIn('en-GB'), 'en-GB');
 
     expect(sorted.map((member) => member.last_name)).toEqual([
       'Babbage',
@@ -92,7 +92,7 @@ describe('community member list state', () => {
       email: null,
     });
 
-    const sorted = sortCommunityMembers([charles, ada], 'email', 'asc', translatorIn('en'), 'en');
+    const sorted = sortCommunityMembers([charles, ada], 'email', 'asc', translatorIn('en-GB'), 'en-GB');
 
     expect(sorted[0]?.email).toBe('ada@example.com');
     expect(sorted[1]?.email).toBeNull();
@@ -117,7 +117,7 @@ describe('community member list state', () => {
       last_name: 'Babbage',
     });
 
-    const sorted = sortCommunityMembers([ada, charles], 'last_name', 'desc', translatorIn('en'), 'en');
+    const sorted = sortCommunityMembers([ada, charles], 'last_name', 'desc', translatorIn('en-GB'), 'en-GB');
 
     expect(sorted.map((member) => member.last_name)).toEqual([
       'Lovelace',
@@ -213,10 +213,10 @@ describe('communityMemberFieldText', () => {
     const member = aCommunityMember({ marital_status: 'widowed' });
 
     expect(
-      communityMemberFieldText(member, 'marital_status', createTranslator(messagesFor('en')))
+      communityMemberFieldText(member, 'marital_status', createTranslator(messagesFor('en-GB')))
     ).toBe('widow / widower');
     expect(
-      communityMemberFieldText(member, 'marital_status', createTranslator(messagesFor('pl')))
+      communityMemberFieldText(member, 'marital_status', createTranslator(messagesFor('pl-PL')))
     ).toBe('wdowa / wdowiec');
   });
 });
@@ -233,10 +233,10 @@ describe('sortCommunityMembers by a labelled field', () => {
   }
 
   it('sortCommunityMembers orders marital statuses by the English words when the screen is English', () => {
-    expect(idsSortedByMaritalStatusIn('en')).toEqual(['married', 'single', 'widowed']);
+    expect(idsSortedByMaritalStatusIn('en-GB')).toEqual(['married', 'single', 'widowed']);
   });
 
   it('sortCommunityMembers orders marital statuses by the Polish words when the screen is Polish', () => {
-    expect(idsSortedByMaritalStatusIn('pl')).toEqual(['single', 'married', 'widowed']);
+    expect(idsSortedByMaritalStatusIn('pl-PL')).toEqual(['single', 'married', 'widowed']);
   });
 });
