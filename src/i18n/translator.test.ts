@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import en from './messages/en.json';
 import pl from './messages/pl.json';
+import cs from './messages/cs.json';
 import { localeFromCookieValue } from './locales';
 import { messagesFor } from './messages';
 import {
@@ -76,6 +77,22 @@ describe('createTranslator with a message reference', () => {
     });
 
     expect(translate(ref)).toBe('Pole "Data rozpoczęcia" jest wymagane.');
+  });
+});
+
+describe('every translated language', () => {
+  const placeholdersIn = (text: string): string[] =>
+    (text.match(/\{\w+\}/g) ?? []).sort();
+
+  it.each([
+    ['pl', pl],
+    ['cs', cs],
+  ])('%s keeps the placeholders of the English sentences', (_language, translated) => {
+    for (const [key, text] of Object.entries(translated)) {
+      const english = (en as Record<string, string>)[key];
+
+      expect(placeholdersIn(text), key).toEqual(placeholdersIn(english));
+    }
   });
 });
 
