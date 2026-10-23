@@ -26,7 +26,7 @@ import {
 import {
   companionshipFindDetailPeople,
   companionshipFindParticipantFieldText,
-  companionshipFindVisibleFieldLabels,
+  companionshipFindVisibleFieldLabelKeys,
   companionshipFindVisibleFields,
   defaultCompanionshipFindVisibleFields,
   readCompanionshipFindDetailFoldOpen,
@@ -124,9 +124,9 @@ function CompanionshipFindDetailFold({
         {visibleFields.map((field) => (
           <p key={field} className={mutedTextClassName}>
             <span className={strongTextClassName}>
-              {companionshipFindVisibleFieldLabels[field]}:{' '}
+              {translate(companionshipFindVisibleFieldLabelKeys[field])}:{' '}
             </span>
-            {companionshipFindParticipantFieldText(member, field)}
+            {companionshipFindParticipantFieldText(member, field, translate)}
           </p>
         ))}
       </div>
@@ -526,7 +526,7 @@ export function CompanionshipFindForm({
                   });
                 }}
               />
-              <span>{companionshipFindVisibleFieldLabels[field]}</span>
+              <span>{translate(companionshipFindVisibleFieldLabelKeys[field])}</span>
             </label>
           ))}
         </div>

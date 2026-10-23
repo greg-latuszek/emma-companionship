@@ -371,7 +371,7 @@ export function CompanionshipRelationList({
       {/* Mobile sort control */}
       <div className="flex flex-col gap-4 text-left lg:hidden">
         <label className="flex flex-col gap-1 text-sm">
-          <span>{translate('companionships.list.sortBy')}</span>
+          <span>{translate('common.sortBy')}</span>
           <select
             value={sortField}
             onChange={(event) => {
@@ -415,10 +415,7 @@ export function CompanionshipRelationList({
                   ? companionshipRelationListPersonExtraFields
                       .filter((f) => accompaniedExtras.includes(f))
                       .map((field) => {
-                        const text = personFieldText(
-                          row.relation!.accompanied,
-                          field
-                        );
+                        const text = personFieldText(row.relation!.accompanied, field, translate);
                         if (!text) return null;
                         return (
                           <span
@@ -442,10 +439,7 @@ export function CompanionshipRelationList({
                   ? companionshipRelationListPersonExtraFields
                       .filter((f) => companionExtras.includes(f))
                       .map((field) => {
-                        const text = personFieldText(
-                          row.relation!.companion,
-                          field
-                        );
+                        const text = personFieldText(row.relation!.companion, field, translate);
                         if (!text) return null;
                         return (
                           <span
@@ -677,7 +671,7 @@ export function CompanionshipRelationList({
                             key={field}
                             className={`whitespace-nowrap px-3 py-3 ${surfaces.mutedText}`}
                           >
-                            {personFieldText(row.relation!.accompanied, field)}
+                            {personFieldText(row.relation!.accompanied, field, translate)}
                           </td>
                         ))
                     : null}
@@ -689,7 +683,7 @@ export function CompanionshipRelationList({
                             key={field}
                             className={`whitespace-nowrap px-3 py-3 ${surfaces.mutedText}`}
                           >
-                            {personFieldText(row.relation!.companion, field)}
+                            {personFieldText(row.relation!.companion, field, translate)}
                           </td>
                         ))
                     : null}

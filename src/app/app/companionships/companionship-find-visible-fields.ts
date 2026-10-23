@@ -6,7 +6,7 @@ import {
   communityMemberFieldText,
   communityMemberListExtraFields,
   communityMemberListExtraFieldsFromStoredValue,
-  communityMemberListFieldLabels,
+  communityMemberListFieldLabelKeys,
   defaultCommunityMemberListExtraFields,
   toggleCommunityMemberListExtraField,
   type CommunityMemberListExtraField,
@@ -18,7 +18,8 @@ import type { CompanionshipParticipantOption } from '@/application/companionship
 export type CompanionshipFindVisibleField = CommunityMemberListExtraField;
 
 export const companionshipFindVisibleFields = communityMemberListExtraFields;
-export const companionshipFindVisibleFieldLabels = communityMemberListFieldLabels;
+export const companionshipFindVisibleFieldLabelKeys =
+  communityMemberListFieldLabelKeys;
 export const defaultCompanionshipFindVisibleFields =
   defaultCommunityMemberListExtraFields;
 export const toggleCompanionshipFindVisibleField =

@@ -23,7 +23,7 @@ export function RemoveCommunityMemberButton({
     <form
       action={formAction}
       onSubmit={(event) => {
-        if (!confirm(`Usunąć ${memberName} z rejestru?`)) {
+        if (!confirm(translate('members.remove.confirm', { name: memberName }))) {
           event.preventDefault();
         }
       }}
@@ -36,7 +36,7 @@ export function RemoveCommunityMemberButton({
         type="submit"
         className={`text-sm font-medium ${surfaces.dangerText} underline-offset-4 hover:underline`}
       >
-        Usuń
+        {translate('common.delete')}
       </button>
     </form>
   );

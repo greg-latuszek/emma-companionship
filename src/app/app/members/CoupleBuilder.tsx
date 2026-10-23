@@ -20,7 +20,7 @@ import {
 } from './couple-builder-draft';
 import {
   coupleListExtraFields,
-  coupleListFieldLabels,
+  coupleListFieldLabelKeys,
   coupleParticipantFieldText,
   defaultCoupleListExtraFields,
   readStoredCoupleListExtraFields,
@@ -47,6 +47,7 @@ function BuilderPersonCell({
   onDropPerson?: (personId: string) => void;
   acceptsDrop: boolean;
 }): JSX.Element {
+  const translate = useTranslate();
   const surfaces = visualSurfaces(useVisualStyle());
 
   if (!person) {
@@ -92,7 +93,7 @@ function BuilderPersonCell({
         }
         return (
           <p key={field} className={`text-sm ${surfaces.mutedText}`}>
-            {coupleListFieldLabels[field]}: {text}
+            {translate(coupleListFieldLabelKeys[field])}: {text}
           </p>
         );
       })}
@@ -216,8 +217,7 @@ export function CoupleBuilder({
   if (people.length === 0) {
     return (
       <p className={`text-center ${surfaces.mutedText}`}>
-        Wszyscy żonaci i zamężne ze znaną płcią są już w małżeństwach, albo brak
-        takich osób w rejestrze.
+        {translate('members.builder.empty')}
       </p>
     );
   }
@@ -225,13 +225,12 @@ export function CoupleBuilder({
   return (
     <div className="flex min-w-0 flex-col gap-6">
       <p className={`text-sm ${surfaces.mutedText}`}>
-        Algorytm proponuje pary po nazwisku. Potwierdź ✓, odrzuć ✕ albo przeciągnij
-        osobę na puste miejsce i potwierdź.
+        {translate('members.builder.hint')}
       </p>
 
       <fieldset className="flex flex-col gap-2 text-left">
         <legend className={`text-sm font-medium ${surfaces.strongText}`}>
-          Widoczne pola
+          {translate('common.visibleFields')}
         </legend>
         <div className="flex flex-wrap gap-3">
           {coupleListExtraFields.map((field) => (
@@ -248,7 +247,7 @@ export function CoupleBuilder({
                   );
                 }}
               />
-              {coupleListFieldLabels[field]}
+              {translate(coupleListFieldLabelKeys[field])}
             </label>
           ))}
         </div>
@@ -262,9 +261,15 @@ export function CoupleBuilder({
         <div
           className={`hidden grid-cols-[1fr_1fr_auto] gap-3 border-b pb-2 lg:grid ${surfaces.rowDivider}`}
         >
-          <span className={`font-medium ${surfaces.strongText}`}>Mąż</span>
-          <span className={`font-medium ${surfaces.strongText}`}>Żona</span>
-          <span className={`font-medium ${surfaces.strongText}`}>Akcje</span>
+          <span className={`font-medium ${surfaces.strongText}`}>
+            {translate('members.couples.husband')}
+          </span>
+          <span className={`font-medium ${surfaces.strongText}`}>
+            {translate('members.couples.wife')}
+          </span>
+          <span className={`font-medium ${surfaces.strongText}`}>
+            {translate('members.couples.actions')}
+          </span>
         </div>
 
         {rows.map((row, rowIndex) => {
@@ -282,7 +287,7 @@ export function CoupleBuilder({
               <BuilderPersonCell
                 person={husband}
                 extraFields={extraFields}
-                emptyLabel="Przeciągnij męża"
+                emptyLabel={translate('members.builder.dragHusband')}
                 acceptsDrop={row.husbandId == null}
                 onDropPerson={(personId) =>
                   handleDrop(personId, rowIndex, 'husband')
@@ -291,7 +296,7 @@ export function CoupleBuilder({
               <BuilderPersonCell
                 person={wife}
                 extraFields={extraFields}
-                emptyLabel="Przeciągnij żonę"
+                emptyLabel={translate('members.builder.dragWife')}
                 acceptsDrop={row.wifeId == null}
                 onDropPerson={(personId) =>
                   handleDrop(personId, rowIndex, 'wife')
@@ -305,8 +310,8 @@ export function CoupleBuilder({
                       disabled={isPending}
                       onClick={() => handleConfirm(rowIndex)}
                       className={`text-lg font-medium ${surfaces.strongText} underline-offset-4 hover:underline disabled:opacity-50`}
-                      aria-label="Potwierdź małżeństwo"
-                      title="Potwierdź"
+                      aria-label={translate('members.builder.confirmLabel')}
+                      title={translate('members.builder.confirmTitle')}
                     >
                       ✓
                     </button>
@@ -315,15 +320,15 @@ export function CoupleBuilder({
                       disabled={isPending}
                       onClick={() => handleReject(rowIndex)}
                       className={`text-lg font-medium ${surfaces.dangerText} underline-offset-4 hover:underline disabled:opacity-50`}
-                      aria-label="Odrzuć propozycję pary"
-                      title="Odrzuć"
+                      aria-label={translate('members.builder.rejectLabel')}
+                      title={translate('members.builder.rejectTitle')}
                     >
                       ✕
                     </button>
                   </>
                 ) : (
                   <span className={`text-sm ${surfaces.mutedText}`}>
-                    Uzupełnij obie strony
+                    {translate('members.builder.fillBothSides')}
                   </span>
                 )}
               </div>

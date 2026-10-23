@@ -35,7 +35,7 @@ export function DecoupleCoupleButton({
     return (
       <div className="flex flex-col gap-2">
         <p className={`text-sm ${surfaces.mutedText}`}>
-          Czy na pewno chcesz rozłączyć małżeństwo?
+          {translate('members.decouple.confirm')}
         </p>
         <p className={`text-xs ${surfaces.secondaryText}`}>{coupleName}</p>
         <div className="flex gap-2">
@@ -44,9 +44,11 @@ export function DecoupleCoupleButton({
             onClick={handleDecouple}
             disabled={isPending}
             className={`text-sm font-medium ${surfaces.dangerText} underline-offset-4 hover:underline disabled:opacity-50`}
-            aria-label="Potwierdź rozłączenie małżeństwa"
+            aria-label={translate('members.decouple.confirmLabel')}
           >
-            {isPending ? 'Rozłączanie...' : 'Tak, rozłącz'}
+            {isPending
+              ? translate('members.decouple.pending')
+              : translate('members.decouple.yes')}
           </button>
           <button
             type="button"
@@ -54,7 +56,7 @@ export function DecoupleCoupleButton({
             disabled={isPending}
             className={`text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline disabled:opacity-50`}
           >
-            Anuluj
+            {translate('common.cancel')}
           </button>
         </div>
       </div>
@@ -70,8 +72,8 @@ export function DecoupleCoupleButton({
           setShowConfirm(true);
         }}
         className={`text-sm font-medium ${surfaces.dangerText} underline-offset-4 hover:underline`}
-        aria-label={`Rozłącz małżeństwo ${coupleName}`}
-        title="Rozłącz"
+        aria-label={translate('members.decouple.label', { name: coupleName })}
+        title={translate('members.decouple.title')}
       >
         ✕
       </button>

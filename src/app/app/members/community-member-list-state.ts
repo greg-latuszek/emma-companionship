@@ -1,10 +1,12 @@
 import type { CommunityMember } from '@/types/community-member';
+import { translateInPolish } from '@/i18n/messages';
+import type { MessageKey, Translate } from '@/i18n/translator';
 import {
-  accompanyingReadinessLabels,
-  communityEngagementLabels,
-  consecratedStatusLabels,
-  genderLabels,
-  maritalStatusLabels,
+  accompanyingReadinessLabelKeys,
+  communityEngagementLabelKeys,
+  consecratedStatusLabelKeys,
+  genderLabelKeys,
+  maritalStatusLabelKeys,
 } from './community-member-labels';
 
 export const communityMemberListExtraFields = [
@@ -45,20 +47,20 @@ export const defaultCommunityMemberListSort: CommunityMemberListSort = {
   sortDirection: 'asc',
 };
 
-export const communityMemberListFieldLabels: Record<
+export const communityMemberListFieldLabelKeys: Record<
   CommunityMemberListSortField,
-  string
+  MessageKey
 > = {
-  first_name: 'Imię',
-  last_name: 'Nazwisko',
-  email: 'E-mail',
-  phone: 'Telefon',
-  gender: 'Płeć',
-  marital_status: 'Stan cywilny',
-  consecrated_status: 'Typ osoby konsekrowanej',
-  community_engagement_status: 'Zaangażowanie we wspólnocie',
-  accompanying_readiness: 'Gotowość do akompaniamentu',
-  notes: 'Notatki',
+  first_name: 'member.field.firstName',
+  last_name: 'member.field.lastName',
+  email: 'member.field.email',
+  phone: 'member.field.phone',
+  gender: 'member.field.gender',
+  marital_status: 'member.field.maritalStatus',
+  consecrated_status: 'member.field.consecratedStatus',
+  community_engagement_status: 'member.field.communityEngagement',
+  accompanying_readiness: 'member.field.accompanyingReadiness',
+  notes: 'member.field.notes',
 };
 
 export function communityMemberThumbnail(
@@ -73,27 +75,30 @@ export function communityMemberName(member: CommunityMember): string {
 
 export function communityMemberFieldText(
   member: CommunityMember,
-  field: CommunityMemberListExtraField
+  field: CommunityMemberListExtraField,
+  translate: Translate
 ): string {
   if (field === 'gender') {
-    return member.gender ? genderLabels[member.gender] : '';
+    return member.gender ? translate(genderLabelKeys[member.gender]) : '';
   }
   if (field === 'marital_status') {
-    return member.marital_status ? maritalStatusLabels[member.marital_status] : '';
+    return member.marital_status
+      ? translate(maritalStatusLabelKeys[member.marital_status])
+      : '';
   }
   if (field === 'consecrated_status') {
     return member.consecrated_status
-      ? consecratedStatusLabels[member.consecrated_status]
+      ? translate(consecratedStatusLabelKeys[member.consecrated_status])
       : '';
   }
   if (field === 'community_engagement_status') {
     return member.community_engagement_status
-      ? communityEngagementLabels[member.community_engagement_status]
+      ? translate(communityEngagementLabelKeys[member.community_engagement_status])
       : '';
   }
   if (field === 'accompanying_readiness') {
     return member.accompanying_readiness
-      ? accompanyingReadinessLabels[member.accompanying_readiness]
+      ? translate(accompanyingReadinessLabelKeys[member.accompanying_readiness])
       : '';
   }
 
@@ -110,7 +115,7 @@ function communityMemberSortKey(
   if (field === 'last_name') {
     return member.last_name;
   }
-  return communityMemberFieldText(member, field);
+  return communityMemberFieldText(member, field, translateInPolish);
 }
 
 export function compareCommunityMembers(

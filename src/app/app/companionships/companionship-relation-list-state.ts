@@ -1,11 +1,12 @@
 import type { ArchivedCompanionshipHistoryRow } from '@/application/group-archived-companionship-history';
 import type { CompanionshipRelationListItem } from '@/types/companionship-relation';
-import type { MessageKey } from '@/i18n/translator';
+import type { MessageKey, Translate } from '@/i18n/translator';
 import {
-  maritalStatusLabels,
-  consecratedStatusLabels,
-  communityEngagementLabels,
+  maritalStatusLabelKeys,
+  consecratedStatusLabelKeys,
+  communityEngagementLabelKeys,
 } from '@/app/app/members/community-member-labels';
+import { translateInPolish } from '@/i18n/messages';
 
 // Base fields in the Companionship group
 export const companionshipRelationListBaseFields = [
@@ -106,15 +107,15 @@ export const companionshipRelationListFieldLabelKeys: Record<
   start_date: 'companionship.field.startDate',
   end_date: 'companionship.field.endDate',
   status: 'companionship.field.status',
-  marital_status: 'companionship.field.maritalStatus',
-  consecrated_status: 'companionship.field.consecratedStatus',
-  community_engagement_status: 'companionship.field.communityEngagement',
-  accompanied_marital_status: 'companionship.field.maritalStatus',
-  accompanied_consecrated_status: 'companionship.field.consecratedStatus',
-  accompanied_community_engagement_status: 'companionship.field.communityEngagement',
-  companion_marital_status: 'companionship.field.maritalStatus',
-  companion_consecrated_status: 'companionship.field.consecratedStatus',
-  companion_community_engagement_status: 'companionship.field.communityEngagement',
+  marital_status: 'member.field.maritalStatus',
+  consecrated_status: 'member.field.consecratedStatus',
+  community_engagement_status: 'member.field.communityEngagement',
+  accompanied_marital_status: 'member.field.maritalStatus',
+  accompanied_consecrated_status: 'member.field.consecratedStatus',
+  accompanied_community_engagement_status: 'member.field.communityEngagement',
+  companion_marital_status: 'member.field.maritalStatus',
+  companion_consecrated_status: 'member.field.consecratedStatus',
+  companion_community_engagement_status: 'member.field.communityEngagement',
 };
 
 export function accompaniedFullName(
@@ -131,19 +132,22 @@ export function companionFullName(
 
 export function personFieldText(
   person: CompanionshipRelationListItem['accompanied'] | CompanionshipRelationListItem['companion'],
-  field: CompanionshipRelationListPersonExtraField
+  field: CompanionshipRelationListPersonExtraField,
+  translate: Translate
 ): string {
   if (field === 'marital_status') {
-    return person.marital_status ? maritalStatusLabels[person.marital_status] : '';
+    return person.marital_status
+      ? translate(maritalStatusLabelKeys[person.marital_status])
+      : '';
   }
   if (field === 'consecrated_status') {
     return person.consecrated_status
-      ? consecratedStatusLabels[person.consecrated_status]
+      ? translate(consecratedStatusLabelKeys[person.consecrated_status])
       : '';
   }
   if (field === 'community_engagement_status') {
     return person.community_engagement_status
-      ? communityEngagementLabels[person.community_engagement_status]
+      ? translate(communityEngagementLabelKeys[person.community_engagement_status])
       : '';
   }
   return '';
@@ -169,22 +173,22 @@ function companionshipRelationSortKey(
     return relation.status;
   }
   if (field === 'accompanied_marital_status') {
-    return personFieldText(relation.accompanied, 'marital_status');
+    return personFieldText(relation.accompanied, 'marital_status', translateInPolish);
   }
   if (field === 'accompanied_consecrated_status') {
-    return personFieldText(relation.accompanied, 'consecrated_status');
+    return personFieldText(relation.accompanied, 'consecrated_status', translateInPolish);
   }
   if (field === 'accompanied_community_engagement_status') {
-    return personFieldText(relation.accompanied, 'community_engagement_status');
+    return personFieldText(relation.accompanied, 'community_engagement_status', translateInPolish);
   }
   if (field === 'companion_marital_status') {
-    return personFieldText(relation.companion, 'marital_status');
+    return personFieldText(relation.companion, 'marital_status', translateInPolish);
   }
   if (field === 'companion_consecrated_status') {
-    return personFieldText(relation.companion, 'consecrated_status');
+    return personFieldText(relation.companion, 'consecrated_status', translateInPolish);
   }
   if (field === 'companion_community_engagement_status') {
-    return personFieldText(relation.companion, 'community_engagement_status');
+    return personFieldText(relation.companion, 'community_engagement_status', translateInPolish);
   }
   return '';
 }

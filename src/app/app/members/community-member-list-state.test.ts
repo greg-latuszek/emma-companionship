@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { MemberId } from '@/types/auth';
 import type { CommunityMember } from '@/types/community-member';
+import { createTranslator } from '@/i18n/translator';
+import { messagesFor } from '@/i18n/messages';
 import {
+  communityMemberFieldText,
   communityMemberListExtraFields,
   communityMemberListExtraFieldsFromStoredValue,
   communityMemberListSortFromStoredValue,
@@ -197,5 +200,29 @@ describe('community member list state', () => {
       sortField: 'community_engagement_status',
       sortDirection: 'asc',
     });
+  });
+});
+
+describe('communityMemberFieldText', () => {
+  it('communityMemberFieldText names the marital status in the language of the translator', () => {
+    const member = aCommunityMember({ marital_status: 'widowed' });
+
+    expect(
+      communityMemberFieldText(member, 'marital_status', createTranslator(messagesFor('en')))
+    ).toBe('widow / widower');
+    expect(
+      communityMemberFieldText(member, 'marital_status', createTranslator(messagesFor('pl')))
+    ).toBe('wdowa / wdowiec');
+  });
+});
+
+describe('sortCommunityMembers by a labelled field', () => {
+  it('sortCommunityMembers orders genders by their Polish labels whatever language the screen shows', () => {
+    const man = aCommunityMember({ id: MemberId('man'), first_name: 'Adam', gender: 'male' });
+    const woman = aCommunityMember({ id: MemberId('woman'), first_name: 'Zofia', gender: 'female' });
+
+    const sorted = sortCommunityMembers([man, woman], 'gender', 'asc');
+
+    expect(sorted.map((member) => member.id)).toEqual([woman.id, man.id]);
   });
 });

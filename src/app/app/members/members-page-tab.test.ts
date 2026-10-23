@@ -5,11 +5,11 @@ import {
 } from '@/app/app/members/members-page-tab';
 
 describe('membersPageTabFrom', () => {
-  it('membersPageTabFrom opens Małżeństwa when tab is couples', () => {
+  it('membersPageTabFrom opens the couples list when tab is couples', () => {
     expect(membersPageTabFrom('couples')).toBe('couples');
   });
 
-  it('membersPageTabFrom opens + Dodaj Małżeństwa when tab is build-couples', () => {
+  it('membersPageTabFrom opens the couple builder when tab is build-couples', () => {
     expect(membersPageTabFrom('build-couples')).toBe('build-couples');
   });
 
@@ -19,7 +19,7 @@ describe('membersPageTabFrom', () => {
 });
 
 describe('membersPageTabHref', () => {
-  it('membersPageTabHref builds the query for + Dodaj Małżeństwa', () => {
+  it('membersPageTabHref builds the query for the couple builder', () => {
     expect(membersPageTabHref('build-couples')).toBe(
       '/app/members?tab=build-couples'
     );

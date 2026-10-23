@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import type { JSX } from 'react';
+import { useTranslate } from '@/i18n/LocaleProvider';
 import { useVisualStyle } from '@/components/VisualStyleProvider';
 import { visualSurfaces } from '@/components/visual-style-surfaces';
 import type { CommunityMember } from '@/types/community-member';
@@ -10,7 +11,7 @@ import { RemoveCommunityMemberButton } from './RemoveCommunityMemberButton';
 import {
   communityMemberFieldText,
   communityMemberListExtraFields,
-  communityMemberListFieldLabels,
+  communityMemberListFieldLabelKeys,
   communityMemberListSortFields,
   communityMemberName,
   communityMemberThumbnail,
@@ -60,6 +61,7 @@ function CommunityMemberRowActions({
 }: {
   member: CommunityMember;
 }): JSX.Element {
+  const translate = useTranslate();
   const surfaces = visualSurfaces(useVisualStyle());
 
   return (
@@ -68,7 +70,7 @@ function CommunityMemberRowActions({
         href={`/app/members/${member.id}/edit`}
         className={`text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
       >
-        Edytuj
+        {translate('common.edit')}
       </Link>
       {!member.hasLoginIdentity ? (
         <RemoveCommunityMemberButton
@@ -100,6 +102,7 @@ function SortHeader({
   onSort: (field: CommunityMemberListSortField) => void;
   isImportant?: boolean;
 }): JSX.Element {
+  const translate = useTranslate();
   const active = sortField === field;
   const surfaces = visualSurfaces(useVisualStyle());
   const textClass = isImportant
@@ -114,7 +117,7 @@ function SortHeader({
       }}
       className={`inline-flex items-center gap-1 text-left ${textClass} underline-offset-4 hover:underline`}
     >
-      {communityMemberListFieldLabels[field]}
+      {translate(communityMemberListFieldLabelKeys[field])}
       {active ? <span aria-hidden="true">{sortDirection === 'asc' ? '↑' : '↓'}</span> : null}
     </button>
   );
@@ -125,6 +128,7 @@ export function CommunityMemberList({
 }: {
   members: CommunityMember[];
 }): JSX.Element {
+  const translate = useTranslate();
   const [sortField, setSortField] =
     useState<CommunityMemberListSortField>('last_name');
   const [sortDirection, setSortDirection] =
@@ -143,7 +147,9 @@ export function CommunityMemberList({
 
   if (members.length === 0) {
     return (
-      <p className={`text-center ${surfaces.mutedText}`}>Nie ma jeszcze osób w rejestrze.</p>
+      <p className={`text-center ${surfaces.mutedText}`}>
+        {translate('members.list.empty')}
+      </p>
     );
   }
 
@@ -170,7 +176,7 @@ export function CommunityMemberList({
     <div className="flex min-w-0 flex-col gap-6">
       <div className="flex flex-col gap-4 text-left">
         <label className="flex flex-col gap-1 text-sm lg:hidden">
-          <span>Sortuj według</span>
+          <span>{translate('common.sortBy')}</span>
           <select
             value={sortField}
             onChange={(event) => {
@@ -183,7 +189,7 @@ export function CommunityMemberList({
           >
             {communityMemberListSortFields.map((field) => (
               <option key={field} value={field} className="bg-white text-gray-900">
-                {communityMemberListFieldLabels[field]}
+                {translate(communityMemberListFieldLabelKeys[field])}
               </option>
             ))}
           </select>
@@ -191,7 +197,7 @@ export function CommunityMemberList({
 
         <details className="text-sm">
           <summary className={`cursor-pointer select-none ${surfaces.secondaryText}`}>
-            Widoczne pola
+            {translate('common.visibleFields')}
           </summary>
           <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2 pl-1">
             {communityMemberListExtraFields.map((field) => (
@@ -213,7 +219,7 @@ export function CommunityMemberList({
                     });
                   }}
                 />
-                <span>{communityMemberListFieldLabels[field]}</span>
+                <span>{translate(communityMemberListFieldLabelKeys[field])}</span>
               </label>
             ))}
           </div>
@@ -233,7 +239,7 @@ export function CommunityMemberList({
                   {communityMemberName(member)}
                 </span>
                 {communityMemberListExtraFields.filter((f) => extraFields.includes(f)).map((field) => {
-                  const text = communityMemberFieldText(member, field);
+                  const text = communityMemberFieldText(member, field, translate);
                   if (!text) {
                     return null;
                   }
@@ -258,7 +264,7 @@ export function CommunityMemberList({
           <thead>
             <tr className={`border-b ${surfaces.hairline}`}>
               <th className={`${surfaces.importantArea} sticky left-0 z-10 w-12 px-2 py-3`}>
-                <span className="sr-only">Zdjęcie</span>
+                <span className="sr-only">{translate('members.list.photo')}</span>
               </th>
               <th
                 aria-sort={sortAria('first_name', sortField, sortDirection)}
@@ -299,7 +305,7 @@ export function CommunityMemberList({
                 </th>
               ))}
               <th className="px-3 py-3 whitespace-nowrap">
-                <span className="sr-only">Działania</span>
+                <span className="sr-only">{translate('common.actions')}</span>
               </th>
             </tr>
           </thead>
@@ -317,7 +323,7 @@ export function CommunityMemberList({
                 </td>
                 {communityMemberListExtraFields.filter((f) => extraFields.includes(f)).map((field) => (
                   <td key={field} className={`whitespace-nowrap px-3 py-3 ${surfaces.mutedText}`}>
-                    {communityMemberFieldText(member, field)}
+                    {communityMemberFieldText(member, field, translate)}
                   </td>
                 ))}
                 <td className="px-3 py-3 whitespace-nowrap">
