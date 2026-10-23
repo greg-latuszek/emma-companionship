@@ -5,6 +5,8 @@ import type { JSX } from 'react';
 import { useVisualStyle } from '@/components/VisualStyleProvider';
 import { visualSurfaces } from '@/components/visual-style-surfaces';
 import { submitDeleteCompanionshipRelation } from './actions';
+import { useTranslate } from '@/i18n/LocaleProvider';
+import { messageRef, type MessageRef } from '@/i18n/translator';
 
 export function DeleteCompanionshipRelationButton({
   relationId,
@@ -17,14 +19,15 @@ export function DeleteCompanionshipRelationButton({
 }): JSX.Element {
   const [isPending, startTransition] = useTransition();
   const [showConfirm, setShowConfirm] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<MessageRef | null>(null);
   const surfaces = visualSurfaces(useVisualStyle());
+  const translate = useTranslate();
 
   function handleDelete() {
     startTransition(async () => {
       const result = await submitDeleteCompanionshipRelation(relationId);
       if (!result.success) {
-        setError(result.error ?? 'Wystąpił błąd');
+        setError(result.error ?? messageRef('error.generic'));
         setShowConfirm(false);
       }
     });
@@ -74,7 +77,7 @@ export function DeleteCompanionshipRelationButton({
         Usuń
       </button>
       {error ? (
-        <p className={`text-xs ${surfaces.dangerText}`}>{error}</p>
+        <p className={`text-xs ${surfaces.dangerText}`}>{translate(error)}</p>
       ) : null}
     </div>
   );

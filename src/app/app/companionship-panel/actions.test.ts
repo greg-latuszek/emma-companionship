@@ -7,6 +7,7 @@ import {
 } from '@/application/update-member-visual-style';
 import { MemberId } from '@/types/auth';
 import { submitMemberVisualStyle } from './actions';
+import { messageRef } from '@/i18n/translator';
 
 vi.mock('@/lib/auth', () => ({
   auth: vi.fn(),
@@ -75,7 +76,7 @@ describe('submitMemberVisualStyle', () => {
       aVisualStyleForm('neon')
     );
 
-    expect(state.formError).toBe('Wybierz wygląd.');
+    expect(state.formError).toEqual(messageRef('panel.settings.chooseAppearance'));
     expect(updateMemberVisualStyle).not.toHaveBeenCalled();
     expect(revalidatePath).not.toHaveBeenCalled();
   });
@@ -91,7 +92,7 @@ describe('submitMemberVisualStyle', () => {
       aVisualStyleForm('high-contrast')
     );
 
-    expect(state.formError).toBe('Zaloguj się ponownie, aby zmienić wygląd.');
+    expect(state.formError).toEqual(messageRef('panel.settings.signInAgain'));
     expect(updateMemberVisualStyle).not.toHaveBeenCalled();
   });
 
@@ -106,7 +107,7 @@ describe('submitMemberVisualStyle', () => {
       aVisualStyleForm('high-contrast')
     );
 
-    expect(state.formError).toBe('Zaloguj się ponownie, aby zmienić wygląd.');
+    expect(state.formError).toEqual(messageRef('panel.settings.signInAgain'));
     expect(revalidatePath).not.toHaveBeenCalled();
   });
 });

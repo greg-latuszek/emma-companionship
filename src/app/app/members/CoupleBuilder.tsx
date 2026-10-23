@@ -13,6 +13,7 @@ import { useVisualStyle } from '@/components/VisualStyleProvider';
 import { visualSurfaces } from '@/components/visual-style-surfaces';
 import type { MarriedPersonWithoutCouple } from '@/types/couple';
 import { submitConfirmCouple } from './actions';
+import { useTranslate } from '@/i18n/LocaleProvider';
 import {
   readStoredCoupleBuilderDraft,
   storeCoupleBuilderDraft,
@@ -27,6 +28,7 @@ import {
   toggleCoupleListExtraField,
   type CoupleListExtraField,
 } from './couple-list-state';
+import { messageRef, type MessageRef } from '@/i18n/translator';
 
 function personName(person: MarriedPersonWithoutCouple): string {
   return `${person.first_name} ${person.last_name}`;
@@ -112,10 +114,11 @@ export function CoupleBuilder({
   const [extraFields, setExtraFields] = useState<CoupleListExtraField[]>(
     defaultCoupleListExtraFields
   );
-  const [rowError, setRowError] = useState<string | null>(null);
+  const [rowError, setRowError] = useState<MessageRef | null>(null);
   const [isPending, startTransition] = useTransition();
   const [hydrated, setHydrated] = useState(false);
   const surfaces = visualSurfaces(useVisualStyle());
+  const translate = useTranslate();
 
   useEffect(() => {
     const draft = readStoredCoupleBuilderDraft(window.localStorage);
@@ -170,7 +173,7 @@ export function CoupleBuilder({
         wifeId: row.wifeId!,
       });
       if (!result.success) {
-        setRowError(result.error ?? 'Wystąpił błąd');
+        setRowError(result.error ?? messageRef('error.generic'));
         return;
       }
       setRows((current) =>
@@ -252,7 +255,7 @@ export function CoupleBuilder({
       </fieldset>
 
       {rowError ? (
-        <p className={`text-sm ${surfaces.formError}`}>{rowError}</p>
+        <p className={`text-sm ${surfaces.formError}`}>{translate(rowError)}</p>
       ) : null}
 
       <div className="flex flex-col gap-3">

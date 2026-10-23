@@ -1,4 +1,5 @@
 import type { CommunityMember } from '@/types/community-member';
+import { messageRef, type MessageRef } from '@/i18n/translator';
 
 export type CommunityMemberFormValues = {
   first_name: string;
@@ -14,8 +15,8 @@ export type CommunityMemberFormValues = {
 };
 
 export type CommunityMemberFormState = {
-  fieldErrors?: Partial<Record<keyof CommunityMemberFormValues, string>>;
-  formError?: string;
+  fieldErrors?: Partial<Record<keyof CommunityMemberFormValues, MessageRef>>;
+  formError?: MessageRef;
   values?: CommunityMemberFormValues;
 };
 
@@ -91,26 +92,26 @@ export function communityMemberFormValuesFromForm(
   };
 }
 
-function polishFieldError(field: string, code: string): string {
+function fieldErrorMessage(field: string, code: string): MessageRef {
   if (field === 'first_name') {
-    return 'Podaj imię.';
+    return messageRef('memberValidation.firstName');
   }
   if (field === 'last_name') {
-    return 'Podaj nazwisko.';
+    return messageRef('memberValidation.lastName');
   }
   if (field === 'email') {
-    return 'Podaj poprawny adres e-mail.';
+    return messageRef('memberValidation.email');
   }
   if (field === 'phone') {
-    return 'Telefon jest za długi.';
+    return messageRef('memberValidation.phone');
   }
   if (code === 'invalid_enum_value' || code === 'invalid_type') {
-    return 'Wybierz poprawną wartość.';
+    return messageRef('memberValidation.chooseValue');
   }
-  return 'Popraw to pole.';
+  return messageRef('memberValidation.fixField');
 }
 
-export function polishCommunityMemberWriteIssues(
+export function communityMemberWriteIssueMessages(
   issues: { path: (string | number)[]; code: string }[]
 ): NonNullable<CommunityMemberFormState['fieldErrors']> {
   const fieldErrors: NonNullable<CommunityMemberFormState['fieldErrors']> = {};
@@ -122,7 +123,7 @@ export function polishCommunityMemberWriteIssues(
       communityMemberFormFields.includes(field as (typeof communityMemberFormFields)[number]) &&
       !fieldErrors[field as keyof CommunityMemberFormValues]
     ) {
-      fieldErrors[field as keyof CommunityMemberFormValues] = polishFieldError(
+      fieldErrors[field as keyof CommunityMemberFormValues] = fieldErrorMessage(
         field,
         issue.code
       );

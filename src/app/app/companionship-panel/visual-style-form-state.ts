@@ -1,5 +1,5 @@
 import { visualStyles, type VisualStyle } from '@/types/auth';
-import type { MessageKey } from '@/i18n/translator';
+import type { MessageKey, MessageRef } from '@/i18n/translator';
 
 export const visualStyleLabelKeys: Record<VisualStyle, MessageKey> = {
   'semi-transparent': 'visualStyle.semi-transparent',
@@ -7,7 +7,7 @@ export const visualStyleLabelKeys: Record<VisualStyle, MessageKey> = {
 };
 
 export type VisualStyleFormState = {
-  formError?: string;
+  formError?: MessageRef;
 };
 
 export function visualStyleFromForm(formData: FormData): VisualStyle | null {

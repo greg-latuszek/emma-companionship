@@ -3,7 +3,12 @@ import en from './messages/en.json';
 import pl from './messages/pl.json';
 import { localeFromCookieValue } from './locales';
 import { messagesFor } from './messages';
-import { createTranslator, mergeOverEnglish, type Messages } from './translator';
+import {
+  createTranslator,
+  mergeOverEnglish,
+  messageRef,
+  type Messages,
+} from './translator';
 
 describe('createTranslator', () => {
   it('createTranslator fills a placeholder with its value', () => {
@@ -46,8 +51,31 @@ describe('messagesFor', () => {
     expect(messagesFor('en')['navbar.home']).toBe('Home page');
   });
 
+  it('every English message key has a Polish text', () => {
+    expect(Object.keys(pl)).toEqual(expect.arrayContaining(Object.keys(en)));
+  });
+
   it('every Polish message key exists in the English file', () => {
     expect(Object.keys(en)).toEqual(expect.arrayContaining(Object.keys(pl)));
+  });
+});
+
+describe('createTranslator with a message reference', () => {
+  it('createTranslator translates a message reference with its own values', () => {
+    const translate = createTranslator(messagesFor('en'));
+
+    expect(translate(messageRef('panel.companionships.missing', { count: 3 }))).toBe(
+      'Missing companionships: 3'
+    );
+  });
+
+  it('createTranslator translates a message reference nested in a value', () => {
+    const translate = createTranslator(messagesFor('pl'));
+    const ref = messageRef('validation.field.required', {
+      field: messageRef('companionshipForm.field.startDate'),
+    });
+
+    expect(translate(ref)).toBe('Pole "Data rozpoczęcia" jest wymagane.');
   });
 });
 

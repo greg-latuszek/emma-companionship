@@ -27,9 +27,10 @@ import {
   removeCommunityMember,
 } from '@/application/remove-community-member';
 import { MemberId } from '@/types/auth';
+import { messageRef, type MessageRef } from '@/i18n/translator';
 import {
   communityMemberFormValuesFromForm,
-  polishCommunityMemberWriteIssues,
+  communityMemberWriteIssueMessages,
   type CommunityMemberFormState,
 } from './community-member-form-state';
 
@@ -43,7 +44,7 @@ export async function submitNewCommunityMember(
   if (!parsed.success) {
     return {
       values,
-      fieldErrors: polishCommunityMemberWriteIssues(parsed.error.issues),
+      fieldErrors: communityMemberWriteIssueMessages(parsed.error.issues),
     };
   }
 
@@ -53,13 +54,13 @@ export async function submitNewCommunityMember(
     if (isDuplicateCommunityMemberEmail(error)) {
       return {
         values,
-        formError: 'Ten adres e-mail jest już w rejestrze.',
+        formError: messageRef('memberError.duplicateEmail'),
       };
     }
 
     return {
       values,
-      formError: 'Nie udało się zapisać osoby. Spróbuj ponownie.',
+      formError: messageRef('memberError.saveFailed'),
     };
   }
 
@@ -77,7 +78,7 @@ export async function submitCommunityMemberEdits(
   if (!parsed.success) {
     return {
       values,
-      fieldErrors: polishCommunityMemberWriteIssues(parsed.error.issues),
+      fieldErrors: communityMemberWriteIssueMessages(parsed.error.issues),
     };
   }
 
@@ -87,20 +88,20 @@ export async function submitCommunityMemberEdits(
     if (isDuplicateCommunityMemberEmail(error)) {
       return {
         values,
-        formError: 'Ten adres e-mail jest już w rejestrze.',
+        formError: messageRef('memberError.duplicateEmail'),
       };
     }
 
     if (isCommunityMemberNotFound(error)) {
       return {
         values,
-        formError: 'Nie znaleziono tej osoby.',
+        formError: messageRef('memberError.notFound'),
       };
     }
 
     return {
       values,
-      formError: 'Nie udało się zapisać osoby. Spróbuj ponownie.',
+      formError: messageRef('memberError.saveFailed'),
     };
   }
 
@@ -109,9 +110,9 @@ export async function submitCommunityMemberEdits(
 
 export async function submitCommunityMemberRemoval(
   memberId: string,
-  previous: { formError?: string } | undefined,
+  previous: { formError?: MessageRef } | undefined,
   formData: FormData
-): Promise<{ formError?: string }> {
+): Promise<{ formError?: MessageRef }> {
   void previous;
   void formData;
 
@@ -120,24 +121,24 @@ export async function submitCommunityMemberRemoval(
   } catch (error) {
     if (isCannotRemoveCommunityMemberWhoCanSignIn(error)) {
       return {
-        formError: 'Nie można usunąć osoby, która loguje się do aplikacji.',
+        formError: messageRef('memberError.removeCanSignIn'),
       };
     }
 
     if (isCannotRemoveCommunityMemberLinkedToOtherData(error)) {
       return {
-        formError: 'Nie można usunąć, bo osoba jest powiązana z innymi danymi.',
+        formError: messageRef('memberError.removeLinkedToOtherData'),
       };
     }
 
     if (isCommunityMemberNotFound(error)) {
       return {
-        formError: 'Nie znaleziono tej osoby.',
+        formError: messageRef('memberError.notFound'),
       };
     }
 
     return {
-      formError: 'Nie udało się usunąć osoby. Spróbuj ponownie.',
+      formError: messageRef('memberError.removeFailed'),
     };
   }
 
@@ -147,7 +148,7 @@ export async function submitCommunityMemberRemoval(
 export async function submitConfirmCouple(input: {
   husbandId: string;
   wifeId: string;
-}): Promise<{ success: boolean; error?: string }> {
+}): Promise<{ success: boolean; error?: MessageRef }> {
   const parsed = coupleWriteSchema.safeParse({
     husband_id: input.husbandId,
     wife_id: input.wifeId,
@@ -156,7 +157,7 @@ export async function submitConfirmCouple(input: {
   if (!parsed.success) {
     return {
       success: false,
-      error: 'Nieprawidłowe dane małżeństwa.',
+      error: messageRef('coupleError.invalidData'),
     };
   }
 
@@ -168,7 +169,7 @@ export async function submitConfirmCouple(input: {
     if (isHusbandAndWifeAreSamePerson(error)) {
       return {
         success: false,
-        error: 'Mąż i żona nie mogą być tą samą osobą.',
+        error: messageRef('coupleError.sameSpouse'),
       };
     }
 
@@ -176,20 +177,20 @@ export async function submitConfirmCouple(input: {
       return {
         success: false,
         error:
-          'Nie można utworzyć małżeństwa — sprawdź płeć, stan cywilny i czy osoby nie są już w parze.',
+          messageRef('coupleError.notEligible'),
       };
     }
 
     return {
       success: false,
-      error: 'Nie udało się zapisać małżeństwa. Spróbuj ponownie.',
+      error: messageRef('coupleError.saveFailed'),
     };
   }
 }
 
 export async function submitDecoupleCouple(
   coupleId: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: MessageRef }> {
   try {
     await removeCouple(coupleId);
     revalidatePath('/app/members');
@@ -198,13 +199,13 @@ export async function submitDecoupleCouple(
     if (isCoupleNotFound(error)) {
       return {
         success: false,
-        error: 'Małżeństwo nie zostało znalezione.',
+        error: messageRef('coupleError.notFound'),
       };
     }
 
     return {
       success: false,
-      error: 'Nie udało się rozłączyć małżeństwa. Spróbuj ponownie.',
+      error: messageRef('coupleError.decoupleFailed'),
     };
   }
 }

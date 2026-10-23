@@ -55,7 +55,7 @@ export function VisualStyleSettings(): JSX.Element {
       </fieldset>
       {state?.formError ? (
         <p className={`mt-3 text-sm ${surfaces.dangerText}`} role="alert">
-          {state.formError}
+          {translate(state.formError)}
         </p>
       ) : null}
     </form>

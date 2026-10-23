@@ -1,6 +1,7 @@
 import type { ZodIssue } from 'zod';
 import type { CompanionshipParticipantOption } from '@/application/companionship-add-participant-options';
 import type { CommunityMember } from '@/types/community-member';
+import { messageRef, type MessageRef } from '@/i18n/translator';
 
 export type CompanionshipParticipantKind = 'person' | 'couple';
 
@@ -16,8 +17,8 @@ export interface CompanionshipRelationFormValues {
 
 export interface CompanionshipRelationFormState {
   values?: CompanionshipRelationFormValues;
-  fieldErrors?: Partial<Record<keyof CompanionshipRelationFormValues, string>>;
-  formError?: string;
+  fieldErrors?: Partial<Record<keyof CompanionshipRelationFormValues, MessageRef>>;
+  formError?: MessageRef;
   /** Unique per failed submit so the form remounts and keeps submitted selects visible. */
   restoreKey?: string;
 }
@@ -131,49 +132,52 @@ export function fromFindCompanionshipRelationFormValues(input: {
   };
 }
 
-export function polishCompanionshipRelationWriteIssues(
+export function companionshipRelationWriteIssueMessages(
   issues: ZodIssue[]
-): Partial<Record<keyof CompanionshipRelationFormValues, string>> {
+): Partial<Record<keyof CompanionshipRelationFormValues, MessageRef>> {
   const fieldErrors: Partial<
-    Record<keyof CompanionshipRelationFormValues, string>
+    Record<keyof CompanionshipRelationFormValues, MessageRef>
   > = {};
-  const fieldLabels: Record<keyof CompanionshipRelationFormValues, string> = {
-    accompanied_kind: 'Akompaniowany',
-    accompanied_id: 'Akompaniowany',
-    companion_kind: 'Akompaniator',
-    companion_id: 'Akompaniator',
-    start_date: 'Data rozpoczęcia',
-    end_date: 'Data zakończenia',
-    notes: 'Notatki',
+  const fieldLabels: Record<keyof CompanionshipRelationFormValues, MessageRef> = {
+    accompanied_kind: messageRef('companionshipForm.field.accompanied'),
+    accompanied_id: messageRef('companionshipForm.field.accompanied'),
+    companion_kind: messageRef('companionshipForm.field.companion'),
+    companion_id: messageRef('companionshipForm.field.companion'),
+    start_date: messageRef('companionshipForm.field.startDate'),
+    end_date: messageRef('companionshipForm.field.endDate'),
+    notes: messageRef('companionshipForm.field.notes'),
   };
 
   for (const issue of issues) {
     const field = issue.path[0] as keyof CompanionshipRelationFormValues;
     if (!field) continue;
 
-    const label = fieldLabels[field] ?? field;
+    const values = { field: fieldLabels[field] ?? field };
 
     if (issue.code === 'invalid_type') {
       if (issue.received === 'undefined' || issue.received === 'null') {
-        fieldErrors[field] = `Pole "${label}" jest wymagane.`;
+        fieldErrors[field] = messageRef('validation.field.required', values);
       } else {
-        fieldErrors[field] = `Pole "${label}" ma nieprawidłowy typ.`;
+        fieldErrors[field] = messageRef('validation.field.wrongType', values);
       }
     } else if (issue.code === 'invalid_string') {
       if (issue.validation === 'uuid') {
         fieldErrors[field] =
           field === 'companion_id' || field === 'accompanied_id'
-            ? `Pole "${label}" wymaga wyboru.`
-            : `Pole "${label}" wymaga wyboru osoby.`;
+            ? messageRef('validation.field.needsChoice', values)
+            : messageRef('validation.field.needsPersonChoice', values);
       } else if (issue.validation === 'regex') {
-        fieldErrors[field] = `Pole "${label}" wymaga daty w formacie RRRR-MM-DD.`;
+        fieldErrors[field] = messageRef('validation.field.needsDate', values);
       } else {
-        fieldErrors[field] = `Pole "${label}" ma nieprawidłowy format.`;
+        fieldErrors[field] = messageRef('validation.field.badFormat', values);
       }
     } else if (issue.code === 'invalid_enum_value') {
-      fieldErrors[field] = `Pole "${label}" wymaga wyboru.`;
+      fieldErrors[field] = messageRef('validation.field.needsChoice', values);
     } else {
-      fieldErrors[field] = `Pole "${label}" zawiera błąd: ${issue.message}`;
+      fieldErrors[field] = messageRef('validation.field.hasError', {
+        ...values,
+        detail: issue.message,
+      });
     }
   }
 

@@ -18,6 +18,7 @@ import {
   submitDeleteProposedCompanionship,
   submitActivateProposedCompanionshipFromFind,
 } from './actions';
+import { messageRef } from '@/i18n/translator';
 
 function aPersonCompanionshipFormData(
   overrides: Record<string, string> = {}
@@ -187,8 +188,8 @@ describe('submitNewCompanionshipRelation', () => {
       })
     );
 
-    expect(result.formError).toBe(
-      'Akompaniator i akompaniowany nie mogą być tym samym małżeństwem.'
+    expect(result.formError).toEqual(
+      messageRef('companionshipError.sameCouple')
     );
     expect(redirect).not.toHaveBeenCalled();
   });
@@ -218,7 +219,7 @@ describe('submitNewCompanionshipRelation', () => {
       })
     );
 
-    expect(result.formError).toBe('Akompaniator i akompaniowany nie mogą być tą samą osobą.');
+    expect(result.formError).toEqual(messageRef('companionshipError.samePerson'));
     expect(redirect).not.toHaveBeenCalled();
   });
 
@@ -233,7 +234,7 @@ describe('submitNewCompanionshipRelation', () => {
       aPersonCompanionshipFormData()
     );
 
-    expect(result.formError).toBe('Akompaniator i akompaniowany muszą być tej samej płci.');
+    expect(result.formError).toEqual(messageRef('companionshipError.differentGenders'));
     expect(result.values?.companion_id).toBe('550e8400-e29b-41d4-a716-446655440000');
     expect(result.values?.accompanied_id).toBe('550e8400-e29b-41d4-a716-446655440001');
     expect(result.restoreKey).toEqual(expect.any(String));
@@ -393,8 +394,8 @@ describe('submitEditCompanionshipRelation', () => {
       })
     );
 
-    expect(result.formError).toBe(
-      'Akompaniator i akompaniowany nie mogą być tą samą osobą.'
+    expect(result.formError).toEqual(
+      messageRef('companionshipError.samePerson')
     );
     expect(redirect).not.toHaveBeenCalled();
   });
@@ -416,8 +417,8 @@ describe('submitEditCompanionshipRelation', () => {
       anEditPersonFormData()
     );
 
-    expect(result.formError).toBe(
-      'Akompaniator i akompaniowany muszą być tej samej płci.'
+    expect(result.formError).toEqual(
+      messageRef('companionshipError.differentGenders')
     );
     expect(result.values?.companion_id).toBe(
       '550e8400-e29b-41d4-a716-446655440000'
@@ -446,7 +447,7 @@ describe('submitEditCompanionshipRelation', () => {
       anEditPersonFormData()
     );
 
-    expect(result.formError).toBe('Akompaniament nie został znaleziony.');
+    expect(result.formError).toEqual(messageRef('companionshipError.notFound'));
     expect(redirect).not.toHaveBeenCalled();
   });
 
@@ -492,7 +493,7 @@ describe('submitDeleteCompanionshipRelation', () => {
     const result = await submitDeleteCompanionshipRelation(relationId);
 
     expect(result.success).toBe(false);
-    expect(result.error).toBe('Akompaniament nie został znaleziony.');
+    expect(result.error).toEqual(messageRef('companionshipError.notFound'));
   });
 
   it('submitDeleteCompanionshipRelation returns error on failure', async () => {
@@ -505,7 +506,7 @@ describe('submitDeleteCompanionshipRelation', () => {
     const result = await submitDeleteCompanionshipRelation(relationId);
 
     expect(result.success).toBe(false);
-    expect(result.error).toBe('Nie udało się usunąć akompaniamentu. Spróbuj ponownie.');
+    expect(result.error).toEqual(messageRef('companionshipError.deleteFailed'));
   });
 });
 
@@ -584,8 +585,8 @@ describe('submitRememberProposedCompanionship', () => {
       aPersonCompanionshipFormData()
     );
 
-    expect(result.formError).toBe(
-      'Ta propozycja akompaniatora jest już zapamiętana.'
+    expect(result.formError).toEqual(
+      messageRef('companionshipError.proposalAlreadyRemembered')
     );
   });
 });

@@ -5,6 +5,8 @@ import type { JSX } from 'react';
 import { useVisualStyle } from '@/components/VisualStyleProvider';
 import { visualSurfaces } from '@/components/visual-style-surfaces';
 import { submitDecoupleCouple } from './actions';
+import { useTranslate } from '@/i18n/LocaleProvider';
+import { messageRef, type MessageRef } from '@/i18n/translator';
 
 export function DecoupleCoupleButton({
   coupleId,
@@ -15,14 +17,15 @@ export function DecoupleCoupleButton({
 }): JSX.Element {
   const [isPending, startTransition] = useTransition();
   const [showConfirm, setShowConfirm] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<MessageRef | null>(null);
   const surfaces = visualSurfaces(useVisualStyle());
+  const translate = useTranslate();
 
   function handleDecouple() {
     startTransition(async () => {
       const result = await submitDecoupleCouple(coupleId);
       if (!result.success) {
-        setError(result.error ?? 'Wystąpił błąd');
+        setError(result.error ?? messageRef('error.generic'));
         setShowConfirm(false);
       }
     });
@@ -73,7 +76,7 @@ export function DecoupleCoupleButton({
         ✕
       </button>
       {error ? (
-        <p className={`text-xs ${surfaces.dangerText}`}>{error}</p>
+        <p className={`text-xs ${surfaces.dangerText}`}>{translate(error)}</p>
       ) : null}
     </div>
   );

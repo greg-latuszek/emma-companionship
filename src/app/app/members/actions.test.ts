@@ -18,6 +18,7 @@ import {
   submitCommunityMemberRemoval,
   submitNewCommunityMember,
 } from './actions';
+import { messageRef } from '@/i18n/translator';
 
 vi.mock('@/application/add-community-member', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/application/add-community-member')>();
@@ -78,7 +79,7 @@ describe('submitNewCommunityMember', () => {
       aNewPersonForm({ first_name: '   ' })
     );
 
-    expect(state.fieldErrors?.first_name).toBe('Podaj imię.');
+    expect(state.fieldErrors?.first_name).toEqual(messageRef('memberValidation.firstName'));
     expect(addCommunityMember).not.toHaveBeenCalled();
     expect(redirect).not.toHaveBeenCalled();
   });
@@ -93,7 +94,7 @@ describe('submitNewCommunityMember', () => {
       aNewPersonForm({ email: 'ada@example.com' })
     );
 
-    expect(state.formError).toBe('Ten adres e-mail jest już w rejestrze.');
+    expect(state.formError).toEqual(messageRef('memberError.duplicateEmail'));
     expect(redirect).not.toHaveBeenCalled();
   });
 
@@ -120,7 +121,7 @@ describe('submitCommunityMemberEdits', () => {
       aNewPersonForm({ first_name: '   ' })
     );
 
-    expect(state.fieldErrors?.first_name).toBe('Podaj imię.');
+    expect(state.fieldErrors?.first_name).toEqual(messageRef('memberValidation.firstName'));
     expect(updateCommunityMember).not.toHaveBeenCalled();
   });
 
@@ -135,7 +136,7 @@ describe('submitCommunityMemberEdits', () => {
       aNewPersonForm()
     );
 
-    expect(state.formError).toBe('Nie znaleziono tej osoby.');
+    expect(state.formError).toEqual(messageRef('memberError.notFound'));
     expect(redirect).not.toHaveBeenCalled();
   });
 
@@ -171,8 +172,8 @@ describe('submitCommunityMemberRemoval', () => {
       new FormData()
     );
 
-    expect(state.formError).toBe(
-      'Nie można usunąć osoby, która loguje się do aplikacji.'
+    expect(state.formError).toEqual(
+      messageRef('memberError.removeCanSignIn')
     );
     expect(redirect).not.toHaveBeenCalled();
   });

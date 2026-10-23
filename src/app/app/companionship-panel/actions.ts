@@ -7,6 +7,7 @@ import {
   updateMemberVisualStyle,
 } from '@/application/update-member-visual-style';
 import { visualStyleToStore } from '@/types/auth';
+import { messageRef } from '@/i18n/translator';
 import {
   visualStyleFromForm,
   type VisualStyleFormState,
@@ -21,22 +22,22 @@ export async function submitMemberVisualStyle(
   const session = await auth();
   const memberId = session?.user.memberId;
   if (!memberId) {
-    return { formError: 'Zaloguj się ponownie, aby zmienić wygląd.' };
+    return { formError: messageRef('panel.settings.signInAgain') };
   }
 
   const visualStyle = visualStyleFromForm(formData);
   if (!visualStyle) {
-    return { formError: 'Wybierz wygląd.' };
+    return { formError: messageRef('panel.settings.chooseAppearance') };
   }
 
   try {
     await updateMemberVisualStyle(memberId, visualStyleToStore(visualStyle));
   } catch (error) {
     if (isLoginMemberNotFound(error)) {
-      return { formError: 'Zaloguj się ponownie, aby zmienić wygląd.' };
+      return { formError: messageRef('panel.settings.signInAgain') };
     }
 
-    return { formError: 'Nie udało się zapisać wyglądu. Spróbuj ponownie.' };
+    return { formError: messageRef('panel.settings.saveFailed') };
   }
 
   revalidatePath('/app', 'layout');

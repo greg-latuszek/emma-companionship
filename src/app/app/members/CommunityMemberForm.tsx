@@ -24,6 +24,8 @@ import {
   type CommunityMemberFormState,
   type CommunityMemberFormValues,
 } from './community-member-form-state';
+import { useTranslate } from '@/i18n/LocaleProvider';
+import type { MessageRef } from '@/i18n/translator';
 
 const emptyFormValues: CommunityMemberFormValues = {
   first_name: '',
@@ -49,13 +51,14 @@ function FieldError({
   message,
   className,
 }: {
-  message?: string;
+  message?: MessageRef;
   className: string;
 }): JSX.Element | null {
+  const translate = useTranslate();
   if (!message) {
     return null;
   }
-  return <p className={`text-sm ${className}`}>{message}</p>;
+  return <p className={`text-sm ${className}`}>{translate(message)}</p>;
 }
 
 export function CommunityMemberForm({
@@ -71,6 +74,7 @@ export function CommunityMemberForm({
   const values = state?.values ?? initialValues ?? emptyFormValues;
   const [maritalStatus, setMaritalStatus] = useState(values.marital_status);
   const surfaces = visualSurfaces(useVisualStyle());
+  const translate = useTranslate();
   const fieldControlClassName = surfaces.field;
 
   return (
@@ -83,7 +87,7 @@ export function CommunityMemberForm({
 
       {state?.formError ? (
         <p className={surfaces.formError}>
-          {state.formError}
+          {translate(state.formError)}
         </p>
       ) : null}
 

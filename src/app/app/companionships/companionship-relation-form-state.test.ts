@@ -8,6 +8,7 @@ import {
 } from './companionship-relation-form-state';
 import { MemberId } from '@/types/auth';
 import type { CommunityMember } from '@/types/community-member';
+import { messageRef } from '@/i18n/translator';
 
 const memberA = { id: '550e8400-e29b-41d4-a716-446655440001' } as CommunityMember;
 
@@ -116,7 +117,7 @@ describe('companionshipRelationFormStateAfterFailedSubmit', () => {
         end_date: '',
         notes: '',
       },
-      formError: 'Akompaniator i akompaniowany muszą być tej samej płci.',
+      formError: messageRef('companionshipError.differentGenders'),
     });
     const second = companionshipRelationFormStateAfterFailedSubmit({
       values: first.values,

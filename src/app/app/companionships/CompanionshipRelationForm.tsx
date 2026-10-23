@@ -19,6 +19,8 @@ import {
   type CompanionshipRelationFormState,
   type CompanionshipRelationFormValues,
 } from './companionship-relation-form-state';
+import { useTranslate } from '@/i18n/LocaleProvider';
+import type { MessageRef } from '@/i18n/translator';
 
 export type LockedCoupleCompanionshipEdit = {
   accompaniedCouple: CoupleListItem;
@@ -60,13 +62,14 @@ function FieldError({
   message,
   className,
 }: {
-  message?: string;
+  message?: MessageRef;
   className: string;
 }): JSX.Element | null {
+  const translate = useTranslate();
   if (!message) {
     return null;
   }
-  return <p className={`text-sm ${className}`}>{message}</p>;
+  return <p className={`text-sm ${className}`}>{translate(message)}</p>;
 }
 
 function formatMemberName(member: CommunityMember): string {
@@ -95,8 +98,8 @@ function LockedPersonAccompaniedSelect({
   initialCompanionId: string;
   fieldControlClassName: string;
   dangerTextClassName: string;
-  accompaniedError?: string;
-  companionError?: string;
+  accompaniedError?: MessageRef;
+  companionError?: MessageRef;
 }): JSX.Element {
   const [companionId, setCompanionId] = useState(initialCompanionId);
 
@@ -155,8 +158,8 @@ function LockedFromFindParticipants({
   lockedFromFind: LockedFromFindCompanionship;
   fieldControlClassName: string;
   dangerTextClassName: string;
-  accompaniedError?: string;
-  companionError?: string;
+  accompaniedError?: MessageRef;
+  companionError?: MessageRef;
 }): JSX.Element {
   return (
     <>
@@ -228,8 +231,8 @@ function LockedCoupleAccompaniedSelect({
   initialCompanionCoupleId: string;
   fieldControlClassName: string;
   dangerTextClassName: string;
-  accompaniedError?: string;
-  companionError?: string;
+  accompaniedError?: MessageRef;
+  companionError?: MessageRef;
 }): JSX.Element {
   const [companionCoupleId, setCompanionCoupleId] = useState(
     initialCompanionCoupleId
@@ -324,8 +327,8 @@ function MixedCompanionshipParticipantSelects({
   initialCompanionId: string;
   fieldControlClassName: string;
   dangerTextClassName: string;
-  accompaniedError?: string;
-  companionError?: string;
+  accompaniedError?: MessageRef;
+  companionError?: MessageRef;
 }): JSX.Element {
   const [accompaniedId, setAccompaniedId] = useState(initialAccompaniedId);
   const [accompaniedKind, setAccompaniedKind] = useState<
@@ -449,6 +452,7 @@ export function CompanionshipRelationForm({
   const [state, formAction] = useActionState(action, undefined);
   const values = state?.values ?? initialValues ?? emptyFormValues;
   const surfaces = visualSurfaces(useVisualStyle());
+  const translate = useTranslate();
   const fieldControlClassName = surfaces.field;
 
   const cancelHref =
@@ -465,7 +469,7 @@ export function CompanionshipRelationForm({
     <div className="flex flex-col gap-4 text-left">
       {state?.formError ? (
         <p className={surfaces.formError}>
-          {state.formError}
+          {translate(state.formError)}
         </p>
       ) : null}
       <form key={formKey} action={formAction} className="flex flex-col gap-4 text-left">

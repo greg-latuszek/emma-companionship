@@ -40,6 +40,8 @@ import {
   submitDeleteProposedCompanionship,
   submitRememberProposedCompanionship,
 } from './actions';
+import { useTranslate } from '@/i18n/LocaleProvider';
+import { messageRef, type MessageRef } from '@/i18n/translator';
 
 const selectOptionClassName = 'bg-white text-gray-900';
 
@@ -65,13 +67,14 @@ function FieldError({
   message,
   className,
 }: {
-  message?: string;
+  message?: MessageRef;
   className: string;
 }): JSX.Element | null {
+  const translate = useTranslate();
   if (!message) {
     return null;
   }
-  return <p className={`text-sm ${className}`}>{message}</p>;
+  return <p className={`text-sm ${className}`}>{translate(message)}</p>;
 }
 
 function CompanionshipFindDetailFold({
@@ -205,8 +208,8 @@ function FindParticipantSelects({
   dangerTextClassName: string;
   mutedTextClassName: string;
   strongTextClassName: string;
-  accompaniedError?: string;
-  companionError?: string;
+  accompaniedError?: MessageRef;
+  companionError?: MessageRef;
 }): JSX.Element {
   const router = useRouter();
   const [accompaniedId, setAccompaniedId] = useState(
@@ -397,12 +400,13 @@ export function CompanionshipFindForm({
       }
     : initialValues;
   const surfaces = visualSurfaces(useVisualStyle());
+  const translate = useTranslate();
   const fieldControlClassName = surfaces.field;
   const rememberFormKey = rememberState?.restoreKey ?? 'pristine';
 
   const [selectedChoiceValue, setSelectedChoiceValue] = useState('');
   const [chooseError, setChooseError] = useState<string | undefined>();
-  const [deleteError, setDeleteError] = useState<string | undefined>();
+  const [deleteError, setDeleteError] = useState<MessageRef | undefined>();
   const [isDeleting, startDelete] = useTransition();
   const [visibleFields, setVisibleFields] = useState<
     CompanionshipFindVisibleField[]
@@ -476,7 +480,7 @@ export function CompanionshipFindForm({
       }
       const result = await submitDeleteProposedCompanionship(formData);
       if (!result.success) {
-        setDeleteError(result.error ?? 'Nie udało się usunąć propozycji.');
+        setDeleteError(result.error ?? messageRef('companionshipError.proposalDeleteFailed'));
         return;
       }
       if (selectedChoiceValue === proposedCompanionshipChoiceValue(choice)) {
@@ -489,9 +493,9 @@ export function CompanionshipFindForm({
   return (
     <div className="flex flex-col gap-6 text-left">
       {rememberState?.formError ? (
-        <p className={surfaces.formError}>{rememberState.formError}</p>
+        <p className={surfaces.formError}>{translate(rememberState.formError)}</p>
       ) : null}
-      {deleteError ? <p className={surfaces.formError}>{deleteError}</p> : null}
+      {deleteError ? <p className={surfaces.formError}>{translate(deleteError)}</p> : null}
       {chooseError ? <p className={surfaces.formError}>{chooseError}</p> : null}
 
       <details className="text-sm">
