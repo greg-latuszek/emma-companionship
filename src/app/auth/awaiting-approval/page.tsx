@@ -7,8 +7,11 @@ import { AppArea } from '@/components/AppArea';
 import { Navbar } from '@/components/Navbar';
 import { PageTitle } from '@/components/PageTitle';
 import { PageCredit } from '@/components/PageCredit';
+import { useTranslate } from '@/i18n/LocaleProvider';
 
 export default function AwaitingApprovalPage(): JSX.Element {
+  const translate = useTranslate();
+
   return (
     <PageBackground
       id="awaiting-approval-container"
@@ -43,7 +46,7 @@ export default function AwaitingApprovalPage(): JSX.Element {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 1, delay: 0.5, ease: 'easeOut' }}
               >
-                Oczekujemy akceptacji Administratora serwisu
+                {translate('auth.awaitingApproval')}
               </motion.p>
             </motion.main>
           </AnimatePresence>

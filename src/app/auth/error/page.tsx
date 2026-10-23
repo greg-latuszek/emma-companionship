@@ -3,9 +3,12 @@ import { AppArea } from '@/components/AppArea';
 import { Navbar } from '@/components/Navbar';
 import { PageTitle } from '@/components/PageTitle';
 import { SemiTransparentLink } from '@/components/SemiTransparentButton';
-import { signInFailureCopy } from '@/lib/unavailable-database';
+import { currentTranslator } from '@/i18n/current-locale';
+import { signInFailureMessageKey } from '@/lib/unavailable-database';
 
-export default function SignInErrorPage() {
+export default async function SignInErrorPage() {
+  const translate = await currentTranslator();
+
   return (
     <PageBackground
       imageSource="/docs/img/Christ_and_st_Menas.webp"
@@ -19,10 +22,10 @@ export default function SignInErrorPage() {
             <PageTitle delay={0.3}>emmaCompanionship</PageTitle>
             <div className="w-20 h-px bg-gradient-to-r from-white/0 via-white/40 to-white/0 mb-8 md:mb-10" />
             <p className="max-w-xl text-base sm:text-lg md:text-xl leading-relaxed text-white/85 font-sans font-light tracking-wide drop-shadow-md mb-10">
-              {signInFailureCopy()}
+              {translate(signInFailureMessageKey())}
             </p>
             <SemiTransparentLink href="/" delay={0.6}>
-              Wróć
+              {translate('common.back')}
             </SemiTransparentLink>
           </main>
         </div>

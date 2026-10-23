@@ -5,9 +5,10 @@ import {
   operatorHintsAreEnabled,
   reportAuthJsFailure,
   reportFailedOAuthMemberRecognition,
-  signInFailureCopy,
+  signInFailureMessageKey,
   UnavailableDatabase,
 } from '@/lib/unavailable-database';
+import { messagesFor } from '@/i18n/messages';
 
 function givenARefusedPostgresConnection(): Error & {
   code: string;
@@ -86,17 +87,21 @@ describe('unavailable database', () => {
     expect(operatorHintsAreEnabled({ NODE_ENV: 'production' })).toBe(false);
   });
 
-  it('signInFailureCopy tells a local operator to read the server log when operator hints are on', () => {
-    const copy = signInFailureCopy({ NODE_ENV: 'development' });
+  it('signInFailureMessageKey tells a local operator to read the server log when operator hints are on', () => {
+    const key = signInFailureMessageKey({ NODE_ENV: 'development' });
 
-    expect(copy).toBe('Nie udało się dokończyć logowania. Serwis uruchomiony lokalnie — sprawdź logi serwera.');
-    expect(copy).not.toMatch(/npm|postgres|baz[aę]/i);
+    expect(key).toBe('auth.signInFailedLocal');
+    for (const locale of ['en', 'pl'] as const) {
+      expect(messagesFor(locale)[key]).not.toMatch(/npm|postgres|baz[aę]/i);
+    }
   });
 
-  it('signInFailureCopy hides how the server runs when operator hints are off', () => {
-    const copy = signInFailureCopy({ NODE_ENV: 'production' });
+  it('signInFailureMessageKey hides how the server runs when operator hints are off', () => {
+    const key = signInFailureMessageKey({ NODE_ENV: 'production' });
 
-    expect(copy).toBe('Nie udało się dokończyć logowania. Spróbuj ponownie.');
-    expect(copy).not.toMatch(/npm|logi serwera|lokalnie/i);
+    expect(key).toBe('auth.signInFailed');
+    for (const locale of ['en', 'pl'] as const) {
+      expect(messagesFor(locale)[key]).not.toMatch(/npm|logi serwera|lokalnie|server logs|locally/i);
+    }
   });
 });

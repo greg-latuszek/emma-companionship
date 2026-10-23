@@ -1,5 +1,5 @@
 /**
- * Visible detail fields on Find Companion — same set as Members (Członkowie).
+ * Visible detail fields on Find Companion — same set as Members (Community Members).
  */
 
 import {

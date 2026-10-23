@@ -176,5 +176,9 @@
   "members.decouple.pending": "Rozłączanie...",
   "members.decouple.label": "Rozłącz małżeństwo {name}",
   "members.decouple.title": "Rozłącz",
-  "members.remove.confirm": "Usunąć {name} z rejestru?"
+  "members.remove.confirm": "Usunąć {name} z rejestru?",
+  "common.back": "Wróć",
+  "auth.awaitingApproval": "Oczekujemy akceptacji Administratora serwisu",
+  "auth.signInFailed": "Nie udało się dokończyć logowania. Spróbuj ponownie.",
+  "auth.signInFailedLocal": "Nie udało się dokończyć logowania. Serwis uruchomiony lokalnie — sprawdź logi serwera."
 }

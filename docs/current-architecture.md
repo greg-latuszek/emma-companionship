@@ -143,7 +143,9 @@ flowchart TD
 
 **Errors.** `[emma]` logs may say `npm run db:start`. The public page does not. Local extra sentence when `OPERATOR_HINTS=1` or `NODE_ENV === 'development'`.
 
-User-facing copy is Polish.
+### How texts get translated
+
+Every user-visible string lives in `src/i18n/messages/<language>.json` (flat keys named by meaning). English is the base and the fallback; Polish is the second language. The `emma-language` cookie, set from the navbar dropdown, chooses the language; routes do not change. The root layout reads the cookie and gives the merged messages to `LocaleProvider`; client components call `useTranslate()`, server components `currentTranslator()`. Server actions never return sentences: they return `messageRef(key, values)` and the form or button translates it. Enum values and other stored values stay English; only their labels translate, and lists sort by the Polish label whatever language is shown. To add a language, follow [translating.md](./translating.md).
 
 ## Community registry
 
@@ -169,9 +171,9 @@ flowchart LR
 
 - Required on write: `first_name`, `last_name`. `accompanying_readiness` defaults to `'Not Candidate'` in application code.
 - Email is optional. If present it must look like an email and be unique across **all** member types (application check; the partial unique index stays `app_user`-only).
-- Enum values match the SQL CHECKs, including the stored spelling `Commited`. Labels are Polish; stored values stay English.
+- Enum values match the SQL CHECKs, including the stored spelling `Commited`. Labels come from the message files; stored values stay English.
 - Consecrated-type is offered only when marital status is `consecrated`.
-- **Usuń** is a hard `DELETE` and only when `!hasLoginIdentity`. A login row shows a hint, not a delete control. A FK block shows a Polish sentence with no table names.
+- **Usuń** is a hard `DELETE` and only when `!hasLoginIdentity`. A login row shows a hint, not a delete control. A FK block shows a sentence with no table names.
 - The list loads every in-scope row in one query (no pagination). Cards below the `lg` breakpoint, a table from `lg`. Imię and nazwisko stay visible; other columns are optional. Sort and shown fields live in `localStorage`. The table face is the Google `profile_picture` URL, not `image_url` (unused Base64).
 
 ## Couples

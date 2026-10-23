@@ -176,5 +176,9 @@
   "members.decouple.pending": "Separating...",
   "members.decouple.label": "Separate the couple {name}",
   "members.decouple.title": "Separate",
-  "members.remove.confirm": "Remove {name} from the register?"
+  "members.remove.confirm": "Remove {name} from the register?",
+  "common.back": "Back",
+  "auth.awaitingApproval": "We are waiting for approval from the service Administrator",
+  "auth.signInFailed": "Could not finish signing in. Try again.",
+  "auth.signInFailedLocal": "Could not finish signing in. The service is running locally — check the server logs."
 }

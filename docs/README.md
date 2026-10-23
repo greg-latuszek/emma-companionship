@@ -32,6 +32,7 @@ Business-rule validation (consecrated constraints, power separation), couple gro
 2. **[current-architecture.md](./current-architecture.md)** — stack, hexagon, auth, UI, database honesty, how to run and extend.
 3. **[application_idea.md](./application_idea.md)** — domain language and future product. Read it as destination, not as “implement now”.
 4. **[organic-growth.md](./organic-growth.md)** — why we do not rebuild unused architecture; read before proposing new layers or plans.
+5. **[translating.md](./translating.md)** — how to add a language (no coding needed).
 
 ```mermaid
 flowchart TD
