@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import en from './messages/en.json';
 import pl from './messages/pl.json';
 import cs from './messages/cs.json';
+import sk from './messages/sk.json';
 import { localeFromCookieValue } from './locales';
 import { messagesFor } from './messages';
 import {
@@ -87,6 +88,7 @@ describe('every translated language', () => {
   it.each([
     ['pl', pl],
     ['cs', cs],
+    ['sk', sk],
   ])('%s keeps the placeholders of the English sentences', (_language, translated) => {
     for (const [key, text] of Object.entries(translated)) {
       const english = (en as Record<string, string>)[key];
