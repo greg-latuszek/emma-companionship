@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { MemberId } from '@/types/auth';
 import type { CommunityMember } from '@/types/community-member';
 import { createTranslator } from '@/i18n/translator';
+import type { Locale } from '@/i18n/locales';
 import { messagesFor } from '@/i18n/messages';
 import {
   communityMemberFieldText,
@@ -17,6 +18,10 @@ import {
   storeCommunityMemberListSort,
   toggleCommunityMemberListExtraField,
 } from './community-member-list-state';
+
+function translatorIn(locale: Locale) {
+  return createTranslator(messagesFor(locale));
+}
 
 function aMemoryStorage() {
   const values = new Map<string, string>();
@@ -70,7 +75,7 @@ describe('community member list state', () => {
       last_name: 'Babbage',
     });
 
-    const sorted = sortCommunityMembers([ada, charles], 'last_name');
+    const sorted = sortCommunityMembers([ada, charles], 'last_name', 'asc', translatorIn('en'), 'en');
 
     expect(sorted.map((member) => member.last_name)).toEqual([
       'Babbage',
@@ -87,7 +92,7 @@ describe('community member list state', () => {
       email: null,
     });
 
-    const sorted = sortCommunityMembers([charles, ada], 'email');
+    const sorted = sortCommunityMembers([charles, ada], 'email', 'asc', translatorIn('en'), 'en');
 
     expect(sorted[0]?.email).toBe('ada@example.com');
     expect(sorted[1]?.email).toBeNull();
@@ -112,7 +117,7 @@ describe('community member list state', () => {
       last_name: 'Babbage',
     });
 
-    const sorted = sortCommunityMembers([ada, charles], 'last_name', 'desc');
+    const sorted = sortCommunityMembers([ada, charles], 'last_name', 'desc', translatorIn('en'), 'en');
 
     expect(sorted.map((member) => member.last_name)).toEqual([
       'Lovelace',
@@ -217,12 +222,21 @@ describe('communityMemberFieldText', () => {
 });
 
 describe('sortCommunityMembers by a labelled field', () => {
-  it('sortCommunityMembers orders genders by their Polish labels whatever language the screen shows', () => {
-    const man = aCommunityMember({ id: MemberId('man'), first_name: 'Adam', gender: 'male' });
-    const woman = aCommunityMember({ id: MemberId('woman'), first_name: 'Zofia', gender: 'female' });
+  const single = aCommunityMember({ id: MemberId('single'), marital_status: 'single' });
+  const married = aCommunityMember({ id: MemberId('married'), marital_status: 'married' });
+  const widowed = aCommunityMember({ id: MemberId('widowed'), marital_status: 'widowed' });
 
-    const sorted = sortCommunityMembers([man, woman], 'gender', 'asc');
+  function idsSortedByMaritalStatusIn(locale: Locale): string[] {
+    return sortCommunityMembers([widowed, single, married], 'marital_status', 'asc', translatorIn(locale), locale).map(
+      (member) => member.id
+    );
+  }
 
-    expect(sorted.map((member) => member.id)).toEqual([woman.id, man.id]);
+  it('sortCommunityMembers orders marital statuses by the English words when the screen is English', () => {
+    expect(idsSortedByMaritalStatusIn('en')).toEqual(['married', 'single', 'widowed']);
+  });
+
+  it('sortCommunityMembers orders marital statuses by the Polish words when the screen is Polish', () => {
+    expect(idsSortedByMaritalStatusIn('pl')).toEqual(['single', 'married', 'widowed']);
   });
 });

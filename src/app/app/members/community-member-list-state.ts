@@ -1,5 +1,5 @@
 import type { CommunityMember } from '@/types/community-member';
-import { translateInPolish } from '@/i18n/translate-in-polish';
+import type { Locale } from '@/i18n/locales';
 import type { MessageKey, Translate } from '@/i18n/translator';
 import {
   accompanyingReadinessLabelKeys,
@@ -107,7 +107,8 @@ export function communityMemberFieldText(
 
 function communityMemberSortKey(
   member: CommunityMember,
-  field: CommunityMemberListSortField
+  field: CommunityMemberListSortField,
+  translate: Translate
 ): string {
   if (field === 'first_name') {
     return member.first_name;
@@ -115,17 +116,19 @@ function communityMemberSortKey(
   if (field === 'last_name') {
     return member.last_name;
   }
-  return communityMemberFieldText(member, field, translateInPolish);
+  return communityMemberFieldText(member, field, translate);
 }
 
 export function compareCommunityMembers(
   left: CommunityMember,
   right: CommunityMember,
   sortField: CommunityMemberListSortField,
-  direction: CommunityMemberListSortDirection = 'asc'
+  direction: CommunityMemberListSortDirection,
+  translate: Translate,
+  locale: Locale
 ): number {
-  const leftKey = communityMemberSortKey(left, sortField);
-  const rightKey = communityMemberSortKey(right, sortField);
+  const leftKey = communityMemberSortKey(left, sortField, translate);
+  const rightKey = communityMemberSortKey(right, sortField, translate);
 
   if (leftKey === '' && rightKey !== '') {
     return 1;
@@ -134,22 +137,27 @@ export function compareCommunityMembers(
     return -1;
   }
 
-  const byField = leftKey.localeCompare(rightKey, 'pl');
+  const byField = leftKey.localeCompare(rightKey, locale);
   const directed = direction === 'desc' ? -byField : byField;
   if (directed !== 0) {
     return directed;
   }
 
-  return communityMemberName(left).localeCompare(communityMemberName(right), 'pl');
+  return communityMemberName(left).localeCompare(
+    communityMemberName(right),
+    locale
+  );
 }
 
 export function sortCommunityMembers(
   members: CommunityMember[],
   sortField: CommunityMemberListSortField,
-  direction: CommunityMemberListSortDirection = 'asc'
+  direction: CommunityMemberListSortDirection,
+  translate: Translate,
+  locale: Locale
 ): CommunityMember[] {
   return [...members].sort((left, right) =>
-    compareCommunityMembers(left, right, sortField, direction)
+    compareCommunityMembers(left, right, sortField, direction, translate, locale)
   );
 }
 

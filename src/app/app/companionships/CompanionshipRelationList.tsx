@@ -3,7 +3,9 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import type { JSX } from 'react';
-import { useTranslate } from '@/i18n/LocaleProvider';
+import { useLocale, useTranslate } from '@/i18n/LocaleProvider';
+import type { Locale } from '@/i18n/locales';
+import type { Translate } from '@/i18n/translator';
 import { useVisualStyle } from '@/components/VisualStyleProvider';
 import { visualSurfaces } from '@/components/visual-style-surfaces';
 import type { ArchivedCompanionshipHistoryRow } from '@/application/group-archived-companionship-history';
@@ -16,6 +18,7 @@ import {
   archivedCompanionshipHistoryCompanionLabel,
   archivedCompanionshipHistoryRowId,
   companionFullName,
+  companionshipStatusLabelKey,
   companionshipRelationListFieldLabelKeys,
   nextCompanionshipRelationListSort,
   personFieldText,
@@ -111,9 +114,17 @@ function formatDate(dateString: string | null): string {
 function displayRowsFromRelations(
   relations: CompanionshipRelationListItem[],
   sortField: CompanionshipRelationListSortField,
-  sortDirection: CompanionshipRelationListSortDirection
+  sortDirection: CompanionshipRelationListSortDirection,
+  translate: Translate,
+  locale: Locale
 ): CompanionshipRelationListDisplayRow[] {
-  return sortCompanionshipRelations(relations, sortField, sortDirection).map(
+  return sortCompanionshipRelations(
+    relations,
+    sortField,
+    sortDirection,
+    translate,
+    locale
+  ).map(
     (relation) => ({
       id: relation.id,
       accompaniedLabel: accompaniedFullName(relation),
@@ -129,12 +140,14 @@ function displayRowsFromRelations(
 function displayRowsFromHistory(
   historyRows: ArchivedCompanionshipHistoryRow[],
   sortField: CompanionshipRelationListSortField,
-  sortDirection: CompanionshipRelationListSortDirection
+  sortDirection: CompanionshipRelationListSortDirection,
+  locale: Locale
 ): CompanionshipRelationListDisplayRow[] {
   return sortArchivedCompanionshipHistoryRows(
     historyRows,
     sortField,
-    sortDirection
+    sortDirection,
+    locale
   ).map((row) => ({
     id: archivedCompanionshipHistoryRowId(row),
     accompaniedLabel: archivedCompanionshipHistoryAccompaniedLabel(row),
@@ -158,6 +171,7 @@ export function CompanionshipRelationList({
   readOnly?: boolean;
 }): JSX.Element {
   const translate = useTranslate();
+  const locale = useLocale();
   const [sortField, setSortField] =
     useState<CompanionshipRelationListSortField>('accompanied');
   const [sortDirection, setSortDirection] =
@@ -223,8 +237,14 @@ export function CompanionshipRelationList({
   }
 
   const displayRows = historyRows
-    ? displayRowsFromHistory(historyRows, sortField, sortDirection)
-    : displayRowsFromRelations(relations ?? [], sortField, sortDirection);
+    ? displayRowsFromHistory(historyRows, sortField, sortDirection, locale)
+    : displayRowsFromRelations(
+        relations ?? [],
+        sortField,
+        sortDirection,
+        translate,
+        locale
+      );
 
   function rememberSort(
     field: CompanionshipRelationListSortField,
@@ -465,7 +485,7 @@ export function CompanionshipRelationList({
                 </span>
               ) : null}
               {!readOnly && akompaniamentExtras.includes('status') ? (
-                <span>{translate(row.status === 'active' ? 'companionship.status.active' : 'companionship.status.archived')}</span>
+                <span>{translate(companionshipStatusLabelKey(row.status))}</span>
               ) : null}
             </div>
             {readOnly || !row.relation ? null : (
@@ -660,7 +680,7 @@ export function CompanionshipRelationList({
                     <td
                       className={`whitespace-nowrap px-3 py-3 ${surfaces.mutedText}`}
                     >
-                      {translate(row.status === 'active' ? 'companionship.status.active' : 'companionship.status.archived')}
+                      {translate(companionshipStatusLabelKey(row.status))}
                     </td>
                   ) : null}
                   {row.relation

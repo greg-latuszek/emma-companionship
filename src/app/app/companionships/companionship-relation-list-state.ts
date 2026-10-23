@@ -1,12 +1,12 @@
 import type { ArchivedCompanionshipHistoryRow } from '@/application/group-archived-companionship-history';
 import type { CompanionshipRelationListItem } from '@/types/companionship-relation';
+import type { Locale } from '@/i18n/locales';
 import type { MessageKey, Translate } from '@/i18n/translator';
 import {
   maritalStatusLabelKeys,
   consecratedStatusLabelKeys,
   communityEngagementLabelKeys,
 } from '@/app/app/members/community-member-labels';
-import { translateInPolish } from '@/i18n/translate-in-polish';
 
 // Base fields in the Companionship group
 export const companionshipRelationListBaseFields = [
@@ -153,9 +153,16 @@ export function personFieldText(
   return '';
 }
 
+export function companionshipStatusLabelKey(status: string): MessageKey {
+  return status === 'active'
+    ? 'companionship.status.active'
+    : 'companionship.status.archived';
+}
+
 function companionshipRelationSortKey(
   relation: CompanionshipRelationListItem,
-  field: CompanionshipRelationListSortField
+  field: CompanionshipRelationListSortField,
+  translate: Translate
 ): string {
   if (field === 'accompanied') {
     return accompaniedFullName(relation);
@@ -170,25 +177,25 @@ function companionshipRelationSortKey(
     return relation.end_date ?? '';
   }
   if (field === 'status') {
-    return relation.status;
+    return translate(companionshipStatusLabelKey(relation.status));
   }
   if (field === 'accompanied_marital_status') {
-    return personFieldText(relation.accompanied, 'marital_status', translateInPolish);
+    return personFieldText(relation.accompanied, 'marital_status', translate);
   }
   if (field === 'accompanied_consecrated_status') {
-    return personFieldText(relation.accompanied, 'consecrated_status', translateInPolish);
+    return personFieldText(relation.accompanied, 'consecrated_status', translate);
   }
   if (field === 'accompanied_community_engagement_status') {
-    return personFieldText(relation.accompanied, 'community_engagement_status', translateInPolish);
+    return personFieldText(relation.accompanied, 'community_engagement_status', translate);
   }
   if (field === 'companion_marital_status') {
-    return personFieldText(relation.companion, 'marital_status', translateInPolish);
+    return personFieldText(relation.companion, 'marital_status', translate);
   }
   if (field === 'companion_consecrated_status') {
-    return personFieldText(relation.companion, 'consecrated_status', translateInPolish);
+    return personFieldText(relation.companion, 'consecrated_status', translate);
   }
   if (field === 'companion_community_engagement_status') {
-    return personFieldText(relation.companion, 'community_engagement_status', translateInPolish);
+    return personFieldText(relation.companion, 'community_engagement_status', translate);
   }
   return '';
 }
@@ -197,10 +204,12 @@ function compareCompanionshipRelations(
   left: CompanionshipRelationListItem,
   right: CompanionshipRelationListItem,
   sortField: CompanionshipRelationListSortField,
-  direction: CompanionshipRelationListSortDirection = 'asc'
+  direction: CompanionshipRelationListSortDirection,
+  translate: Translate,
+  locale: Locale
 ): number {
-  const leftKey = companionshipRelationSortKey(left, sortField);
-  const rightKey = companionshipRelationSortKey(right, sortField);
+  const leftKey = companionshipRelationSortKey(left, sortField, translate);
+  const rightKey = companionshipRelationSortKey(right, sortField, translate);
 
   if (leftKey === '' && rightKey !== '') {
     return 1;
@@ -209,22 +218,27 @@ function compareCompanionshipRelations(
     return -1;
   }
 
-  const byField = leftKey.localeCompare(rightKey, 'pl');
+  const byField = leftKey.localeCompare(rightKey, locale);
   const directed = direction === 'desc' ? -byField : byField;
   if (directed !== 0) {
     return directed;
   }
 
-  return accompaniedFullName(left).localeCompare(accompaniedFullName(right), 'pl');
+  return accompaniedFullName(left).localeCompare(
+    accompaniedFullName(right),
+    locale
+  );
 }
 
 export function sortCompanionshipRelations(
   relations: CompanionshipRelationListItem[],
   sortField: CompanionshipRelationListSortField,
-  direction: CompanionshipRelationListSortDirection = 'asc'
+  direction: CompanionshipRelationListSortDirection,
+  translate: Translate,
+  locale: Locale
 ): CompanionshipRelationListItem[] {
   return [...relations].sort((left, right) =>
-    compareCompanionshipRelations(left, right, sortField, direction)
+    compareCompanionshipRelations(left, right, sortField, direction, translate, locale)
   );
 }
 
@@ -281,7 +295,8 @@ function archivedCompanionshipHistorySortKey(
 export function sortArchivedCompanionshipHistoryRows(
   rows: ArchivedCompanionshipHistoryRow[],
   sortField: CompanionshipRelationListSortField,
-  direction: CompanionshipRelationListSortDirection = 'asc'
+  direction: CompanionshipRelationListSortDirection,
+  locale: Locale
 ): ArchivedCompanionshipHistoryRow[] {
   return [...rows].sort((left, right) => {
     const leftKey = archivedCompanionshipHistorySortKey(left, sortField);
@@ -294,7 +309,7 @@ export function sortArchivedCompanionshipHistoryRows(
       return -1;
     }
 
-    const byField = leftKey.localeCompare(rightKey, 'pl');
+    const byField = leftKey.localeCompare(rightKey, locale);
     const directed = direction === 'desc' ? -byField : byField;
     if (directed !== 0) {
       return directed;
@@ -302,7 +317,7 @@ export function sortArchivedCompanionshipHistoryRows(
 
     return archivedCompanionshipHistoryAccompaniedLabel(left).localeCompare(
       archivedCompanionshipHistoryAccompaniedLabel(right),
-      'pl'
+      locale
     );
   });
 }

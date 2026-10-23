@@ -71,7 +71,7 @@ Then run the app (`npm run dev`), choose your language in the navbar, and walk t
 
 - Names of people, e-mail addresses and notes: they are data.
 - The values stored in the database (for example `Commited`): only their labels on screen are translated.
-- Lists sort by the Polish label of a value, whatever language is shown. That is a domain rule, not a translation gap.
+- Lists sort by the words the user sees, using the rules of the chosen language. Switching language can therefore reorder a list.
 
 ## For developers
 

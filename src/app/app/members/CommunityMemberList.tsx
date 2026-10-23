@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import type { JSX } from 'react';
-import { useTranslate } from '@/i18n/LocaleProvider';
+import { useLocale, useTranslate } from '@/i18n/LocaleProvider';
 import { useVisualStyle } from '@/components/VisualStyleProvider';
 import { visualSurfaces } from '@/components/visual-style-surfaces';
 import type { CommunityMember } from '@/types/community-member';
@@ -129,6 +129,7 @@ export function CommunityMemberList({
   members: CommunityMember[];
 }): JSX.Element {
   const translate = useTranslate();
+  const locale = useLocale();
   const [sortField, setSortField] =
     useState<CommunityMemberListSortField>('last_name');
   const [sortDirection, setSortDirection] =
@@ -153,7 +154,13 @@ export function CommunityMemberList({
     );
   }
 
-  const sortedMembers = sortCommunityMembers(members, sortField, sortDirection);
+  const sortedMembers = sortCommunityMembers(
+    members,
+    sortField,
+    sortDirection,
+    translate,
+    locale
+  );
 
   function rememberSort(
     field: CommunityMemberListSortField,
