@@ -1,6 +1,6 @@
 'use client';
 
-import type { JSX } from 'react';
+import { useId, useState, type JSX } from 'react';
 import type { CompanionLoad } from '@/application/list-companion-loads';
 import { useVisualStyle } from '@/components/VisualStyleProvider';
 import { visualSurfaces } from '@/components/visual-style-surfaces';
@@ -18,6 +18,10 @@ function barDescription(companion: CompanionLoad): string {
   return `${companion.load} ${companion.label} (${accompaniedLastNames(companion)})`;
 }
 
+function companionKey(companion: CompanionLoad): string {
+  return `${companion.kind}-${companion.label}`;
+}
+
 function LegendSwatch({ className }: { className: string }): JSX.Element {
   return <span aria-hidden className={`h-3 w-3 shrink-0 rounded-sm ${className}`} />;
 }
@@ -31,7 +35,19 @@ export function CompanionLoadChart({
 }): JSX.Element {
   const surfaces = visualSurfaces(useVisualStyle());
   const translate = useTranslate();
+  const chartId = useId();
+  const [unfoldedKeys, setUnfoldedKeys] = useState<ReadonlySet<string>>(new Set());
   const largestLoad = Math.max(0, ...companions.map((companion) => companion.load));
+
+  function toggleUnfolded(key: string): void {
+    setUnfoldedKeys((current) => {
+      const next = new Set(current);
+      if (!next.delete(key)) {
+        next.add(key);
+      }
+      return next;
+    });
+  }
 
   return (
     <section className="flex min-w-0 flex-col gap-4 text-left">
@@ -61,32 +77,51 @@ export function CompanionLoadChart({
           </ul>
 
           <ul className="flex min-w-0 flex-col gap-0.5">
-            {companions.map((companion) => (
-              <li
-                key={`${companion.kind}-${companion.label}`}
-                className="min-w-0 py-px"
-                title={barDescription(companion)}
-              >
-                <div
-                  className={`flex h-6 min-w-[7rem] items-center gap-2 rounded-r px-2 text-sm text-white ${
-                    companion.isOverwhelmed
-                      ? overwhelmedBarClassName
-                      : fineBarClassName
-                  }`}
-                  style={{
-                    width: `${barLengthShare(companion.load, largestLoad) * 100}%`,
-                  }}
-                >
-                  <span className="shrink-0 font-bold">{companion.load}</span>
-                  <span className="min-w-0 truncate">
-                    {companion.label}{' '}
-                    <span className="opacity-80">
-                      ({accompaniedLastNames(companion)})
-                    </span>
-                  </span>
-                </div>
-              </li>
-            ))}
+            {companions.map((companion) => {
+              const key = companionKey(companion);
+              const isUnfolded = unfoldedKeys.has(key);
+              const accompaniedListId = `${chartId}-${key}`;
+              return (
+                <li key={key} className="min-w-0 py-px" title={barDescription(companion)}>
+                  <button
+                    type="button"
+                    aria-expanded={isUnfolded}
+                    aria-controls={accompaniedListId}
+                    onClick={() => toggleUnfolded(key)}
+                    className={`block w-full cursor-pointer text-left ${surfaces.focusOutline}`}
+                  >
+                    <div
+                      className={`flex h-6 min-w-[7rem] items-center gap-2 rounded-r px-2 text-sm text-white hover:brightness-110 ${
+                        companion.isOverwhelmed
+                          ? overwhelmedBarClassName
+                          : fineBarClassName
+                      }`}
+                      style={{
+                        width: `${barLengthShare(companion.load, largestLoad) * 100}%`,
+                      }}
+                    >
+                      <span className="shrink-0 font-bold">{companion.load}</span>
+                      <span className="min-w-0 truncate">
+                        {companion.label}{' '}
+                        <span className="opacity-80">
+                          ({accompaniedLastNames(companion)})
+                        </span>
+                      </span>
+                    </div>
+                  </button>
+                  {isUnfolded ? (
+                    <ul
+                      id={accompaniedListId}
+                      className={`my-1 ml-2 flex flex-col gap-0.5 border-l py-1 pl-3 text-sm ${surfaces.hairline} ${surfaces.strongText}`}
+                    >
+                      {companion.accompanied.map((unit) => (
+                        <li key={unit.label}>{unit.label}</li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </li>
+              );
+            })}
           </ul>
         </>
       )}
