@@ -7,6 +7,10 @@ import { groupPeopleWithoutCompanion } from '@/application/group-people-without-
 import { groupProposedCompanionshipChoices } from '@/application/group-proposed-companionship-choices';
 import { listPeopleWithoutCompanion } from '@/application/list-people-without-companion';
 import { listProposedCompanionshipRelationsForAccompanied } from '@/application/list-proposed-companionship-relations';
+import {
+  listCompanionLoads,
+  OVERWHELMED_COMPANION_LOAD,
+} from '@/application/list-companion-loads';
 import { listCommunityMembers } from '@/application/list-community-members';
 import { listCouples } from '@/application/list-couples';
 import { findCompanionshipRelation } from '@/application/find-companionship-relation';
@@ -19,7 +23,7 @@ import {
   proposeAccompaniedCompanionshipOptions,
   type CompanionshipParticipantOption,
 } from '@/application/companionship-add-participant-options';
-import { currentTranslator } from '@/i18n/current-locale';
+import { currentLocale, currentTranslator } from '@/i18n/current-locale';
 import { PageBackground } from '@/components/PageBackground';
 import { AppArea } from '@/components/AppArea';
 import { Navbar } from '@/components/Navbar';
@@ -31,6 +35,7 @@ import { CompanionshipRelationList } from './CompanionshipRelationList';
 import { CompanionshipRelationForm } from './CompanionshipRelationForm';
 import { CompanionshipFindForm } from './CompanionshipFindForm';
 import { PeopleWithoutCompanionList } from './PeopleWithoutCompanionList';
+import { CompanionLoadChart } from './CompanionLoadChart';
 import {
   submitActivateProposedCompanionshipFromFind,
   submitNewCompanionshipRelation,
@@ -134,6 +139,11 @@ export default async function CompanionshipsPage({
             [] as Awaited<ReturnType<typeof listArchivedCompanionshipRelations>>
           ),
     ]);
+
+  const companionLoads =
+    selectedTab === 'statistics'
+      ? await listCompanionLoads(await currentLocale())
+      : [];
 
   const historyRows =
     selectedTab === 'history'
@@ -353,6 +363,11 @@ export default async function CompanionshipsPage({
                   isActive: selectedTab === 'missing',
                 },
                 {
+                  href: companionshipsTabHref('statistics'),
+                  label: translate(companionshipsTabTitleKeys.statistics),
+                  isActive: selectedTab === 'statistics',
+                },
+                {
                   href: companionshipsTabHref('find'),
                   label: translate(companionshipsTabTitleKeys.find),
                   isActive: selectedTab === 'find',
@@ -397,6 +412,11 @@ export default async function CompanionshipsPage({
                 />
               ) : selectedTab === 'missing' ? (
                 <PeopleWithoutCompanionList rows={missingRows} />
+              ) : selectedTab === 'statistics' ? (
+                <CompanionLoadChart
+                  companions={companionLoads}
+                  limit={OVERWHELMED_COMPANION_LOAD}
+                />
               ) : selectedTab === 'history' ? (
                 <CompanionshipRelationList historyRows={historyRows} readOnly />
               ) : (
