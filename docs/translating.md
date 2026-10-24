@@ -43,7 +43,14 @@ diff <(jq -r 'keys[]' src/i18n/messages/en-GB.json | sort) \
 
 Lines starting with `<` are missing from your file. Lines starting with `>` are keys that do not exist in English (usually a typo in a key).
 
-Then run the app (`npm run dev`; restart it after adding the file), choose your language in the navbar, and walk through the screens: landing page, panel, Companionships (all five tabs), Community members (all four tabs), and the sign-in error page.
+Then look at your translation in the running app. Start it with `npm run dev` (restart it after adding the file), choose your language in the navbar, and click through every screen you can reach. Do not stop at the first view of a screen:
+
+- open every tab and every page the menus lead to;
+- open each form and submit it empty or with a wrong value, to see the error messages;
+- try the buttons that ask for confirmation, and look at lists with no entries;
+- sort and filter the lists, and use the dropdown choices.
+
+While you do this, look for sentences that are still in English (a line you left out or mistyped), text that does not fit its place (too long, cut off), and `{placeholders}` that show up as numbers or names in the wrong place.
 
 ## 4. Send the file
 
