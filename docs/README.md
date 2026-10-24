@@ -4,22 +4,22 @@ Start here. These files describe the **current** application plus the **domain d
 
 ## What the app is today
 
-A closed, members-only web app. Google confirms identity. The application recognizes that person as a member (existing or pending). Only an **approved** member (`is_active` and not revoked) may stay under `/app`. From the panel they can open **Członkowie wspólnoty** or **Akompaniamenty**. The panel card shows how many people still await a companion and how many Companions are overwhelmed.
+A closed, members-only web app. Google confirms identity. The application recognizes that person as a member (existing or pending). Only an **approved** member (`is_active` and not revoked) may stay under `/app`. From the panel they can open **Community members** or **Companionships**. The panel card shows how many people still await a companion and how many Companions are overwhelmed.
 
 ```mermaid
 flowchart LR
-  visitor[Visitor] --> home["/ Zaloguj się"]
+  visitor[Visitor] --> home["/ Sign in with Google"]
   home --> google[Google OAuth]
   google --> recognize[Recognize member]
   recognize --> pending{Approved?}
   pending -->|no| wait["/auth/awaiting-approval"]
   pending -->|yes| panel["/app/companionship-panel\n(shows missing count)"]
-  panel --> members["/app/members\n(lista | małżeństwa | dodaj)"]
-  members --> edit["Edytuj / Usuń / Rozłącz"]
-  panel --> companionships["/app/companionships\n(tab: utworzone | brakujące | statystyki | znajdź | historia | dodaj)"]
-  companionships --> editRel["Edytuj / Zmień / Usuń akompaniament"]
-  companionships --> assign["Przypisz / Znajdź akompaniatora"]
-  companionships --> find["Zapamiętaj propozycje → Wybierz → aktywuj"]
+  panel --> members["/app/members\n(tab: list | couples | add couples | add person)"]
+  members --> edit["Edit / Delete / Separate"]
+  panel --> companionships["/app/companionships\n(tab: created | missing | statistics | find | history | add)"]
+  companionships --> editRel["Edit / Change / Delete companionship"]
+  companionships --> assign["Assign / Find a Companion"]
+  companionships --> find["Remember proposals → Choose → activate"]
 ```
 
 ## What it is not yet
