@@ -15,6 +15,7 @@
   "panel.companionships.title": "Begleitungen",
   "panel.companionships.description": "Wer wen begleitet",
   "panel.companionships.missing": "Fehlende Begleitungen: {count}",
+  "panel.companionships.overwhelmed": "Überlastete Begleitpersonen: {count}",
   "panel.settings.title": "Einstellungen der Anwendung",
   "panel.settings.signInAgain": "Melden Sie sich erneut an, um das Erscheinungsbild zu ändern.",
   "panel.settings.appearance": "Erscheinungsbild",

@@ -15,6 +15,7 @@
   "panel.companionships.title": "Doprovázení",
   "panel.companionships.description": "Kdo koho doprovází",
   "panel.companionships.missing": "Chybějící doprovázení: {count}",
+  "panel.companionships.overwhelmed": "Přetížení doprovázející: {count}",
   "panel.settings.title": "Nastavení aplikace",
   "panel.settings.signInAgain": "Přihlaste se znovu, abyste mohli změnit vzhled.",
   "panel.settings.appearance": "Vzhled",

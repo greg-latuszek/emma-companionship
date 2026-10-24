@@ -15,6 +15,7 @@
   "panel.companionships.title": "Sprevádzania",
   "panel.companionships.description": "Kto koho sprevádza",
   "panel.companionships.missing": "Chýbajúce sprevádzania: {count}",
+  "panel.companionships.overwhelmed": "Preťažení sprevádzajúci: {count}",
   "panel.settings.title": "Nastavenia aplikácie",
   "panel.settings.signInAgain": "Prihláste sa znova, aby ste mohli zmeniť vzhľad.",
   "panel.settings.appearance": "Vzhľad",

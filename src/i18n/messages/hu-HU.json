@@ -15,6 +15,7 @@
   "panel.companionships.title": "Kísérések",
   "panel.companionships.description": "Ki kit kísér",
   "panel.companionships.missing": "Hiányzó kísérések: {count}",
+  "panel.companionships.overwhelmed": "Túlterhelt kísérők: {count}",
   "panel.settings.title": "Az alkalmazás beállításai",
   "panel.settings.signInAgain": "A megjelenés módosításához jelentkezzen be újra.",
   "panel.settings.appearance": "Megjelenés",

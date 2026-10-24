@@ -15,6 +15,7 @@
   "panel.companionships.title": "Akompaniamenty",
   "panel.companionships.description": "Kto jest czyim akompaniatorem",
   "panel.companionships.missing": "Brakujące akompaniamenty: {count}",
+  "panel.companionships.overwhelmed": "Przeciążeni akompaniatorzy: {count}",
   "panel.settings.title": "Ustawienia aplikacji",
   "panel.settings.signInAgain": "Zaloguj się ponownie, aby zmienić wygląd.",
   "panel.settings.appearance": "Wygląd",

@@ -15,6 +15,7 @@
   "panel.companionships.title": "Companionships",
   "panel.companionships.description": "Who is whose companion",
   "panel.companionships.missing": "Missing companionships: {count}",
+  "panel.companionships.overwhelmed": "Overwhelmed Companions: {count}",
   "panel.settings.title": "Application settings",
   "panel.settings.signInAgain": "Sign in again to change the appearance.",
   "panel.settings.appearance": "Appearance",

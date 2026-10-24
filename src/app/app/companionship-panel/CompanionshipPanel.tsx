@@ -19,12 +19,14 @@ import { useTranslate } from '@/i18n/LocaleProvider';
 export function CompanionshipPanel({
   member,
   missingCount,
+  overwhelmedCount,
 }: {
   member: SignedInMember;
   missingCount: number;
+  overwhelmedCount: number;
 }): JSX.Element {
   const communityMembers = communityMembersPanelCard();
-  const companionships = companionshipsPanelCard(missingCount);
+  const companionships = companionshipsPanelCard(missingCount, overwhelmedCount);
   const surfaces = visualSurfaces(useVisualStyle());
   const translate = useTranslate();
 
@@ -89,6 +91,11 @@ export function CompanionshipPanel({
                 <p className={`mt-3 text-sm font-medium ${surfaces.strongText}`}>
                   {translate('panel.companionships.missing', {
                     count: companionships.missingCount,
+                  })}
+                </p>
+                <p className={`mt-1 text-sm font-medium ${surfaces.strongText}`}>
+                  {translate('panel.companionships.overwhelmed', {
+                    count: companionships.overwhelmedCount,
                   })}
                 </p>
               </Link>

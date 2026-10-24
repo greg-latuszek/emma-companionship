@@ -15,6 +15,7 @@
   "panel.companionships.title": "Accompagnements",
   "panel.companionships.description": "Qui accompagne qui",
   "panel.companionships.missing": "Accompagnements manquants : {count}",
+  "panel.companionships.overwhelmed": "Accompagnateurs surchargés : {count}",
   "panel.settings.title": "Paramètres de l'application",
   "panel.settings.signInAgain": "Reconnectez-vous pour modifier l'apparence.",
   "panel.settings.appearance": "Apparence",
