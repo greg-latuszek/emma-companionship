@@ -1,6 +1,6 @@
 # Adding a language
 
-You do not need to write code to translate the app. You copy one text file, translate the sentences in it, and register the language in two places. English is the base language: any sentence you leave out is shown in English, so a half-finished translation already works.
+You do not need to write code to translate the app. You copy one text file, translate the sentences in it, and send that one file. Nothing else needs to be registered: every language file in `src/i18n/messages/` is a language. English is the base language: any sentence you leave out is shown in English, so a half-finished translation already works.
 
 The examples use Czech (`cs-CZ`). A language code is always the language and the country in capitals, joined by a hyphen: `cs-CZ`, `sk-SK`, `pl-PL`, `en-GB`, `pt-BR`. The country decides the flag shown in the dropdown, so for a language spoken in several countries pick the one your community is in (`de-AT`, not `de-DE`, for Austria).
 
@@ -32,29 +32,7 @@ Rules:
 - Delete a line if you are not ready to translate it. The English sentence will show instead.
 - The file must stay valid JSON: every line ends with a comma except the last one, and a `"` inside a sentence is written `\"`.
 
-## 3. Register the language
-
-Two small edits.
-
-In `src/i18n/locales.ts`, add the code to `locales` and the name of the language, written in that language, to `languageNames`. The flag follows from the country in the code:
-
-```ts
-export const locales = ['en-GB', 'pl-PL', 'cs-CZ'] as const;
-...
-  'cs-CZ': 'Čeština',
-```
-
-In `src/i18n/messages.ts`, import the file and add it to `translations`:
-
-```ts
-import cs from './messages/cs-CZ.json';
-...
-  'cs-CZ': cs,
-```
-
-The language now appears in the dropdown in the navbar. The choice is remembered in a cookie.
-
-## 4. Check what is still untranslated
+## 3. Check what is still untranslated
 
 Keys that are in English but not in your file still show English text in the app. To list them:
 
@@ -65,7 +43,22 @@ diff <(jq -r 'keys[]' src/i18n/messages/en-GB.json | sort) \
 
 Lines starting with `<` are missing from your file. Lines starting with `>` are keys that do not exist in English (usually a typo in a key).
 
-Then run the app (`npm run dev`), choose your language in the navbar, and walk through the screens: landing page, panel, Companionships (all five tabs), Community members (all four tabs), and the sign-in error page.
+Then run the app (`npm run dev`; restart it after adding the file), choose your language in the navbar, and walk through the screens: landing page, panel, Companionships (all five tabs), Community members (all four tabs), and the sign-in error page.
+
+## 4. Send the file
+
+The easiest way needs no git commands: on the repository's GitHub page open `src/i18n/messages`, choose **Add file → Upload files**, drop in your `cs-CZ.json`, and choose **Propose changes**. GitHub opens a pull request; the automatic tests tell you if the file name, a key or a placeholder is wrong, and a developer reviews it.
+
+With git instead:
+
+```bash
+git checkout -b add-czech
+git add src/i18n/messages/cs-CZ.json
+git commit -m "Add a Czech translation"
+git push -u origin add-czech
+```
+
+and open a pull request from that branch. After it is merged and the app is built again, the language is in the dropdown.
 
 ## What is deliberately not translated
 
@@ -75,4 +68,4 @@ Then run the app (`npm run dev`), choose your language in the navbar, and walk t
 
 ## For developers
 
-New user-visible text goes into `src/i18n/messages/en-GB.json` and `pl-PL.json` under a key that names the meaning, not the wording. Client components read it with `useTranslate()`, server components with `currentTranslator()`. Server actions return `messageRef(key, values)` and the UI translates it. See "How texts get translated" in [current-architecture.md](./current-architecture.md).
+New user-visible text goes into `src/i18n/messages/en-GB.json` and `pl-PL.json` under a key that names the meaning, not the wording. The language list is read from the folder when the app is built (`next.config.ts` calls `readLanguageChoices` and passes the list on as `process.env.LANGUAGE_CHOICES`; `vitest.config.ts` does the same for tests), and the texts are loaded with a template-literal `import()` that makes the bundler include every file in the folder. Nothing reads the folder at run time, so a built image does not need the `src/` folder. Client components read it with `useTranslate()`, server components with `currentTranslator()`. Server actions return `messageRef(key, values)` and the UI translates it. See "How texts get translated" in [current-architecture.md](./current-architecture.md).

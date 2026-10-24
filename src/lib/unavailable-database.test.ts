@@ -87,21 +87,21 @@ describe('unavailable database', () => {
     expect(operatorHintsAreEnabled({ NODE_ENV: 'production' })).toBe(false);
   });
 
-  it('signInFailureMessageKey tells a local operator to read the server log when operator hints are on', () => {
+  it('signInFailureMessageKey tells a local operator to read the server log when operator hints are on', async () => {
     const key = signInFailureMessageKey({ NODE_ENV: 'development' });
 
     expect(key).toBe('auth.signInFailedLocal');
     for (const locale of ['en-GB', 'pl-PL'] as const) {
-      expect(messagesFor(locale)[key]).not.toMatch(/npm|postgres|baz[aę]/i);
+      expect((await messagesFor(locale))[key]).not.toMatch(/npm|postgres|baz[aę]/i);
     }
   });
 
-  it('signInFailureMessageKey hides how the server runs when operator hints are off', () => {
+  it('signInFailureMessageKey hides how the server runs when operator hints are off', async () => {
     const key = signInFailureMessageKey({ NODE_ENV: 'production' });
 
     expect(key).toBe('auth.signInFailed');
     for (const locale of ['en-GB', 'pl-PL'] as const) {
-      expect(messagesFor(locale)[key]).not.toMatch(/npm|logi serwera|lokalnie|server logs|locally/i);
+      expect((await messagesFor(locale))[key]).not.toMatch(/npm|logi serwera|lokalnie|server logs|locally/i);
     }
   });
 });

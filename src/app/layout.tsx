@@ -25,7 +25,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={locale}>
       <body className="h-full antialiased">
-        <LocaleProvider locale={locale} messages={messagesFor(locale)}>
+        <LocaleProvider locale={locale} messages={await messagesFor(locale)}>
           <AuthSessionProvider>{children}</AuthSessionProvider>
         </LocaleProvider>
       </body>

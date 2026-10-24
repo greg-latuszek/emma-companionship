@@ -76,8 +76,8 @@ function aRelationWhereAccompaniedIs(maritalStatus: MaritalStatus): Companionshi
   };
 }
 
-function translatorIn(locale: Locale) {
-  return createTranslator(messagesFor(locale));
+async function translatorIn(locale: Locale) {
+  return createTranslator(await messagesFor(locale));
 }
 
 describe('sortCompanionshipRelations by a labelled field', () => {
@@ -87,20 +87,20 @@ describe('sortCompanionshipRelations by a labelled field', () => {
     aRelationWhereAccompaniedIs('married'),
   ];
 
-  function idsSortedIn(locale: Locale): string[] {
+  async function idsSortedIn(locale: Locale): Promise<string[]> {
     return sortCompanionshipRelations(
       relations,
       'accompanied_marital_status',
       'asc',
-      translatorIn(locale), locale
+      await translatorIn(locale), locale
     ).map((relation) => relation.id);
   }
 
-  it('sortCompanionshipRelations orders marital statuses by the English words when the screen is English', () => {
-    expect(idsSortedIn('en-GB')).toEqual(['married', 'single', 'widowed']);
+  it('sortCompanionshipRelations orders marital statuses by the English words when the screen is English', async () => {
+    expect(await idsSortedIn('en-GB')).toEqual(['married', 'single', 'widowed']);
   });
 
-  it('sortCompanionshipRelations orders marital statuses by the Polish words when the screen is Polish', () => {
-    expect(idsSortedIn('pl-PL')).toEqual(['single', 'married', 'widowed']);
+  it('sortCompanionshipRelations orders marital statuses by the Polish words when the screen is Polish', async () => {
+    expect(await idsSortedIn('pl-PL')).toEqual(['single', 'married', 'widowed']);
   });
 });

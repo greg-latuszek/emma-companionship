@@ -9,5 +9,5 @@ export async function currentLocale(): Promise<Locale> {
 }
 
 export async function currentTranslator(): Promise<Translate> {
-  return createTranslator(messagesFor(await currentLocale()));
+  return createTranslator(await messagesFor(await currentLocale()));
 }
