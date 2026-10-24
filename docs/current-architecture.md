@@ -131,11 +131,11 @@ flowchart TD
 | `/auth/continue` | Post-OAuth fork |
 | `/auth/awaiting-approval` | Signed in, not approved |
 | `/auth/error` | Sign-in failed; public copy has no npm/DB details |
-| `/app/companionship-panel` | Approved member; **Członkowie wspólnoty**, **Akompaniamenty** (with missing count), Health Dashboard stub, **Ustawienia aplikacji** |
+| `/app/companionship-panel` | Approved member; **Członkowie wspólnoty**, **Akompaniamenty** (with missing count and overwhelmed-Companions count), Health Dashboard stub, **Ustawienia aplikacji** |
 | `/app/members` | Four tabs: **Członkowie Wspólnoty** (list), **Małżeństwa** (`?tab=couples`), **+ Dodaj Małżeństwa** (`?tab=build-couples`), **+ Dodaj Osobę** (`?tab=new`) |
 | `/app/members/new` | Redirects to `/app/members?tab=new` |
 | `/app/members/[id]/edit` | **Edytuj**; missing id → 404 |
-| `/app/companionships` | Five tabs: **Utworzone Akompaniamenty** (default, active), **Brakujące Akompaniamenty** (`?tab=missing`), **Znajdź Akompaniatora** (`?tab=find`), **Historia Akompaniamentów** (`?tab=history`, archived, read-only), **+ Dodaj Akompaniament** (`?tab=new`); `?accompanied=<id>` pre-fills Accompanied on Find or Dodaj; `?change=<relationId>` opens Find with Accompanied locked (Zmień); `?from=find` on Dodaj locks both sides and activates the chosen proposal on Zapisz |
+| `/app/companionships` | Six tabs: **Utworzone Akompaniamenty** (default, active), **Brakujące Akompaniamenty** (`?tab=missing`), **Statystyki** (`?tab=statistics`, Overwhelmed Companions chart), **Znajdź Akompaniatora** (`?tab=find`), **Historia Akompaniamentów** (`?tab=history`, archived, read-only), **+ Dodaj Akompaniament** (`?tab=new`); `?accompanied=<id>` pre-fills Accompanied on Find or Dodaj; `?change=<relationId>` opens Find with Accompanied locked (Zmień); `?from=find` on Dodaj locks both sides and activates the chosen proposal on Zapisz |
 | `/app/companionships/new` | Redirects to `/app/companionships?tab=new` (preserving `?accompanied`) |
 | `/app/companionships/[id]/edit` | **Edytuj akompaniament**; missing id → 404 |
 
@@ -210,6 +210,7 @@ flowchart LR
   panel["Companionship panel\n(shows missing count)"] --> companionships["/app/companionships"]
   companionships --> tabCreated["tab: Utworzone\n(listCompanionshipRelations active)"]
   companionships --> tabMissing["tab: Brakujące\n(listPeopleWithoutCompanion)"]
+  companionships --> tabStatistics["tab: Statystyki\n(listCompanionLoads)"]
   companionships --> tabFind["tab: Znajdź\n(proposed drafts)"]
   companionships --> tabHistory["tab: Historia\n(listArchivedCompanionshipRelations)"]
   companionships --> tabNew["tab: + Dodaj\n(inline form, ?accompanied pre-fills)"]
@@ -229,6 +230,8 @@ flowchart LR
   remove --> repo
   tabCreated --> listRel[listCompanionshipRelations]
   tabMissing --> listMissing[listPeopleWithoutCompanion]
+  tabStatistics --> listLoads[listCompanionLoads]
+  listLoads --> listRel
   listRel --> repo
   listMissing --> repo
   repo --> pg[(companionship_relations + members JOIN)]
@@ -247,7 +250,14 @@ flowchart LR
 - **Znajdź Akompaniatora** (`?tab=find`): draft several companion options before activating one. Accompanied pool matches Dodaj (Brakujące-eligible) when opened free or from Missing (pre-selected, editable). From **Zmień**, Accompanied is locked (person or couple context like Edit). Layout order: Akompaniowany → **Detale…** for Accompanied → **Obecny Akompaniator** (Zmień only) → Proponowany Akompaniator → its **Detale…**. **Widoczne pola** (same member fields as Członkowie); couple → Detale męża / Detale żony; fold open/closed and field set live in `localStorage`. **Zapamiętaj propozycję** inserts `proposed` row(s) (couple → husband→husband + wife→wife, one radio option); refuses a duplicate Companion while still `proposed`; clears the companion select, keeps Accompanied. **Wybrany Akompaniator** radios list proposals for that Accompanied (none selected by default); **Usuń** deletes that proposal (couple: both spouse rows), no confirm. **Wybierz Akompaniatora** requires a radio → Dodaj with `?from=find` and proposal id(s). Anuluj → Brakujące.
 - **+ Dodaj** form: **Akompaniowany** mixes unpaired Brakujące people (`Nazwisko, Imię`) and eligible couples (`HusbandLastName, HusbandFirst + WifeFirst`). A person in the couple registry never appears as a single row. A couple appears only when **neither** spouse has an **active** accompanied relation. Choosing a person keeps **Akompaniator** as same-gender people from the full registry. Choosing a couple fills **Akompaniator** with other couples only; Zapisz runs `addCoupleCompanionshipRelations` (husband→husband and wife→wife, same dates/notes/status, one transaction). Same couple on both sides is refused. DB stays person↔person — no couple id on `companionship_relations`. `?accompanied=<id>` pre-selects when that id is still an Accompanied option (person or couple). After plain save, redirects to Brakujące if opened from there, otherwise Utworzone. **From Find** (`?from=find`): both Accompanied and Companion locked; no Data zakończenia; Zapisz activates the chosen proposal (`start_date` + notes), deletes other `proposed` rows for that Accompanied (couple: both spouses), and if an active relation already exists (Zmień path) archives it first — same archive-then-replace idea as Edit companion change.
 - Edit form: Accompanied is locked. If the accompanied person is in the couple registry and **both** spouses have an **active** accompanied relation, the form shows the couple label and Companion couples only; Zapisz updates both spouse rows. Otherwise person edit (same-gender Companion list). **Companion unchanged** → in-place update of dates/notes on the active row(s). **Companion changed** → archive current active row(s) (`status = archived`, `end_date = today`) and insert new active row(s) in one transaction. Person edit still binds `accompanied_id` so a tampered form cannot reassign Accompanied.
-- Panel card shows `listPeopleWithoutCompanion().length` as the missing-companionships count.
+- Panel card shows `listPeopleWithoutCompanion().length` as the missing-companionships count, and under it the number of overwhelmed Companions (rows of the Statistics chart with `isOverwhelmed`; a Companion couple counts once). Both lines show when the count is 0.
+- **Statystyki** tab (`?tab=statistics`): a section per chart; today one, **Przeciążeni akompaniatorzy** (Overwhelmed Companions). A horizontal bar chart of **every** Companion with at least one active Accompanied, in plain HTML and Tailwind (no chart library). `listCompanionLoads(locale)` reads the active relations (`listCompanionshipRelations`) and the couples (`listCouples`) and counts in the application layer (`groupCompanionLoads`); no port method, SQL or migration was added for it.
+  - **Row.** A Companion couple is one row when both spouses accompany someone (`Nowak, Jan + Anna`); otherwise each Companion is a person row (`Nowak Jan`), same labels as Brakujące.
+  - **Load.** Distinct Accompanied units of the row, active relations only. An Accompanied couple (both spouses accompanied by the row) is one unit, so a Companion couple with four Accompanied couples has load 4.
+  - **Overwhelmed** when the load is `OVERWHELMED_COMPANION_LOAD` (4) or more; 3 is still acceptable. The limit is a constant in `list-companion-loads.ts`, not a setting. The stored readiness value `Overwhelmed` is a separate, manual choice that this chart neither reads nor writes.
+  - **Order.** Load descending, then the Companion's last name, then first name, collated by the chosen UI language (the Brakujące tab still sorts by `'pl'`).
+  - **Bar.** Length proportional to the load (largest fills the width, minimum 7rem), red for overwhelmed and green for the rest, with the number first, then the label, then `(Accompanied last names)`, trimmed with `…` when it does not fit. A legend names both colours. Hovering shows the full text as a native tooltip.
+  - **Unfold.** Each bar is a button (`aria-expanded`); clicking lists every Accompanied with its full label under the bar. Several can be open; the state is not remembered.
 - **Usuń** requires two-step confirmation (button label changes to confirm). Hard `DELETE` from `companionship_relations` table. FK constraints on `companion_id` and `accompanied_id` use `ON DELETE RESTRICT`.
 
 ## UI composition

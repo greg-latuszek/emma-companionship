@@ -4,7 +4,7 @@ Start here. These files describe the **current** application plus the **domain d
 
 ## What the app is today
 
-A closed, members-only web app. Google confirms identity. The application recognizes that person as a member (existing or pending). Only an **approved** member (`is_active` and not revoked) may stay under `/app`. From the panel they can open **Członkowie wspólnoty** or **Akompaniamenty**. The panel card shows how many people still await a companion.
+A closed, members-only web app. Google confirms identity. The application recognizes that person as a member (existing or pending). Only an **approved** member (`is_active` and not revoked) may stay under `/app`. From the panel they can open **Członkowie wspólnoty** or **Akompaniamenty**. The panel card shows how many people still await a companion and how many Companions are overwhelmed.
 
 ```mermaid
 flowchart LR
@@ -16,7 +16,7 @@ flowchart LR
   pending -->|yes| panel["/app/companionship-panel\n(shows missing count)"]
   panel --> members["/app/members\n(lista | małżeństwa | dodaj)"]
   members --> edit["Edytuj / Usuń / Rozłącz"]
-  panel --> companionships["/app/companionships\n(tab: utworzone | brakujące | znajdź | historia | dodaj)"]
+  panel --> companionships["/app/companionships\n(tab: utworzone | brakujące | statystyki | znajdź | historia | dodaj)"]
   companionships --> editRel["Edytuj / Zmień / Usuń akompaniament"]
   companionships --> assign["Przypisz / Znajdź akompaniatora"]
   companionships --> find["Zapamiętaj propozycje → Wybierz → aktywuj"]
@@ -24,7 +24,7 @@ flowchart LR
 
 ## What it is not yet
 
-Business-rule validation (consecrated constraints, power separation), couple grouping on Companionships Created, geography assignment, supervision relations, graphs, Excel/CSV import, health views, role assignment UI, admin approval UI, password login, Facebook (or any second OAuth provider).
+Business-rule validation (consecrated constraints, power separation), couple grouping on Companionships Created, geography assignment, supervision relations, graphs beyond the Overwhelmed Companions chart, Excel/CSV import, health views, role assignment UI, admin approval UI, password login, Facebook (or any second OAuth provider).
 
 ## Read order
 
