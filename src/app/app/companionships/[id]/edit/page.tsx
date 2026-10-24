@@ -5,6 +5,7 @@ import { listCouples } from '@/application/list-couples';
 import { findCompanionshipRelation } from '@/application/find-companionship-relation';
 import { findActiveCompanionshipRelationByAccompaniedId } from '@/application/find-active-companionship-relation-by-accompanied';
 import { resolveCoupleCompanionshipEditContext } from '@/application/couple-companionship-edit-context';
+import { currentTranslator } from '@/i18n/current-locale';
 import { PageBackground } from '@/components/PageBackground';
 import { AppArea } from '@/components/AppArea';
 import { Navbar } from '@/components/Navbar';
@@ -22,6 +23,7 @@ export default async function EditCompanionshipRelationPage({
   params: Promise<{ id: string }>;
 }) {
   const session = await auth();
+  const translate = await currentTranslator();
 
   if (!session?.user) {
     redirect('/');
@@ -106,7 +108,7 @@ export default async function EditCompanionshipRelationPage({
 
         <div className="flex min-w-0 flex-1 flex-col px-4 pb-16">
           <div className="pt-4 text-center">
-            <PageTitle delay={0.2}>Edytuj akompaniament</PageTitle>
+            <PageTitle delay={0.2}>{translate('companionships.edit.title')}</PageTitle>
           </div>
 
           <SemiTransparentPanel className="mx-auto mt-8 w-full max-w-3xl p-6">

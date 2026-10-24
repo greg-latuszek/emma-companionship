@@ -54,11 +54,12 @@ import {
 import {
   companionshipRelationFormStateAfterFailedSubmit,
   companionshipRelationFormValuesFromForm,
-  polishCompanionshipRelationWriteIssues,
+  companionshipRelationWriteIssueMessages,
   type CompanionshipRelationFormState,
   type CompanionshipRelationFormValues,
 } from './companionship-relation-form-state';
 import { companionshipFindReturnHref } from './companionship-find-form-state';
+import { messageRef, type MessageRef } from '@/i18n/translator';
 
 function redirectAfterNewCompanionship(formData: FormData): never {
   const returnTab = formData.get('return_tab')?.toString();
@@ -84,7 +85,7 @@ async function submitNewPersonCompanionshipRelation(
   if (!parsed.success) {
     return companionshipRelationFormStateAfterFailedSubmit({
       values,
-      fieldErrors: polishCompanionshipRelationWriteIssues(parsed.error.issues),
+      fieldErrors: companionshipRelationWriteIssueMessages(parsed.error.issues),
     });
   }
 
@@ -94,20 +95,20 @@ async function submitNewPersonCompanionshipRelation(
     if (isCompanionAndAccompaniedAreSamePerson(error)) {
       return companionshipRelationFormStateAfterFailedSubmit({
         values,
-        formError: 'Akompaniator i akompaniowany nie mogą być tą samą osobą.',
+        formError: messageRef('companionshipError.samePerson'),
       });
     }
 
     if (isCompanionAndAccompaniedHaveDifferentGenders(error)) {
       return companionshipRelationFormStateAfterFailedSubmit({
         values,
-        formError: 'Akompaniator i akompaniowany muszą być tej samej płci.',
+        formError: messageRef('companionshipError.differentGenders'),
       });
     }
 
     return companionshipRelationFormStateAfterFailedSubmit({
       values,
-      formError: 'Nie udało się zapisać akompaniamentu. Spróbuj ponownie.',
+      formError: messageRef('companionshipError.saveFailed'),
     });
   }
 
@@ -139,7 +140,7 @@ async function submitNewCoupleCompanionshipRelation(
     });
     return companionshipRelationFormStateAfterFailedSubmit({
       values,
-      fieldErrors: polishCompanionshipRelationWriteIssues(remappedIssues),
+      fieldErrors: companionshipRelationWriteIssueMessages(remappedIssues),
     });
   }
 
@@ -149,7 +150,7 @@ async function submitNewCoupleCompanionshipRelation(
     if (isCompanionAndAccompaniedAreSameCouple(error)) {
       return companionshipRelationFormStateAfterFailedSubmit({
         values,
-        formError: 'Akompaniator i akompaniowany nie mogą być tym samym małżeństwem.',
+        formError: messageRef('companionshipError.sameCouple'),
       });
     }
 
@@ -157,13 +158,13 @@ async function submitNewCoupleCompanionshipRelation(
       return companionshipRelationFormStateAfterFailedSubmit({
         values,
         formError:
-          'Wybrane małżeństwa nie mogą utworzyć akompaniamentu. Sprawdź, czy oboje małżonkowie akompaniowanego nadal czekają na akompaniatora.',
+          messageRef('companionshipError.coupleNotEligibleToCreate'),
       });
     }
 
     return companionshipRelationFormStateAfterFailedSubmit({
       values,
-      formError: 'Nie udało się zapisać akompaniamentu. Spróbuj ponownie.',
+      formError: messageRef('companionshipError.saveFailed'),
     });
   }
 
@@ -187,7 +188,7 @@ export async function submitNewCompanionshipRelation(
   return companionshipRelationFormStateAfterFailedSubmit({
     values,
     formError:
-      'Akompaniowany i akompaniator muszą być oboje osobami albo oboje małżeństwami.',
+      messageRef('companionshipError.mixedKinds'),
   });
 }
 
@@ -211,7 +212,7 @@ async function submitEditPersonCompanionshipRelation(
   if (!parsed.success) {
     return companionshipRelationFormStateAfterFailedSubmit({
       values,
-      fieldErrors: polishCompanionshipRelationWriteIssues(parsed.error.issues),
+      fieldErrors: companionshipRelationWriteIssueMessages(parsed.error.issues),
     });
   }
 
@@ -221,27 +222,27 @@ async function submitEditPersonCompanionshipRelation(
     if (isCompanionAndAccompaniedAreSamePersonUpdate(error)) {
       return companionshipRelationFormStateAfterFailedSubmit({
         values,
-        formError: 'Akompaniator i akompaniowany nie mogą być tą samą osobą.',
+        formError: messageRef('companionshipError.samePerson'),
       });
     }
 
     if (isCompanionAndAccompaniedHaveDifferentGendersUpdate(error)) {
       return companionshipRelationFormStateAfterFailedSubmit({
         values,
-        formError: 'Akompaniator i akompaniowany muszą być tej samej płci.',
+        formError: messageRef('companionshipError.differentGenders'),
       });
     }
 
     if (isCompanionshipRelationNotFound(error)) {
       return companionshipRelationFormStateAfterFailedSubmit({
         values,
-        formError: 'Akompaniament nie został znaleziony.',
+        formError: messageRef('companionshipError.notFound'),
       });
     }
 
     return companionshipRelationFormStateAfterFailedSubmit({
       values,
-      formError: 'Nie udało się zaktualizować akompaniamentu. Spróbuj ponownie.',
+      formError: messageRef('companionshipError.updateFailed'),
     });
   }
 
@@ -277,7 +278,7 @@ async function submitEditCoupleCompanionshipRelation(
     });
     return companionshipRelationFormStateAfterFailedSubmit({
       values,
-      fieldErrors: polishCompanionshipRelationWriteIssues(remappedIssues),
+      fieldErrors: companionshipRelationWriteIssueMessages(remappedIssues),
     });
   }
 
@@ -292,7 +293,7 @@ async function submitEditCoupleCompanionshipRelation(
       return companionshipRelationFormStateAfterFailedSubmit({
         values,
         formError:
-          'Akompaniator i akompaniowany nie mogą być tym samym małżeństwem.',
+          messageRef('companionshipError.sameCouple'),
       });
     }
 
@@ -300,20 +301,20 @@ async function submitEditCoupleCompanionshipRelation(
       return companionshipRelationFormStateAfterFailedSubmit({
         values,
         formError:
-          'Wybrane małżeństwa nie mogą zaktualizować akompaniamentu.',
+          messageRef('companionshipError.coupleNotEligibleToUpdate'),
       });
     }
 
     if (isCompanionshipRelationNotFoundCoupleEdit(error)) {
       return companionshipRelationFormStateAfterFailedSubmit({
         values,
-        formError: 'Akompaniament nie został znaleziony.',
+        formError: messageRef('companionshipError.notFound'),
       });
     }
 
     return companionshipRelationFormStateAfterFailedSubmit({
       values,
-      formError: 'Nie udało się zaktualizować akompaniamentu. Spróbuj ponownie.',
+      formError: messageRef('companionshipError.updateFailed'),
     });
   }
 
@@ -341,7 +342,7 @@ export async function submitEditCompanionshipRelation(
 
 export async function submitDeleteCompanionshipRelation(
   relationId: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: MessageRef }> {
   try {
     await deleteCompanionshipRelation(relationId);
     revalidatePath('/app/companionships');
@@ -350,13 +351,13 @@ export async function submitDeleteCompanionshipRelation(
     if (isCompanionshipRelationNotFoundDelete(error)) {
       return {
         success: false,
-        error: 'Akompaniament nie został znaleziony.',
+        error: messageRef('companionshipError.notFound'),
       };
     }
 
     return {
       success: false,
-      error: 'Nie udało się usunąć akompaniamentu. Spróbuj ponownie.',
+      error: messageRef('companionshipError.deleteFailed'),
     };
   }
 }
@@ -388,7 +389,7 @@ async function submitRememberPersonProposedCompanionship(
   if (!parsed.success) {
     return companionshipRelationFormStateAfterFailedSubmit({
       values,
-      fieldErrors: polishCompanionshipRelationWriteIssues(parsed.error.issues),
+      fieldErrors: companionshipRelationWriteIssueMessages(parsed.error.issues),
     });
   }
 
@@ -398,27 +399,27 @@ async function submitRememberPersonProposedCompanionship(
     if (isCompanionAndAccompaniedAreSamePersonProposed(error)) {
       return companionshipRelationFormStateAfterFailedSubmit({
         values,
-        formError: 'Akompaniator i akompaniowany nie mogą być tą samą osobą.',
+        formError: messageRef('companionshipError.samePerson'),
       });
     }
 
     if (isCompanionAndAccompaniedHaveDifferentGendersProposed(error)) {
       return companionshipRelationFormStateAfterFailedSubmit({
         values,
-        formError: 'Akompaniator i akompaniowany muszą być tej samej płci.',
+        formError: messageRef('companionshipError.differentGenders'),
       });
     }
 
     if (isProposedCompanionshipAlreadyExists(error)) {
       return companionshipRelationFormStateAfterFailedSubmit({
         values,
-        formError: 'Ta propozycja akompaniatora jest już zapamiętana.',
+        formError: messageRef('companionshipError.proposalAlreadyRemembered'),
       });
     }
 
     return companionshipRelationFormStateAfterFailedSubmit({
       values,
-      formError: 'Nie udało się zapamiętać propozycji. Spróbuj ponownie.',
+      formError: messageRef('companionshipError.proposalSaveFailed'),
     });
   }
 
@@ -453,7 +454,7 @@ async function submitRememberCoupleProposedCompanionship(
     });
     return companionshipRelationFormStateAfterFailedSubmit({
       values,
-      fieldErrors: polishCompanionshipRelationWriteIssues(remappedIssues),
+      fieldErrors: companionshipRelationWriteIssueMessages(remappedIssues),
     });
   }
 
@@ -464,7 +465,7 @@ async function submitRememberCoupleProposedCompanionship(
       return companionshipRelationFormStateAfterFailedSubmit({
         values,
         formError:
-          'Akompaniator i akompaniowany nie mogą być tym samym małżeństwem.',
+          messageRef('companionshipError.sameCouple'),
       });
     }
 
@@ -472,20 +473,20 @@ async function submitRememberCoupleProposedCompanionship(
       return companionshipRelationFormStateAfterFailedSubmit({
         values,
         formError:
-          'Wybrane małżeństwa nie mogą utworzyć propozycji akompaniamentu.',
+          messageRef('companionshipError.proposalCoupleNotEligible'),
       });
     }
 
     if (isProposedCompanionshipAlreadyExists(error)) {
       return companionshipRelationFormStateAfterFailedSubmit({
         values,
-        formError: 'Ta propozycja akompaniatora jest już zapamiętana.',
+        formError: messageRef('companionshipError.proposalAlreadyRemembered'),
       });
     }
 
     return companionshipRelationFormStateAfterFailedSubmit({
       values,
-      formError: 'Nie udało się zapamiętać propozycji. Spróbuj ponownie.',
+      formError: messageRef('companionshipError.proposalSaveFailed'),
     });
   }
 
@@ -513,13 +514,13 @@ export async function submitRememberProposedCompanionship(
   return companionshipRelationFormStateAfterFailedSubmit({
     values,
     formError:
-      'Akompaniowany i proponowany akompaniator muszą być oboje osobami albo oboje małżeństwami.',
+      messageRef('companionshipError.proposalMixedKinds'),
   });
 }
 
 export async function submitDeleteProposedCompanionship(
   formData: FormData
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: MessageRef }> {
   const proposalKind = formData.get('proposal_kind')?.toString();
 
   try {
@@ -537,13 +538,13 @@ export async function submitDeleteProposedCompanionship(
     } else {
       return {
         success: false,
-        error: 'Nie udało się usunąć propozycji. Spróbuj ponownie.',
+        error: messageRef('companionshipError.proposalDeleteFailed'),
       };
     }
   } catch {
     return {
       success: false,
-      error: 'Nie udało się usunąć propozycji. Spróbuj ponownie.',
+      error: messageRef('companionshipError.proposalDeleteFailed'),
     };
   }
 
@@ -572,7 +573,7 @@ export async function submitActivateProposedCompanionshipFromFind(
       if (!husbandProposalId || !wifeProposalId) {
         return companionshipRelationFormStateAfterFailedSubmit({
           values,
-          formError: 'Brak wybranej propozycji akompaniatora.',
+          formError: messageRef('companionshipError.proposalMissing'),
         });
       }
       await activateProposedCoupleCompanionshipRelations(
@@ -587,7 +588,7 @@ export async function submitActivateProposedCompanionshipFromFind(
       if (!proposalId) {
         return companionshipRelationFormStateAfterFailedSubmit({
           values,
-          formError: 'Brak wybranej propozycji akompaniatora.',
+          formError: messageRef('companionshipError.proposalMissing'),
         });
       }
       await activateProposedCompanionshipRelation(proposalId, activation);
@@ -595,14 +596,14 @@ export async function submitActivateProposedCompanionshipFromFind(
       return companionshipRelationFormStateAfterFailedSubmit({
         values,
         formError:
-          'Akompaniowany i akompaniator muszą być oboje osobami albo oboje małżeństwami.',
+          messageRef('companionshipError.mixedKinds'),
       });
     }
   } catch {
     return companionshipRelationFormStateAfterFailedSubmit({
       values,
       formError:
-        'Nie udało się aktywować propozycji akompaniamentu. Spróbuj ponownie.',
+        messageRef('companionshipError.proposalActivateFailed'),
     });
   }
 

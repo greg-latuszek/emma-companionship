@@ -5,7 +5,7 @@ describe('communityMembersPanelCard', () => {
   it('the companionship panel card for community members opens /app/members', () => {
     expect(communityMembersPanelCard()).toEqual({
       href: '/app/members',
-      title: 'Członkowie wspólnoty',
+      titleKey: 'panel.members.title',
     });
   });
 });

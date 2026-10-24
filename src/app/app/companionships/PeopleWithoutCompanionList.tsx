@@ -5,6 +5,7 @@ import type { JSX } from 'react';
 import type { PersonWithoutCompanionRow } from '@/application/group-people-without-companion';
 import { useVisualStyle } from '@/components/VisualStyleProvider';
 import { visualSurfaces } from '@/components/visual-style-surfaces';
+import { useTranslate } from '@/i18n/LocaleProvider';
 
 function accompaniedIdFrom(row: PersonWithoutCompanionRow): string {
   return row.kind === 'person' ? row.person.id : row.couple.id;
@@ -24,11 +25,12 @@ export function PeopleWithoutCompanionList({
   rows: PersonWithoutCompanionRow[];
 }): JSX.Element {
   const surfaces = visualSurfaces(useVisualStyle());
+  const translate = useTranslate();
 
   if (rows.length === 0) {
     return (
       <p className={`text-center ${surfaces.mutedText}`}>
-        Każda osoba ma akompaniatora.
+        {translate('companionships.missing.empty')}
       </p>
     );
   }
@@ -48,13 +50,13 @@ export function PeopleWithoutCompanionList({
                 href={assignHref(row)}
                 className={`text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
               >
-                Przypisz akompaniatora
+                {translate('companionships.missing.assign')}
               </Link>
               <Link
                 href={findHref(row)}
                 className={`text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
               >
-                Znajdź akompaniatora
+                {translate('companionships.missing.find')}
               </Link>
             </div>
           </li>
@@ -69,10 +71,10 @@ export function PeopleWithoutCompanionList({
               <th
                 className={`${surfaces.importantArea} min-w-[14rem] px-3 py-2 font-bold`}
               >
-                Osoba / Małżeństwo
+                {translate('companionships.missing.personOrCouple')}
               </th>
               <th className="px-3 py-3">
-                <span className="sr-only">Działania</span>
+                <span className="sr-only">{translate('common.actions')}</span>
               </th>
             </tr>
           </thead>
@@ -92,13 +94,13 @@ export function PeopleWithoutCompanionList({
                       href={assignHref(row)}
                       className={`text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
                     >
-                      Przypisz akompaniatora
+                      {translate('companionships.missing.assign')}
                     </Link>
                     <Link
                       href={findHref(row)}
                       className={`text-sm font-medium ${surfaces.strongText} underline-offset-4 hover:underline`}
                     >
-                      Znajdź akompaniatora
+                      {translate('companionships.missing.find')}
                     </Link>
                   </div>
                 </td>

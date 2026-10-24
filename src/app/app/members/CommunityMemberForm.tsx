@@ -11,11 +11,11 @@ import {
   maritalStatuses,
 } from '@/types/community-member';
 import {
-  accompanyingReadinessLabels,
-  communityEngagementLabels,
-  consecratedStatusLabels,
-  genderLabels,
-  maritalStatusLabels,
+  accompanyingReadinessLabelKeys,
+  communityEngagementLabelKeys,
+  consecratedStatusLabelKeys,
+  genderLabelKeys,
+  maritalStatusLabelKeys,
 } from './community-member-labels';
 import { useVisualStyle } from '@/components/VisualStyleProvider';
 import { visualSurfaces } from '@/components/visual-style-surfaces';
@@ -24,6 +24,8 @@ import {
   type CommunityMemberFormState,
   type CommunityMemberFormValues,
 } from './community-member-form-state';
+import { useTranslate } from '@/i18n/LocaleProvider';
+import type { MessageRef } from '@/i18n/translator';
 
 const emptyFormValues: CommunityMemberFormValues = {
   first_name: '',
@@ -49,13 +51,14 @@ function FieldError({
   message,
   className,
 }: {
-  message?: string;
+  message?: MessageRef;
   className: string;
 }): JSX.Element | null {
+  const translate = useTranslate();
   if (!message) {
     return null;
   }
-  return <p className={`text-sm ${className}`}>{message}</p>;
+  return <p className={`text-sm ${className}`}>{translate(message)}</p>;
 }
 
 export function CommunityMemberForm({
@@ -71,6 +74,7 @@ export function CommunityMemberForm({
   const values = state?.values ?? initialValues ?? emptyFormValues;
   const [maritalStatus, setMaritalStatus] = useState(values.marital_status);
   const surfaces = visualSurfaces(useVisualStyle());
+  const translate = useTranslate();
   const fieldControlClassName = surfaces.field;
 
   return (
@@ -83,12 +87,12 @@ export function CommunityMemberForm({
 
       {state?.formError ? (
         <p className={surfaces.formError}>
-          {state.formError}
+          {translate(state.formError)}
         </p>
       ) : null}
 
       <label className="flex flex-col gap-1">
-        <span>Imię</span>
+        <span>{translate('member.field.firstName')}</span>
         <input
           name="first_name"
           defaultValue={values.first_name}
@@ -99,7 +103,7 @@ export function CommunityMemberForm({
       </label>
 
       <label className="flex flex-col gap-1">
-        <span>Nazwisko</span>
+        <span>{translate('member.field.lastName')}</span>
         <input
           name="last_name"
           defaultValue={values.last_name}
@@ -110,18 +114,18 @@ export function CommunityMemberForm({
       </label>
 
       <label className="flex flex-col gap-1">
-        <span>Płeć</span>
+        <span>{translate('member.field.gender')}</span>
         <select
           name="gender"
           defaultValue={values.gender}
           className={fieldControlClassName}
         >
           <option value="" className={selectOptionClassName}>
-            nie wybrano
+            {translate('member.form.notSelected')}
           </option>
           {genders.map((gender) => (
             <option key={gender} value={gender} className={selectOptionClassName}>
-              {genderLabels[gender]}
+              {translate(genderLabelKeys[gender])}
             </option>
           ))}
         </select>
@@ -129,7 +133,7 @@ export function CommunityMemberForm({
       </label>
 
       <label className="flex flex-col gap-1">
-        <span>Stan cywilny</span>
+        <span>{translate('member.field.maritalStatus')}</span>
         <select
           name="marital_status"
           value={maritalStatus}
@@ -137,11 +141,11 @@ export function CommunityMemberForm({
           className={fieldControlClassName}
         >
           <option value="" className={selectOptionClassName}>
-            nie wybrano
+            {translate('member.form.notSelected')}
           </option>
           {maritalStatuses.map((status) => (
             <option key={status} value={status} className={selectOptionClassName}>
-              {maritalStatusLabels[status]}
+              {translate(maritalStatusLabelKeys[status])}
             </option>
           ))}
         </select>
@@ -150,18 +154,18 @@ export function CommunityMemberForm({
 
       {maritalStatusIsConsecrated(maritalStatus) ? (
         <label className="flex flex-col gap-1">
-          <span>Typ osoby konsekrowanej / seminarzysty</span>
+          <span>{translate('member.form.consecratedStatus')}</span>
           <select
             name="consecrated_status"
             defaultValue={values.consecrated_status}
             className={fieldControlClassName}
           >
             <option value="" className={selectOptionClassName}>
-            nie wybrano
+            {translate('member.form.notSelected')}
           </option>
             {consecratedStatuses.map((status) => (
               <option key={status} value={status} className={selectOptionClassName}>
-                {consecratedStatusLabels[status]}
+                {translate(consecratedStatusLabelKeys[status])}
               </option>
             ))}
           </select>
@@ -170,18 +174,18 @@ export function CommunityMemberForm({
       ) : null}
 
       <label className="flex flex-col gap-1">
-        <span>Zaangażowanie we wspólnocie</span>
+        <span>{translate('member.field.communityEngagement')}</span>
         <select
           name="community_engagement_status"
           defaultValue={values.community_engagement_status}
           className={fieldControlClassName}
         >
           <option value="" className={selectOptionClassName}>
-            nie wybrano
+            {translate('member.form.notSelected')}
           </option>
           {communityEngagementStatuses.map((status) => (
             <option key={status} value={status} className={selectOptionClassName}>
-              {communityEngagementLabels[status]}
+              {translate(communityEngagementLabelKeys[status])}
             </option>
           ))}
         </select>
@@ -189,7 +193,7 @@ export function CommunityMemberForm({
       </label>
 
       <label className="flex flex-col gap-1">
-        <span>Gotowość do akompaniamentu</span>
+        <span>{translate('member.field.accompanyingReadiness')}</span>
         <select
           name="accompanying_readiness"
           defaultValue={values.accompanying_readiness}
@@ -197,7 +201,7 @@ export function CommunityMemberForm({
         >
           {accompanyingReadinesses.map((readiness) => (
             <option key={readiness} value={readiness} className={selectOptionClassName}>
-              {accompanyingReadinessLabels[readiness]}
+              {translate(accompanyingReadinessLabelKeys[readiness])}
             </option>
           ))}
         </select>
@@ -205,7 +209,7 @@ export function CommunityMemberForm({
       </label>
 
       <label className="flex flex-col gap-1">
-        <span>E-mail</span>
+        <span>{translate('member.field.email')}</span>
         <input
           name="email"
           type="email"
@@ -216,7 +220,7 @@ export function CommunityMemberForm({
       </label>
 
       <label className="flex flex-col gap-1">
-        <span>Telefon</span>
+        <span>{translate('member.field.phone')}</span>
         <input
           name="phone"
           defaultValue={values.phone}
@@ -226,7 +230,7 @@ export function CommunityMemberForm({
       </label>
 
       <label className="flex flex-col gap-1">
-        <span>Notatki</span>
+        <span>{translate('member.field.notes')}</span>
         <textarea
           name="notes"
           defaultValue={values.notes}
@@ -241,13 +245,13 @@ export function CommunityMemberForm({
           href="/app/members"
           className={surfaces.secondaryButton}
         >
-          Anuluj
+          {translate('common.cancel')}
         </Link>
         <button
           type="submit"
           className={surfaces.primaryButton}
         >
-          Zapisz
+          {translate('common.save')}
         </button>
       </div>
     </form>

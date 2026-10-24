@@ -1,14 +1,15 @@
 import type { CoupleListItem, CoupleParticipant } from '@/types/couple';
+import type { MessageKey } from '@/i18n/translator';
 
 export const coupleListExtraFields = ['email', 'phone', 'notes'] as const;
 export type CoupleListExtraField = (typeof coupleListExtraFields)[number];
 
 export const defaultCoupleListExtraFields: CoupleListExtraField[] = [];
 
-export const coupleListFieldLabels: Record<CoupleListExtraField, string> = {
-  email: 'E-mail',
-  phone: 'Telefon',
-  notes: 'Notatki',
+export const coupleListFieldLabelKeys: Record<CoupleListExtraField, MessageKey> = {
+  email: 'member.field.email',
+  phone: 'member.field.phone',
+  notes: 'member.field.notes',
 };
 
 export const coupleListExtraFieldsStorageKey =

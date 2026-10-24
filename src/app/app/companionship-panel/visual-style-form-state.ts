@@ -1,12 +1,13 @@
 import { visualStyles, type VisualStyle } from '@/types/auth';
+import type { MessageKey, MessageRef } from '@/i18n/translator';
 
-export const visualStyleLabels: Record<VisualStyle, string> = {
-  'semi-transparent': 'Półprzeźroczysty',
-  'high-contrast': 'Kontrastowy',
+export const visualStyleLabelKeys: Record<VisualStyle, MessageKey> = {
+  'semi-transparent': 'visualStyle.semi-transparent',
+  'high-contrast': 'visualStyle.high-contrast',
 };
 
 export type VisualStyleFormState = {
-  formError?: string;
+  formError?: MessageRef;
 };
 
 export function visualStyleFromForm(formData: FormData): VisualStyle | null {

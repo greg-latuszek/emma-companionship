@@ -1,3 +1,5 @@
+import type { MessageKey } from '@/i18n/translator';
+
 const OPERATOR_PREFIX = '[emma]';
 
 export class UnavailableDatabase extends Error {
@@ -99,14 +101,14 @@ export function operatorHintsAreEnabled(
   return env.OPERATOR_HINTS === '1' || env.NODE_ENV === 'development';
 }
 
-export function signInFailureCopy(
+export function signInFailureMessageKey(
   env: NodeJS.ProcessEnv = process.env
-): string {
+): MessageKey {
   if (operatorHintsAreEnabled(env)) {
-    return 'Nie udało się dokończyć logowania. Serwis uruchomiony lokalnie — sprawdź logi serwera.';
+    return 'auth.signInFailedLocal';
   }
 
-  return 'Nie udało się dokończyć logowania. Spróbuj ponownie.';
+  return 'auth.signInFailed';
 }
 
 function connectionAddress(error: unknown): string {

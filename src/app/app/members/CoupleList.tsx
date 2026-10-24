@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type { JSX } from 'react';
+import { useTranslate } from '@/i18n/LocaleProvider';
 import { useVisualStyle } from '@/components/VisualStyleProvider';
 import { visualSurfaces } from '@/components/visual-style-surfaces';
 import type { CoupleListItem, CoupleParticipant } from '@/types/couple';
@@ -9,7 +10,7 @@ import { DecoupleCoupleButton } from './DecoupleCoupleButton';
 import {
   coupleDisplayName,
   coupleListExtraFields,
-  coupleListFieldLabels,
+  coupleListFieldLabelKeys,
   coupleParticipantFieldText,
   defaultCoupleListExtraFields,
   readStoredCoupleListExtraFields,
@@ -25,6 +26,7 @@ function CouplePersonDetails({
   person: CoupleParticipant;
   extraFields: CoupleListExtraField[];
 }): JSX.Element {
+  const translate = useTranslate();
   const surfaces = visualSurfaces(useVisualStyle());
 
   return (
@@ -39,7 +41,7 @@ function CouplePersonDetails({
         }
         return (
           <span key={field} className={`text-sm ${surfaces.mutedText}`}>
-            {coupleListFieldLabels[field]}: {text}
+            {translate(coupleListFieldLabelKeys[field])}: {text}
           </span>
         );
       })}
@@ -52,6 +54,7 @@ export function CoupleList({
 }: {
   couples: CoupleListItem[];
 }): JSX.Element {
+  const translate = useTranslate();
   const [extraFields, setExtraFields] = useState<CoupleListExtraField[]>(
     defaultCoupleListExtraFields
   );
@@ -69,7 +72,7 @@ export function CoupleList({
   if (couples.length === 0) {
     return (
       <p className={`text-center ${surfaces.mutedText}`}>
-        Nie ma jeszcze potwierdzonych małżeństw.
+        {translate('members.couples.empty')}
       </p>
     );
   }
@@ -78,7 +81,7 @@ export function CoupleList({
     <div className="flex min-w-0 flex-col gap-6">
       <fieldset className="flex flex-col gap-2 text-left">
         <legend className={`text-sm font-medium ${surfaces.strongText}`}>
-          Widoczne pola
+          {translate('common.visibleFields')}
         </legend>
         <div className="flex flex-wrap gap-3">
           {coupleListExtraFields.map((field) => (
@@ -95,7 +98,7 @@ export function CoupleList({
                   );
                 }}
               />
-              {coupleListFieldLabels[field]}
+              {translate(coupleListFieldLabelKeys[field])}
             </label>
           ))}
         </div>
@@ -122,13 +125,13 @@ export function CoupleList({
           <thead>
             <tr className={`border-b ${surfaces.rowDivider}`}>
               <th className={`py-2 pr-4 font-medium ${surfaces.strongText}`}>
-                Mąż
+                {translate('members.couples.husband')}
               </th>
               <th className={`py-2 pr-4 font-medium ${surfaces.strongText}`}>
-                Żona
+                {translate('members.couples.wife')}
               </th>
               <th className={`py-2 font-medium ${surfaces.strongText}`}>
-                <span className="sr-only">Akcje</span>
+                <span className="sr-only">{translate('members.couples.actions')}</span>
               </th>
             </tr>
           </thead>

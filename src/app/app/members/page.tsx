@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { listCommunityMembers } from '@/application/list-community-members';
 import { listCouples } from '@/application/list-couples';
 import { listMarriedPeopleWithoutCouple } from '@/application/list-married-people-without-couple';
+import { currentTranslator } from '@/i18n/current-locale';
 import { PageBackground } from '@/components/PageBackground';
 import { AppArea } from '@/components/AppArea';
 import { Navbar } from '@/components/Navbar';
@@ -26,6 +27,7 @@ export default async function CommunityMembersPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const session = await auth();
+  const translate = await currentTranslator();
 
   if (!session?.user) {
     redirect('/');
@@ -62,26 +64,26 @@ export default async function CommunityMembersPage({
         <div className="flex min-w-0 flex-1 flex-col px-4 pb-16">
           <SemiTransparentPanel className="mx-auto mt-8 w-full min-w-0 max-w-3xl p-6 lg:max-w-none">
             <TabbedPanel
-              ariaLabel="Członkowie wspólnoty"
+              ariaLabel={translate('members.tabs.label')}
               tabs={[
                 {
                   href: membersPageTabHref('list'),
-                  label: 'Członkowie Wspólnoty',
+                  label: translate('members.tab.list'),
                   isActive: selectedTab === 'list',
                 },
                 {
                   href: membersPageTabHref('couples'),
-                  label: 'Małżeństwa',
+                  label: translate('members.tab.couples'),
                   isActive: selectedTab === 'couples',
                 },
                 {
                   href: membersPageTabHref('build-couples'),
-                  label: '+ Dodaj Małżeństwa',
+                  label: translate('members.tab.buildCouples'),
                   isActive: selectedTab === 'build-couples',
                 },
                 {
                   href: membersPageTabHref('new'),
-                  label: '+ Dodaj Osobę',
+                  label: translate('members.tab.new'),
                   isActive: selectedTab === 'new',
                 },
               ]}

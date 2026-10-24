@@ -19,6 +19,7 @@ import {
   proposeAccompaniedCompanionshipOptions,
   type CompanionshipParticipantOption,
 } from '@/application/companionship-add-participant-options';
+import { currentTranslator } from '@/i18n/current-locale';
 import { PageBackground } from '@/components/PageBackground';
 import { AppArea } from '@/components/AppArea';
 import { Navbar } from '@/components/Navbar';
@@ -46,7 +47,7 @@ import {
 import {
   companionshipsTabFrom,
   companionshipsTabHref,
-  companionshipsTabTitles,
+  companionshipsTabTitleKeys,
 } from './companionships-tab';
 
 function participantKindFromParam(
@@ -78,6 +79,7 @@ export default async function CompanionshipsPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const session = await auth();
+  const translate = await currentTranslator();
 
   if (!session?.user) {
     redirect('/');
@@ -338,31 +340,31 @@ export default async function CompanionshipsPage({
         <div className="flex min-w-0 flex-1 flex-col px-4 pb-16">
           <SemiTransparentPanel className="mx-auto mt-8 w-full min-w-0 max-w-3xl p-6 lg:max-w-none">
             <TabbedPanel
-              ariaLabel="Akompaniamenty"
+              ariaLabel={translate('companionships.tabs.label')}
               tabs={[
                 {
                   href: companionshipsTabHref('created'),
-                  label: companionshipsTabTitles.created,
+                  label: translate(companionshipsTabTitleKeys.created),
                   isActive: selectedTab === 'created',
                 },
                 {
                   href: companionshipsTabHref('missing'),
-                  label: companionshipsTabTitles.missing,
+                  label: translate(companionshipsTabTitleKeys.missing),
                   isActive: selectedTab === 'missing',
                 },
                 {
                   href: companionshipsTabHref('find'),
-                  label: companionshipsTabTitles.find,
+                  label: translate(companionshipsTabTitleKeys.find),
                   isActive: selectedTab === 'find',
                 },
                 {
                   href: companionshipsTabHref('history'),
-                  label: companionshipsTabTitles.history,
+                  label: translate(companionshipsTabTitleKeys.history),
                   isActive: selectedTab === 'history',
                 },
                 {
                   href: companionshipsTabHref('new'),
-                  label: companionshipsTabTitles.new,
+                  label: translate(companionshipsTabTitleKeys.new),
                   isActive: selectedTab === 'new',
                 },
               ]}

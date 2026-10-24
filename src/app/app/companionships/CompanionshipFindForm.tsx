@@ -26,7 +26,7 @@ import {
 import {
   companionshipFindDetailPeople,
   companionshipFindParticipantFieldText,
-  companionshipFindVisibleFieldLabels,
+  companionshipFindVisibleFieldLabelKeys,
   companionshipFindVisibleFields,
   defaultCompanionshipFindVisibleFields,
   readCompanionshipFindDetailFoldOpen,
@@ -40,6 +40,8 @@ import {
   submitDeleteProposedCompanionship,
   submitRememberProposedCompanionship,
 } from './actions';
+import { useTranslate } from '@/i18n/LocaleProvider';
+import { messageRef, type MessageKey, type MessageRef } from '@/i18n/translator';
 
 const selectOptionClassName = 'bg-white text-gray-900';
 
@@ -65,30 +67,32 @@ function FieldError({
   message,
   className,
 }: {
-  message?: string;
+  message?: MessageRef;
   className: string;
 }): JSX.Element | null {
+  const translate = useTranslate();
   if (!message) {
     return null;
   }
-  return <p className={`text-sm ${className}`}>{message}</p>;
+  return <p className={`text-sm ${className}`}>{translate(message)}</p>;
 }
 
 function CompanionshipFindDetailFold({
   foldKey,
-  title,
+  titleKey,
   member,
   visibleFields,
   mutedTextClassName,
   strongTextClassName,
 }: {
   foldKey: string;
-  title: string;
+  titleKey: MessageKey;
   member: CommunityMember;
   visibleFields: CompanionshipFindVisibleField[];
   mutedTextClassName: string;
   strongTextClassName: string;
 }): JSX.Element {
+  const translate = useTranslate();
   const [open, setOpen] = useState(() =>
     typeof window === 'undefined'
       ? true
@@ -114,15 +118,15 @@ function CompanionshipFindDetailFold({
       className="text-sm"
     >
       <summary className={`cursor-pointer select-none ${mutedTextClassName}`}>
-        {title}
+        {translate(titleKey)}
       </summary>
       <div className="mt-2 flex flex-col gap-1 pl-1">
         {visibleFields.map((field) => (
           <p key={field} className={mutedTextClassName}>
             <span className={strongTextClassName}>
-              {companionshipFindVisibleFieldLabels[field]}:{' '}
+              {translate(companionshipFindVisibleFieldLabelKeys[field])}:{' '}
             </span>
-            {companionshipFindParticipantFieldText(member, field)}
+            {companionshipFindParticipantFieldText(member, field, translate)}
           </p>
         ))}
       </div>
@@ -156,11 +160,11 @@ function CompanionshipFindParticipantDetails({
 
   return (
     <div className="flex flex-col gap-2">
-      {detailPeople.map(({ title, member }) => (
+      {detailPeople.map(({ titleKey, member }) => (
         <CompanionshipFindDetailFold
           key={member.id}
           foldKey={member.id}
-          title={title}
+          titleKey={titleKey}
           member={member}
           visibleFields={visibleFields}
           mutedTextClassName={mutedTextClassName}
@@ -205,9 +209,10 @@ function FindParticipantSelects({
   dangerTextClassName: string;
   mutedTextClassName: string;
   strongTextClassName: string;
-  accompaniedError?: string;
-  companionError?: string;
+  accompaniedError?: MessageRef;
+  companionError?: MessageRef;
 }): JSX.Element {
+  const translate = useTranslate();
   const router = useRouter();
   const [accompaniedId, setAccompaniedId] = useState(
     lockedAccompanied?.id ?? initialAccompaniedId
@@ -268,7 +273,9 @@ function FindParticipantSelects({
   }
 
   const companionPlaceholder =
-    accompanied?.kind === 'couple' ? 'wybierz małżeństwo...' : 'wybierz osobę...';
+    accompanied?.kind === 'couple'
+        ? translate('common.chooseCouple')
+        : translate('common.choosePerson');
 
   return (
     <>
@@ -276,7 +283,7 @@ function FindParticipantSelects({
       <input type="hidden" name="companion_kind" value={companionKind} />
 
       <label className="flex flex-col gap-1">
-        <span>Akompaniowany</span>
+        <span>{translate('companionship.field.accompanied')}</span>
         {lockedAccompanied ? (
           <>
             <input type="hidden" name="accompanied_id" value={lockedAccompanied.id} />
@@ -291,7 +298,7 @@ function FindParticipantSelects({
             required
           >
             <option value="" className={selectOptionClassName}>
-              wybierz...
+              {translate('common.choose')}
             </option>
             {accompaniedOptions.map((option) => (
               <option
@@ -318,13 +325,13 @@ function FindParticipantSelects({
 
       {currentCompanionLabel ? (
         <label className="flex flex-col gap-1">
-          <span>Obecny Akompaniator</span>
+          <span>{translate('companionships.find.currentCompanion')}</span>
           <p className={fieldControlClassName}>{currentCompanionLabel}</p>
         </label>
       ) : null}
 
       <label className="flex flex-col gap-1">
-        <span>Proponowany Akompaniator</span>
+        <span>{translate('companionships.find.proposedCompanion')}</span>
         <select
           name="companion_id"
           value={companionId}
@@ -397,12 +404,13 @@ export function CompanionshipFindForm({
       }
     : initialValues;
   const surfaces = visualSurfaces(useVisualStyle());
+  const translate = useTranslate();
   const fieldControlClassName = surfaces.field;
   const rememberFormKey = rememberState?.restoreKey ?? 'pristine';
 
   const [selectedChoiceValue, setSelectedChoiceValue] = useState('');
-  const [chooseError, setChooseError] = useState<string | undefined>();
-  const [deleteError, setDeleteError] = useState<string | undefined>();
+  const [chooseError, setChooseError] = useState<MessageRef | undefined>();
+  const [deleteError, setDeleteError] = useState<MessageRef | undefined>();
   const [isDeleting, startDelete] = useTransition();
   const [visibleFields, setVisibleFields] = useState<
     CompanionshipFindVisibleField[]
@@ -424,7 +432,7 @@ export function CompanionshipFindForm({
       proposalChoices
     );
     if (!choice || !accompanied) {
-      setChooseError('Wybierz akompaniatora z listy propozycji.');
+      setChooseError(messageRef('companionships.find.chooseFromList'));
       return;
     }
 
@@ -458,7 +466,7 @@ export function CompanionshipFindForm({
       return;
     }
 
-    setChooseError('Wybierz akompaniatora z listy propozycji.');
+    setChooseError(messageRef('companionships.find.chooseFromList'));
   }
 
   function removeProposal(choice: ProposedCompanionshipChoice): void {
@@ -476,7 +484,7 @@ export function CompanionshipFindForm({
       }
       const result = await submitDeleteProposedCompanionship(formData);
       if (!result.success) {
-        setDeleteError(result.error ?? 'Nie udało się usunąć propozycji.');
+        setDeleteError(result.error ?? messageRef('companionshipError.proposalDeleteFailed'));
         return;
       }
       if (selectedChoiceValue === proposedCompanionshipChoiceValue(choice)) {
@@ -489,14 +497,14 @@ export function CompanionshipFindForm({
   return (
     <div className="flex flex-col gap-6 text-left">
       {rememberState?.formError ? (
-        <p className={surfaces.formError}>{rememberState.formError}</p>
+        <p className={surfaces.formError}>{translate(rememberState.formError)}</p>
       ) : null}
-      {deleteError ? <p className={surfaces.formError}>{deleteError}</p> : null}
-      {chooseError ? <p className={surfaces.formError}>{chooseError}</p> : null}
+      {deleteError ? <p className={surfaces.formError}>{translate(deleteError)}</p> : null}
+      {chooseError ? <p className={surfaces.formError}>{translate(chooseError)}</p> : null}
 
       <details className="text-sm">
         <summary className={`cursor-pointer select-none ${surfaces.secondaryText}`}>
-          Widoczne pola
+          {translate('common.visibleFields')}
         </summary>
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2 pl-1">
           {companionshipFindVisibleFields.map((field) => (
@@ -518,7 +526,7 @@ export function CompanionshipFindForm({
                   });
                 }}
               />
-              <span>{companionshipFindVisibleFieldLabels[field]}</span>
+              <span>{translate(companionshipFindVisibleFieldLabelKeys[field])}</span>
             </label>
           ))}
         </div>
@@ -555,16 +563,18 @@ export function CompanionshipFindForm({
 
         <div className="flex justify-end">
           <button type="submit" className={surfaces.primaryButton}>
-            Zapamiętaj propozycję
+            {translate('companionships.find.remember')}
           </button>
         </div>
       </form>
 
       <fieldset className="flex flex-col gap-3">
-        <legend className={surfaces.headerText}>Lista propozycji Akompaniatora</legend>
+        <legend className={surfaces.headerText}>
+          {translate('companionships.find.proposalList')}
+        </legend>
         {proposalChoices.length === 0 ? (
           <p className={surfaces.mutedText}>
-            Brak zapamiętanych propozycji dla wybranego akompaniowanego.
+            {translate('companionships.find.proposalListEmpty')}
           </p>
         ) : (
           <ul className="flex flex-col gap-4">
@@ -594,7 +604,7 @@ export function CompanionshipFindForm({
                       disabled={isDeleting}
                       className={`text-sm font-medium ${surfaces.dangerText} underline-offset-4 hover:underline disabled:opacity-50`}
                     >
-                      Usuń
+                      {translate('common.delete')}
                     </button>
                   </div>
                   <CompanionshipFindParticipantDetails
@@ -619,14 +629,14 @@ export function CompanionshipFindForm({
           href="/app/companionships?tab=missing"
           className={surfaces.secondaryButton}
         >
-          Anuluj
+          {translate('common.cancel')}
         </Link>
         <button
           type="button"
           onClick={chooseSelectedProposal}
           className={surfaces.primaryButton}
         >
-          Wybierz Akompaniatora
+          {translate('companionships.find.choose')}
         </button>
       </div>
     </div>

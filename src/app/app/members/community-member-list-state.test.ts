@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { MemberId } from '@/types/auth';
 import type { CommunityMember } from '@/types/community-member';
+import { createTranslator } from '@/i18n/translator';
+import type { Locale } from '@/i18n/locales';
+import { messagesFor } from '@/i18n/messages';
 import {
+  communityMemberFieldText,
   communityMemberListExtraFields,
   communityMemberListExtraFieldsFromStoredValue,
   communityMemberListSortFromStoredValue,
@@ -14,6 +18,10 @@ import {
   storeCommunityMemberListSort,
   toggleCommunityMemberListExtraField,
 } from './community-member-list-state';
+
+async function translatorIn(locale: Locale) {
+  return createTranslator(await messagesFor(locale));
+}
 
 function aMemoryStorage() {
   const values = new Map<string, string>();
@@ -59,7 +67,7 @@ describe('community member list state', () => {
     );
   });
 
-  it('sortCommunityMembers orders people by last name when the Delegate sorts by nazwisko', () => {
+  it('sortCommunityMembers orders people by last name when the Delegate sorts by nazwisko', async () => {
     const ada = aCommunityMember({ last_name: 'Lovelace' });
     const charles = aCommunityMember({
       id: MemberId('member-2'),
@@ -67,7 +75,7 @@ describe('community member list state', () => {
       last_name: 'Babbage',
     });
 
-    const sorted = sortCommunityMembers([ada, charles], 'last_name');
+    const sorted = sortCommunityMembers([ada, charles], 'last_name', 'asc', await translatorIn('en-GB'), 'en-GB');
 
     expect(sorted.map((member) => member.last_name)).toEqual([
       'Babbage',
@@ -75,7 +83,7 @@ describe('community member list state', () => {
     ]);
   });
 
-  it('sortCommunityMembers puts people without an email after those who have one', () => {
+  it('sortCommunityMembers puts people without an email after those who have one', async () => {
     const ada = aCommunityMember({ email: 'ada@example.com' });
     const charles = aCommunityMember({
       id: MemberId('member-2'),
@@ -84,7 +92,7 @@ describe('community member list state', () => {
       email: null,
     });
 
-    const sorted = sortCommunityMembers([charles, ada], 'email');
+    const sorted = sortCommunityMembers([charles, ada], 'email', 'asc', await translatorIn('en-GB'), 'en-GB');
 
     expect(sorted[0]?.email).toBe('ada@example.com');
     expect(sorted[1]?.email).toBeNull();
@@ -101,7 +109,7 @@ describe('community member list state', () => {
     expect(toggleCommunityMemberListExtraField(['email'], 'email')).toEqual([]);
   });
 
-  it('sortCommunityMembers reverses last names when the Delegate sorts nazwisko descending', () => {
+  it('sortCommunityMembers reverses last names when the Delegate sorts nazwisko descending', async () => {
     const ada = aCommunityMember({ last_name: 'Lovelace' });
     const charles = aCommunityMember({
       id: MemberId('member-2'),
@@ -109,7 +117,7 @@ describe('community member list state', () => {
       last_name: 'Babbage',
     });
 
-    const sorted = sortCommunityMembers([ada, charles], 'last_name', 'desc');
+    const sorted = sortCommunityMembers([ada, charles], 'last_name', 'desc', await translatorIn('en-GB'), 'en-GB');
 
     expect(sorted.map((member) => member.last_name)).toEqual([
       'Lovelace',
@@ -197,5 +205,38 @@ describe('community member list state', () => {
       sortField: 'community_engagement_status',
       sortDirection: 'asc',
     });
+  });
+});
+
+describe('communityMemberFieldText', () => {
+  it('communityMemberFieldText names the marital status in the language of the translator', async () => {
+    const member = aCommunityMember({ marital_status: 'widowed' });
+
+    expect(
+      communityMemberFieldText(member, 'marital_status', createTranslator(await messagesFor('en-GB')))
+    ).toBe('widow / widower');
+    expect(
+      communityMemberFieldText(member, 'marital_status', createTranslator(await messagesFor('pl-PL')))
+    ).toBe('wdowa / wdowiec');
+  });
+});
+
+describe('sortCommunityMembers by a labelled field', () => {
+  const single = aCommunityMember({ id: MemberId('single'), marital_status: 'single' });
+  const married = aCommunityMember({ id: MemberId('married'), marital_status: 'married' });
+  const widowed = aCommunityMember({ id: MemberId('widowed'), marital_status: 'widowed' });
+
+  async function idsSortedByMaritalStatusIn(locale: Locale): Promise<string[]> {
+    return sortCommunityMembers([widowed, single, married], 'marital_status', 'asc', await translatorIn(locale), locale).map(
+      (member) => member.id
+    );
+  }
+
+  it('sortCommunityMembers orders marital statuses by the English words when the screen is English', async () => {
+    expect(await idsSortedByMaritalStatusIn('en-GB')).toEqual(['married', 'single', 'widowed']);
+  });
+
+  it('sortCommunityMembers orders marital statuses by the Polish words when the screen is Polish', async () => {
+    expect(await idsSortedByMaritalStatusIn('pl-PL')).toEqual(['single', 'married', 'widowed']);
   });
 });

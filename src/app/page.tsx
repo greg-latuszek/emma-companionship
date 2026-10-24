@@ -10,8 +10,10 @@ import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 import { DevSignInButton } from '@/components/DevSignInButton';
 import { PageTitle } from '@/components/PageTitle';
 import { PageCredit } from '@/components/PageCredit';
+import { useTranslate } from '@/i18n/LocaleProvider';
 
 export default function Home(): JSX.Element {
+  const translate = useTranslate();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isLoaded, _setIsLoaded] = useState(true);
 
@@ -64,7 +66,7 @@ export default function Home(): JSX.Element {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 1, delay: 0.5, ease: 'easeOut' }}
                 >
-                  Serwis dla Delegatów ds. Akompaniamentów
+                  {translate('landing.subtitle')}
                 </motion.p>
               </motion.main>
             )}

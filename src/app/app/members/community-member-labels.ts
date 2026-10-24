@@ -5,46 +5,53 @@ import {
   genders,
   maritalStatuses,
 } from '@/types/community-member';
+import type { MessageKey } from '@/i18n/translator';
 
-export const genderLabels: Record<(typeof genders)[number], string> = {
-  male: 'mężczyzna',
-  female: 'kobieta',
+export const genderLabelKeys: Record<(typeof genders)[number], MessageKey> = {
+  male: 'member.gender.male',
+  female: 'member.gender.female',
 };
 
-export const maritalStatusLabels: Record<(typeof maritalStatuses)[number], string> = {
-  single: 'osoba stanu wolnego',
-  married: 'w małżeństwie',
-  widowed: 'wdowa / wdowiec',
-  consecrated: 'osoba konsekrowana lub seminarzysta',
+export const maritalStatusLabelKeys: Record<
+  (typeof maritalStatuses)[number],
+  MessageKey
+> = {
+  single: 'member.maritalStatus.single',
+  married: 'member.maritalStatus.married',
+  widowed: 'member.maritalStatus.widowed',
+  consecrated: 'member.maritalStatus.consecrated',
 };
 
-export const consecratedStatusLabels: Record<(typeof consecratedStatuses)[number], string> = {
-  priest: 'kapłan',
-  deacon: 'diakon',
-  seminarian: 'seminarzysta',
-  sister: 'siostra konsekrowana',
-  brother: 'brat konsekrowany',
+export const consecratedStatusLabelKeys: Record<
+  (typeof consecratedStatuses)[number],
+  MessageKey
+> = {
+  priest: 'member.consecratedStatus.priest',
+  deacon: 'member.consecratedStatus.deacon',
+  seminarian: 'member.consecratedStatus.seminarian',
+  sister: 'member.consecratedStatus.sister',
+  brother: 'member.consecratedStatus.brother',
 };
 
-export const communityEngagementLabels: Record<
+export const communityEngagementLabelKeys: Record<
   (typeof communityEngagementStatuses)[number],
-  string
+  MessageKey
 > = {
-  'Looker-On': 'Przyglądający(a) się',
-  'In-Probation': 'Na etapie przyjęcia i rozeznania',
-  Commited: 'Zaangażowany(a)',
-  'In-Fraternity-Probation': 'W okresie próbnym Bractwa Jezusowego',
-  Fraternity: 'Konsekrowany(a) w Bractwie Jezusowym',
+  'Looker-On': 'member.engagement.lookerOn',
+  'In-Probation': 'member.engagement.inProbation',
+  Commited: 'member.engagement.committed',
+  'In-Fraternity-Probation': 'member.engagement.inFraternityProbation',
+  Fraternity: 'member.engagement.fraternity',
 };
 
-export const accompanyingReadinessLabels: Record<
+export const accompanyingReadinessLabelKeys: Record<
   (typeof accompanyingReadinesses)[number],
-  string
+  MessageKey
 > = {
-  'Not Candidate': 'Nie jest kandydatem',
-  Candidate: 'Kandydat',
-  Ready: 'Gotowy',
-  Active: 'Aktywny',
-  Overwhelmed: 'Przeciążony',
-  Deactivated: 'Dezaktywowany',
+  'Not Candidate': 'member.readiness.notCandidate',
+  Candidate: 'member.readiness.candidate',
+  Ready: 'member.readiness.ready',
+  Active: 'member.readiness.active',
+  Overwhelmed: 'member.readiness.overwhelmed',
+  Deactivated: 'member.readiness.deactivated',
 };

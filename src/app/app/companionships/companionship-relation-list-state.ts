@@ -1,9 +1,11 @@
 import type { ArchivedCompanionshipHistoryRow } from '@/application/group-archived-companionship-history';
 import type { CompanionshipRelationListItem } from '@/types/companionship-relation';
+import type { Locale } from '@/i18n/locales';
+import type { MessageKey, Translate } from '@/i18n/translator';
 import {
-  maritalStatusLabels,
-  consecratedStatusLabels,
-  communityEngagementLabels,
+  maritalStatusLabelKeys,
+  consecratedStatusLabelKeys,
+  communityEngagementLabelKeys,
 } from '@/app/app/members/community-member-labels';
 
 // Base fields in the Companionship group
@@ -92,28 +94,28 @@ export const defaultCompanionshipRelationListAccompaniedExtras: CompanionshipRel
 export const defaultCompanionshipRelationListCompanionExtras: CompanionshipRelationListPersonExtraField[] =
   [];
 
-export const companionshipRelationListFieldLabels: Record<
+export const companionshipRelationListFieldLabelKeys: Record<
   | CompanionshipRelationListBaseField
   | CompanionshipRelationListAkompaniamentExtraField
   | CompanionshipRelationListPersonExtraField
   | `accompanied_${CompanionshipRelationListPersonExtraField}`
   | `companion_${CompanionshipRelationListPersonExtraField}`,
-  string
+  MessageKey
 > = {
-  accompanied: 'Akompaniowany',
-  companion: 'Akompaniator',
-  start_date: 'Data rozpoczęcia',
-  end_date: 'Data zakończenia',
-  status: 'Status',
-  marital_status: 'Stan cywilny',
-  consecrated_status: 'Typ osoby konsekrowanej',
-  community_engagement_status: 'Zaangażowanie we wspólnocie',
-  accompanied_marital_status: 'Stan cywilny',
-  accompanied_consecrated_status: 'Typ osoby konsekrowanej',
-  accompanied_community_engagement_status: 'Zaangażowanie we wspólnocie',
-  companion_marital_status: 'Stan cywilny',
-  companion_consecrated_status: 'Typ osoby konsekrowanej',
-  companion_community_engagement_status: 'Zaangażowanie we wspólnocie',
+  accompanied: 'companionship.field.accompanied',
+  companion: 'companionship.field.companion',
+  start_date: 'companionship.field.startDate',
+  end_date: 'companionship.field.endDate',
+  status: 'companionship.field.status',
+  marital_status: 'member.field.maritalStatus',
+  consecrated_status: 'member.field.consecratedStatus',
+  community_engagement_status: 'member.field.communityEngagement',
+  accompanied_marital_status: 'member.field.maritalStatus',
+  accompanied_consecrated_status: 'member.field.consecratedStatus',
+  accompanied_community_engagement_status: 'member.field.communityEngagement',
+  companion_marital_status: 'member.field.maritalStatus',
+  companion_consecrated_status: 'member.field.consecratedStatus',
+  companion_community_engagement_status: 'member.field.communityEngagement',
 };
 
 export function accompaniedFullName(
@@ -130,31 +132,37 @@ export function companionFullName(
 
 export function personFieldText(
   person: CompanionshipRelationListItem['accompanied'] | CompanionshipRelationListItem['companion'],
-  field: CompanionshipRelationListPersonExtraField
+  field: CompanionshipRelationListPersonExtraField,
+  translate: Translate
 ): string {
   if (field === 'marital_status') {
-    return person.marital_status ? maritalStatusLabels[person.marital_status] : '';
+    return person.marital_status
+      ? translate(maritalStatusLabelKeys[person.marital_status])
+      : '';
   }
   if (field === 'consecrated_status') {
     return person.consecrated_status
-      ? consecratedStatusLabels[person.consecrated_status]
+      ? translate(consecratedStatusLabelKeys[person.consecrated_status])
       : '';
   }
   if (field === 'community_engagement_status') {
     return person.community_engagement_status
-      ? communityEngagementLabels[person.community_engagement_status]
+      ? translate(communityEngagementLabelKeys[person.community_engagement_status])
       : '';
   }
   return '';
 }
 
-function statusLabel(status: string): string {
-  return status === 'active' ? 'Aktywny' : 'Zarchiwizowany';
+export function companionshipStatusLabelKey(status: string): MessageKey {
+  return status === 'active'
+    ? 'companionship.status.active'
+    : 'companionship.status.archived';
 }
 
 function companionshipRelationSortKey(
   relation: CompanionshipRelationListItem,
-  field: CompanionshipRelationListSortField
+  field: CompanionshipRelationListSortField,
+  translate: Translate
 ): string {
   if (field === 'accompanied') {
     return accompaniedFullName(relation);
@@ -169,25 +177,25 @@ function companionshipRelationSortKey(
     return relation.end_date ?? '';
   }
   if (field === 'status') {
-    return statusLabel(relation.status);
+    return translate(companionshipStatusLabelKey(relation.status));
   }
   if (field === 'accompanied_marital_status') {
-    return personFieldText(relation.accompanied, 'marital_status');
+    return personFieldText(relation.accompanied, 'marital_status', translate);
   }
   if (field === 'accompanied_consecrated_status') {
-    return personFieldText(relation.accompanied, 'consecrated_status');
+    return personFieldText(relation.accompanied, 'consecrated_status', translate);
   }
   if (field === 'accompanied_community_engagement_status') {
-    return personFieldText(relation.accompanied, 'community_engagement_status');
+    return personFieldText(relation.accompanied, 'community_engagement_status', translate);
   }
   if (field === 'companion_marital_status') {
-    return personFieldText(relation.companion, 'marital_status');
+    return personFieldText(relation.companion, 'marital_status', translate);
   }
   if (field === 'companion_consecrated_status') {
-    return personFieldText(relation.companion, 'consecrated_status');
+    return personFieldText(relation.companion, 'consecrated_status', translate);
   }
   if (field === 'companion_community_engagement_status') {
-    return personFieldText(relation.companion, 'community_engagement_status');
+    return personFieldText(relation.companion, 'community_engagement_status', translate);
   }
   return '';
 }
@@ -196,10 +204,12 @@ function compareCompanionshipRelations(
   left: CompanionshipRelationListItem,
   right: CompanionshipRelationListItem,
   sortField: CompanionshipRelationListSortField,
-  direction: CompanionshipRelationListSortDirection = 'asc'
+  direction: CompanionshipRelationListSortDirection,
+  translate: Translate,
+  locale: Locale
 ): number {
-  const leftKey = companionshipRelationSortKey(left, sortField);
-  const rightKey = companionshipRelationSortKey(right, sortField);
+  const leftKey = companionshipRelationSortKey(left, sortField, translate);
+  const rightKey = companionshipRelationSortKey(right, sortField, translate);
 
   if (leftKey === '' && rightKey !== '') {
     return 1;
@@ -208,22 +218,27 @@ function compareCompanionshipRelations(
     return -1;
   }
 
-  const byField = leftKey.localeCompare(rightKey, 'pl');
+  const byField = leftKey.localeCompare(rightKey, locale);
   const directed = direction === 'desc' ? -byField : byField;
   if (directed !== 0) {
     return directed;
   }
 
-  return accompaniedFullName(left).localeCompare(accompaniedFullName(right), 'pl');
+  return accompaniedFullName(left).localeCompare(
+    accompaniedFullName(right),
+    locale
+  );
 }
 
 export function sortCompanionshipRelations(
   relations: CompanionshipRelationListItem[],
   sortField: CompanionshipRelationListSortField,
-  direction: CompanionshipRelationListSortDirection = 'asc'
+  direction: CompanionshipRelationListSortDirection,
+  translate: Translate,
+  locale: Locale
 ): CompanionshipRelationListItem[] {
   return [...relations].sort((left, right) =>
-    compareCompanionshipRelations(left, right, sortField, direction)
+    compareCompanionshipRelations(left, right, sortField, direction, translate, locale)
   );
 }
 
@@ -280,7 +295,8 @@ function archivedCompanionshipHistorySortKey(
 export function sortArchivedCompanionshipHistoryRows(
   rows: ArchivedCompanionshipHistoryRow[],
   sortField: CompanionshipRelationListSortField,
-  direction: CompanionshipRelationListSortDirection = 'asc'
+  direction: CompanionshipRelationListSortDirection,
+  locale: Locale
 ): ArchivedCompanionshipHistoryRow[] {
   return [...rows].sort((left, right) => {
     const leftKey = archivedCompanionshipHistorySortKey(left, sortField);
@@ -293,7 +309,7 @@ export function sortArchivedCompanionshipHistoryRows(
       return -1;
     }
 
-    const byField = leftKey.localeCompare(rightKey, 'pl');
+    const byField = leftKey.localeCompare(rightKey, locale);
     const directed = direction === 'desc' ? -byField : byField;
     if (directed !== 0) {
       return directed;
@@ -301,7 +317,7 @@ export function sortArchivedCompanionshipHistoryRows(
 
     return archivedCompanionshipHistoryAccompaniedLabel(left).localeCompare(
       archivedCompanionshipHistoryAccompaniedLabel(right),
-      'pl'
+      locale
     );
   });
 }

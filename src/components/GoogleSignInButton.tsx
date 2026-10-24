@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { signIn } from 'next-auth/react';
 import type { JSX } from 'react';
 import { semiTransparentControlSurfaceClassName } from '@/components/SemiTransparentButton';
+import { useTranslate } from '@/i18n/LocaleProvider';
 
 interface GoogleSignInButtonProps {
   delay?: number;
@@ -38,10 +39,12 @@ function GoogleMark(): JSX.Element {
 }
 
 export function GoogleSignInButton({ delay = 0.5 }: GoogleSignInButtonProps): JSX.Element {
+  const translate = useTranslate();
+
   return (
     <motion.button
       type="button"
-      aria-label="Zaloguj się przez Google"
+      aria-label={translate('signIn.label')}
       onClick={() => {
         void signIn('google', { callbackUrl: '/auth/continue' });
       }}
@@ -52,9 +55,9 @@ export function GoogleSignInButton({ delay = 0.5 }: GoogleSignInButtonProps): JS
     >
       <GoogleMark />
       <span className="hidden sm:flex flex-col items-start leading-tight text-left">
-        <span className="uppercase tracking-widest">Zaloguj się</span>
+        <span className="uppercase tracking-widest">{translate('signIn.action')}</span>
         <span className="normal-case tracking-wide text-[11px] sm:text-xs font-normal text-white/80">
-          przez Google
+          {translate('signIn.viaGoogle')}
         </span>
       </span>
     </motion.button>
