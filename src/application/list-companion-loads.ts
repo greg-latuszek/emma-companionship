@@ -2,13 +2,14 @@
  * How many people each Companion accompanies, for the Statistics chart.
  * Counts active relations only. A Companion couple is one row when both
  * spouses accompany someone; an Accompanied couple is one unit when both
- * spouses are accompanied by the row.
+ * spouses are accompanied by the row. Names sort by the rules of `locale`.
  */
 
 import { formatCompanionshipCoupleOptionLabel } from '@/application/companionship-add-participant-options';
 import { listCompanionshipRelations } from '@/application/list-companionship-relations';
 import { listCouples } from '@/application/list-couples';
 import { openRegistry } from '@/application/open-registry';
+import type { Locale } from '@/i18n/locales';
 import type { ICompanionshipRelationRepository } from '@/ports/repositories/ICompanionshipRelationRepository';
 import type { ICoupleRepository } from '@/ports/repositories/ICoupleRepository';
 import type {
@@ -61,7 +62,8 @@ function groupAccompaniedByCompanion(
 
 function accompaniedUnitsOf(
   accompaniedPeople: readonly CompanionshipRelationParticipant[],
-  couples: readonly CoupleListItem[]
+  couples: readonly CoupleListItem[],
+  locale: Locale
 ): AccompaniedUnit[] {
   const peopleById = new Map(
     accompaniedPeople.map((person) => [person.id as string, person])
@@ -84,8 +86,8 @@ function accompaniedUnitsOf(
 
   return units.sort(
     (left, right) =>
-      left.lastName.localeCompare(right.lastName, 'pl') ||
-      left.label.localeCompare(right.label, 'pl')
+      left.lastName.localeCompare(right.lastName, locale) ||
+      left.label.localeCompare(right.label, locale)
   );
 }
 
@@ -93,9 +95,10 @@ function aCompanionLoad(
   row: Pick<CompanionLoad, 'kind' | 'label' | 'lastName' | 'firstName'>,
   accompaniedPeople: readonly CompanionshipRelationParticipant[],
   couples: readonly CoupleListItem[],
+  locale: Locale,
   limit: number
 ): CompanionLoad {
-  const accompanied = accompaniedUnitsOf(accompaniedPeople, couples);
+  const accompanied = accompaniedUnitsOf(accompaniedPeople, couples, locale);
   return {
     ...row,
     accompanied,
@@ -113,6 +116,7 @@ function distinctPeople(
 export function groupCompanionLoads(
   relations: readonly CompanionshipRelationListItem[],
   couples: readonly CoupleListItem[],
+  locale: Locale,
   limit: number = OVERWHELMED_COMPANION_LOAD
 ): CompanionLoad[] {
   const activeRelations = relations.filter(
@@ -140,6 +144,7 @@ export function groupCompanionLoads(
         },
         distinctPeople([...husband.accompanied, ...wife.accompanied]),
         couples,
+        locale,
         limit
       )
     );
@@ -159,6 +164,7 @@ export function groupCompanionLoads(
         },
         distinctPeople(entry.accompanied),
         couples,
+        locale,
         limit
       )
     );
@@ -167,12 +173,13 @@ export function groupCompanionLoads(
   return loads.sort(
     (left, right) =>
       right.load - left.load ||
-      left.lastName.localeCompare(right.lastName, 'pl') ||
-      left.firstName.localeCompare(right.firstName, 'pl')
+      left.lastName.localeCompare(right.lastName, locale) ||
+      left.firstName.localeCompare(right.firstName, locale)
   );
 }
 
 export async function listCompanionLoads(
+  locale: Locale,
   relations: ICompanionshipRelationRepository = openRegistry().getCompanionshipRelationRepository(),
   couples: ICoupleRepository = openRegistry().getCoupleRepository()
 ): Promise<CompanionLoad[]> {
@@ -180,5 +187,5 @@ export async function listCompanionLoads(
     listCompanionshipRelations(relations),
     listCouples(couples),
   ]);
-  return groupCompanionLoads(activeRelations, registeredCouples);
+  return groupCompanionLoads(activeRelations, registeredCouples, locale);
 }

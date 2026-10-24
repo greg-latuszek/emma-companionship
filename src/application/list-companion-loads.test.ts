@@ -14,6 +14,8 @@ import type {
 } from '@/types/companionship-relation';
 import type { CoupleListItem, CoupleParticipant } from '@/types/couple';
 
+const english = 'en-GB';
+
 function aPerson(
   id: string,
   firstName: string,
@@ -98,7 +100,7 @@ describe('groupCompanionLoads', () => {
       accompanies(nowakJan, malinowski),
     ];
 
-    const loads = groupCompanionLoads(relations, []);
+    const loads = groupCompanionLoads(relations, [], english);
 
     expect(loads).toHaveLength(1);
     expect(loads[0]).toMatchObject({
@@ -113,7 +115,7 @@ describe('groupCompanionLoads', () => {
       accompanies(nowakJan, accompanied)
     );
 
-    const [load] = groupCompanionLoads(relations, []);
+    const [load] = groupCompanionLoads(relations, [], english);
 
     expect(load.load).toBe(OVERWHELMED_COMPANION_LOAD);
     expect(load.isOverwhelmed).toBe(true);
@@ -124,7 +126,7 @@ describe('groupCompanionLoads', () => {
       accompanies(nowakJan, accompanied)
     );
 
-    const [load] = groupCompanionLoads(relations, []);
+    const [load] = groupCompanionLoads(relations, [], english);
 
     expect(load.load).toBe(OVERWHELMED_COMPANION_LOAD - 1);
     expect(load.isOverwhelmed).toBe(false);
@@ -142,7 +144,7 @@ describe('groupCompanionLoads', () => {
       accompanies(nowakJan, wisniewski, 'proposed'),
     ];
 
-    const [load] = groupCompanionLoads(relations, []);
+    const [load] = groupCompanionLoads(relations, [], english);
 
     expect(load.load).toBe(1);
   });
@@ -154,7 +156,7 @@ describe('groupCompanionLoads', () => {
       accompanies(nowakAnna, malinowski),
     ];
 
-    const loads = groupCompanionLoads(relations, [nowakCouple]);
+    const loads = groupCompanionLoads(relations, [nowakCouple], english);
 
     expect(loads).toHaveLength(1);
     expect(loads[0]).toMatchObject({
@@ -170,7 +172,7 @@ describe('groupCompanionLoads', () => {
       accompanies(nowakAnna, kowalskaMaria),
     ];
 
-    const [load] = groupCompanionLoads(relations, [nowakCouple, kowalskiCouple]);
+    const [load] = groupCompanionLoads(relations, [nowakCouple, kowalskiCouple], english);
 
     expect(load.load).toBe(1);
     expect(load.accompanied).toEqual([
@@ -182,7 +184,7 @@ describe('groupCompanionLoads', () => {
     const [zielinski] = peopleNamed(['Zieliński']);
     const relations = [accompanies(nowakJan, zielinski)];
 
-    const loads = groupCompanionLoads(relations, [nowakCouple]);
+    const loads = groupCompanionLoads(relations, [nowakCouple], english);
 
     expect(loads).toHaveLength(1);
     expect(loads[0]).toMatchObject({ kind: 'person', label: 'Nowak Jan' });
@@ -200,13 +202,26 @@ describe('groupCompanionLoads', () => {
       accompanies(nowakJan, c),
     ];
 
-    const loads = groupCompanionLoads(relations, []);
+    const loads = groupCompanionLoads(relations, [], english);
 
     expect(loads.map((load) => load.label)).toEqual([
       'Nowak Jan',
       'Adamski Ewa',
       'Zawadzki Ola',
     ]);
+  });
+
+  it('groupCompanionLoads sorts Companion names by the rules of the chosen language', () => {
+    const ostberg = aPerson('ostberg', 'Ola', 'Östberg');
+    const zawadzki = aPerson('zawadzki', 'Ola', 'Zawadzki');
+    const [a] = peopleNamed(['A']);
+    const relations = [accompanies(zawadzki, a), accompanies(ostberg, a)];
+
+    const german = groupCompanionLoads(relations, [], 'de-DE');
+    const swedish = groupCompanionLoads(relations, [], 'sv-SE');
+
+    expect(german.map((load) => load.lastName)).toEqual(['Östberg', 'Zawadzki']);
+    expect(swedish.map((load) => load.lastName)).toEqual(['Zawadzki', 'Östberg']);
   });
 
   it('groupCompanionLoads lists the Accompanied last names alphabetically, one per couple', () => {
@@ -218,7 +233,7 @@ describe('groupCompanionLoads', () => {
       accompanies(nowakJan, malinowski),
     ];
 
-    const [load] = groupCompanionLoads(relations, [kowalskiCouple]);
+    const [load] = groupCompanionLoads(relations, [kowalskiCouple], english);
 
     expect(load.accompanied.map((unit) => unit.lastName)).toEqual([
       'Kowalski',
@@ -235,7 +250,7 @@ describe('groupCompanionLoads', () => {
       accompanies(nowakJan, kowalskaMaria),
     ];
 
-    const [load] = groupCompanionLoads(relations, [kowalskiCouple]);
+    const [load] = groupCompanionLoads(relations, [kowalskiCouple], english);
 
     expect(load.accompanied.map((unit) => unit.label)).toEqual([
       'Kowalski, Piotr + Maria',
@@ -244,7 +259,7 @@ describe('groupCompanionLoads', () => {
   });
 
   it('groupCompanionLoads returns nothing when there are no active relations', () => {
-    expect(groupCompanionLoads([], [nowakCouple])).toEqual([]);
+    expect(groupCompanionLoads([], [nowakCouple], english)).toEqual([]);
   });
 });
 
@@ -268,7 +283,7 @@ describe('listCompanionLoads', () => {
       listCouples: vi.fn().mockResolvedValue([nowakCouple, kowalskiCouple]),
     } as unknown as ICoupleRepository;
 
-    const loads = await listCompanionLoads(relations, couples);
+    const loads = await listCompanionLoads(english, relations, couples);
 
     expect(loads).toHaveLength(1);
     expect(loads[0]).toMatchObject({ label: 'Nowak, Jan + Anna', load: 1 });
